@@ -169,37 +169,7 @@
         ORDER BY paper_count DESC, exam_count DESC
     </select>
 
-    <!-- 查询题目组合分析 -->
-    <select id="analyzeQuestionCombination" resultType="java.util.Map">
-        WITH question_pairs AS (
-            SELECT 
-                a.question_id as q1_id,
-                b.question_id as q2_id,
-                COUNT(*) as combination_count
-            FROM exam_paper_question a
-            INNER JOIN exam_paper_question b 
-                ON a.paper_id = b.paper_id 
-                AND a.question_id < b.question_id
-            WHERE a.paper_id = #{paperId}
-            GROUP BY a.question_id, b.question_id
-        )
-        SELECT 
-            q1.content as q1_content,
-            q2.content as q2_content,
-            qp.combination_count
-        FROM question_pairs qp
-        INNER JOIN question q1 ON qp.q1_id = q1.question_id
-        INNER JOIN question q2 ON qp.q2_id = q2.question_id
-        ORDER BY qp.combination_count DESC
-    </select>
 
-    <!-- 更新题目分组 -->
-    <update id="updateQuestionGroup">
-        UPDATE exam_paper_question 
-        SET group_id = #{groupId}
-        WHERE paper_id = #{paperId} 
-        AND question_id = #{questionId}
-    </update>
 
     <!-- 批量更新题目分组 -->
     <update id="batchUpdateGroup">

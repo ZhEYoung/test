@@ -270,9 +270,14 @@ CREATE TABLE IF NOT EXISTS log (
     user_id INT NOT NULL COMMENT '用户ID',
     action_type INT NOT NULL COMMENT '0: INSERT、1: UPDATE、2: DELETE、3: LOGIN、4: SUBMIT_TEST',
     action_description TEXT COMMENT '操作描述',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
     object_type TEXT COMMENT '操作对象',
+    ip_address VARCHAR(50) COMMENT 'IP地址',
+    device_info TEXT COMMENT '设备信息',
+    status VARCHAR(20) COMMENT '操作状态',
     INDEX idx_log_id (log_id),
     INDEX idx_user_id (user_id),
+    INDEX idx_action_type (action_type),
+    INDEX idx_created_time (created_time),
     FOREIGN KEY (user_id) REFERENCES user(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日志表'; 

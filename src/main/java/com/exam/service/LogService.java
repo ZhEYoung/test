@@ -29,42 +29,42 @@ public interface LogService extends BaseService<Log> {
      * 根据IP地址查询日志
      */
     List<Log> getByIpAddress(String ipAddress);
-    
+
     /**
      * 根据操作状态查询日志
      */
     List<Log> getByStatus(String status);
-    
+
     /**
      * 查询用户最近的操作日志
      */
     List<Log> getRecentLogs(Integer userId, Integer limit);
-    
+
     /**
      * 查询系统异常日志
      */
     List<Log> getExceptionLogs(Date startTime, Date endTime);
-    
+
     /**
      * 统计用户操作次数
      */
     Long countUserOperations(Integer userId);
-    
+
     /**
      * 统计操作类型分布
      */
     List<Map<String, Object>> countByOperationType();
-    
+
     /**
      * 统计操作状态分布
      */
     List<Map<String, Object>> countByStatus();
-    
+
     /**
      * 统计IP访问次数
      */
     List<Map<String, Object>> countByIpAddress();
-    
+
     /**
      * 统计每日操作次数
      */
@@ -97,17 +97,15 @@ public interface LogService extends BaseService<Log> {
      * @param ipAddress IP地址
      * @return 记录结果
      */
-    int logOperation(Integer userId, String operationType, String description, String ipAddress);
+    int logOperation(Integer userId, Integer operationType, String description, String ipAddress);
     
     /**
      * 记录系统异常日志
-     * @param module 异常模块
      * @param error 异常信息
-     * @param stackTrace 堆栈信息
      * @return 记录结果
      */
-    int logException(String module, String error, String stackTrace);
-    
+    int logException(String error);
+
     /**
      * 清理过期日志
      * @param days 保留天数

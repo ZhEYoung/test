@@ -123,11 +123,5 @@ public interface StudentScoreMapper extends BaseMapper<StudentScore> {
         @Param("subjectId") Integer subjectId
     );
 
-    /**
-     * 查询学生成绩汇总
-     */
-    Map<String, Object> selectScoreSummary(
-        @Param("studentId") Integer studentId,
-        @Param("academicTerm") String academicTerm
-    );
+
 } 

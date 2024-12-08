@@ -40,8 +40,36 @@ public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQues
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int batchInsert(List<StudentQuestionScore> list) {
-        return baseMapper.batchInsert(list);
+        if (list == null || list.isEmpty()) {
+            return 0;
+        }
+
+        // 数据验证
+        for (StudentQuestionScore record : list) {
+            // 必填字段验证
+            if (record.getExamId() == null || record.getStudentId() == null || 
+                record.getQuestionId() == null || record.getScoreId() == null) {
+                throw new IllegalArgumentException("考试ID、学生ID、题目ID和成绩ID不能为空");
+            }
+
+            // 设置默认状态为未批改
+            if (record.getStatus() == null) {
+                record.setStatus(0);
+            }
+
+            // 如果分数为空，设置为0
+            if (record.getScore() == null) {
+                record.setScore(BigDecimal.ZERO);
+            }
+        }
+
+        try {
+            return baseMapper.batchInsert(list);
+        } catch (Exception e) {
+            throw new RuntimeException("批量插入题目得分记录失败", e);
+        }
     }
 
     @Override
@@ -151,4 +179,14 @@ public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQues
         
         return batchInsert(scores);
     }
+
+    @Override
+    public int insertStudentQuestionScore(StudentQuestionScore record) {
+        // 设置初始状态为未批改
+        if (record.getStatus() == null) {
+            record.setStatus(0);
+        }
+        return baseMapper.insert(record);
+    }
+
 } 

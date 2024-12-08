@@ -209,17 +209,4 @@
         WHERE prev.score IS NOT NULL
     </select>
 
-    <!-- 查询学生成绩汇总 -->
-    <select id="selectScoreSummary" resultType="java.util.Map">
-        SELECT 
-            COUNT(DISTINCT ss.exam_id) as total_exams,
-            AVG(ss.score) as avg_score,
-            MAX(ss.score) as highest_score,
-            MIN(ss.score) as lowest_score,
-            COUNT(CASE WHEN ss.score >= 60 THEN 1 END) * 100.0 / COUNT(*) as pass_rate
-        FROM student_score ss
-        INNER JOIN exam e ON ss.exam_id = e.exam_id
-        WHERE ss.student_id = #{studentId}
-        AND e.academic_term = #{academicTerm}
-    </select>
 </mapper>

@@ -51,10 +51,7 @@ public interface TeacherService extends BaseService<Teacher> {
      */
     List<Class> getTeacherClasses(Integer teacherId);
     
-    /**
-     * 查询教师在指定学期教授的班级
-     */
-    List<Class> getTeacherClassesByTerm(Integer teacherId, String academicTerm);
+
     
     /**
      * 统计教师所教授的班级数量
@@ -67,18 +64,6 @@ public interface TeacherService extends BaseService<Teacher> {
      * @return 导入结果
      */
     int batchImport(List<Teacher> teachers);
-    
-    /**
-     * 获取教师工作量统计
-     * @param teacherId 教师ID
-     * @return 工作量统计信息
-     */
-    Map<String, Object> getWorkloadStatistics(Integer teacherId);
-    
-    /**
-     * 查询教师监考安排
-     * @param teacherId 教师ID
-     * @return 监考安排列表
-     */
-    List<Map<String, Object>> getInvigilationSchedule(Integer teacherId);
+
+
 } 

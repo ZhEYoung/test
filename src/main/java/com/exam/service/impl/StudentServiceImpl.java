@@ -80,7 +80,7 @@ public class StudentServiceImpl extends BaseServiceImpl<Student, StudentMapper> 
     public int batchImport(List<Student> students) {
         // 批量导入前进行数据验证
         for (Student student : students) {
-            if (student.getStudentNo() == null || student.getName() == null) {
+            if (student.getStudentId() == null || student.getName() == null) {
                 return 0;
             }
         }
@@ -109,7 +109,7 @@ public class StudentServiceImpl extends BaseServiceImpl<Student, StudentMapper> 
         double minScore = Double.MAX_VALUE;
         
         for (StudentScore score : scores) {
-            double currentScore = score.getScore();
+            double currentScore = score.getScore().doubleValue();
             totalScore += currentScore;
             maxScore = Math.max(maxScore, currentScore);
             minScore = Math.min(minScore, currentScore);

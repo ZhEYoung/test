@@ -12,6 +12,13 @@ import java.util.Date;
 public interface StudentQuestionScoreService extends BaseService<StudentQuestionScore> {
     
     /**
+     * 插入单条学生题目得分记录
+     * @param record 学生题目得分记录
+     * @return 影响的行数
+     */
+    int insertStudentQuestionScore(StudentQuestionScore record);
+    
+    /**
      * 根据成绩ID查询题目得分列表
      */
     List<StudentQuestionScore> getByScoreId(Integer scoreId);

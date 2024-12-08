@@ -12,6 +12,11 @@ import java.util.Date;
  */
 public interface StudentQuestionScoreMapper extends BaseMapper<StudentQuestionScore> {
     /**
+     * 插入单条题目得分记录
+     */
+    int insert(StudentQuestionScore record);
+
+    /**
      * 根据成绩ID查询题目得分列表
      */
     List<StudentQuestionScore> selectByScoreId(@Param("scoreId") Integer scoreId);

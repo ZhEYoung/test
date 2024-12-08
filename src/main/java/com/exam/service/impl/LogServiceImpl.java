@@ -26,7 +26,7 @@ public class LogServiceImpl extends BaseServiceImpl<Log, LogMapper> implements L
 
     @Override
     public List<Log> getByOperationType(String operationType) {
-        return baseMapper.selectByOperationType(operationType);
+        return baseMapper.selectByActionType(operationType);
     }
 
     @Override
@@ -93,39 +93,37 @@ public class LogServiceImpl extends BaseServiceImpl<Log, LogMapper> implements L
     public int logLogin(Integer userId, String ipAddress, String deviceInfo) {
         Log log = new Log();
         log.setUserId(userId);
-        log.setOperationType("LOGIN");
-        log.setDescription("用户登录系统");
+        log.setActionType(3);
+        log.setActionDescription("用户登录系统");
         log.setIpAddress(ipAddress);
         log.setDeviceInfo(deviceInfo);
-        log.setOperationTime(new Date());
+        log.setCreatedTime(new Date());
         log.setStatus("SUCCESS");
         
         return baseMapper.insert(log);
     }
 
     @Override
-    public int logOperation(Integer userId, String operationType, String description, String ipAddress) {
+    public int logOperation(Integer userId, Integer operationType, String description, String ipAddress) {
         Log log = new Log();
         log.setUserId(userId);
-        log.setOperationType(operationType);
-        log.setDescription(description);
+        log.setActionType(operationType);
+        log.setActionDescription(description);
         log.setIpAddress(ipAddress);
-        log.setOperationTime(new Date());
+        log.setCreatedTime(new Date());
         log.setStatus("SUCCESS");
         
         return baseMapper.insert(log);
     }
 
     @Override
-    public int logException(String module, String error, String stackTrace) {
+    public int logException(String error) {
         Log log = new Log();
-        log.setOperationType("EXCEPTION");
-        log.setModule(module);
-        log.setDescription(error);
-        log.setStackTrace(stackTrace);
-        log.setOperationTime(new Date());
+        log.setActionType(5);
+        log.setActionDescription(error);
+        log.setCreatedTime(new Date());
         log.setStatus("ERROR");
-        
+
         return baseMapper.insert(log);
     }
 
@@ -145,19 +143,19 @@ public class LogServiceImpl extends BaseServiceImpl<Log, LogMapper> implements L
         // 获取操作日志列表
         List<Log> logs = getByTimeRange(startTime, endTime);
         data.put("logs", logs);
-        
+
         // 统计操作类型分布
         data.put("operationTypeStats", countByOperationType());
-        
+
         // 统计操作状态分布
         data.put("statusStats", countByStatus());
-        
+
         // 统计IP访问次数
         data.put("ipStats", countByIpAddress());
-        
+
         // 统计每日操作次数
         data.put("dailyStats", countDailyOperations(startTime, endTime));
-        
+
         // 获取高频操作用户
         data.put("frequentUsers", getFrequentUsers(10));
         
@@ -167,19 +165,16 @@ public class LogServiceImpl extends BaseServiceImpl<Log, LogMapper> implements L
     @Override
     public Map<String, Object> exportExceptionLogs(Date startTime, Date endTime) {
         Map<String, Object> data = new HashMap<>();
-        
+
         // 获取异常日志列表
         List<Log> logs = getExceptionLogs(startTime, endTime);
         data.put("logs", logs);
-        
-        // 统计异常模块分布
-        List<Map<String, Object>> moduleStats = baseMapper.countByModule();
-        data.put("moduleStats", moduleStats);
-        
+
+
         // 统计每日异常次数
         List<Map<String, Object>> dailyStats = baseMapper.countDailyExceptions(startTime, endTime);
         data.put("dailyStats", dailyStats);
-        
+
         return data;
     }
 } 

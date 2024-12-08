@@ -88,7 +88,7 @@ public interface LogMapper extends BaseMapper<Log> {
     /**
      * 清理过期日志
      */
-    int cleanExpiredLogs(@Param("expireTime") Date expireTime);
+    int deleteExpiredLogs(@Param("expireTime") Date expireTime);
 
     /**
      * 批量清理日志
@@ -133,4 +133,68 @@ public interface LogMapper extends BaseMapper<Log> {
         @Param("startTime") Date startTime,
         @Param("endTime") Date endTime
     );
+
+    /**
+     * 根据IP地址查询日志
+     */
+    List<Log> selectByIpAddress(@Param("ipAddress") String ipAddress);
+
+    /**
+     * 根据状态查询日志
+     */
+    List<Log> selectByStatus(@Param("status") String status);
+
+    /**
+     * 查询用户最近的操作日志
+     */
+    List<Log> selectRecentLogs(
+        @Param("userId") Integer userId,
+        @Param("limit") Integer limit
+    );
+
+    /**
+     * 查询异常日志
+     */
+    List<Log> selectExceptionLogs(
+        @Param("startTime") Date startTime,
+        @Param("endTime") Date endTime
+    );
+
+    /**
+     * 统计用户操作次数
+     */
+    Long countUserOperations(@Param("userId") Integer userId);
+
+    /**
+     * 统计操作类型分布
+     */
+    List<Map<String, Object>> countByOperationType();
+
+    /**
+     * 统计操作状态分布
+     */
+    List<Map<String, Object>> countByStatus();
+
+    /**
+     * 统计IP访问次数
+     */
+    List<Map<String, Object>> countByIpAddress();
+
+    /**
+     * 统计每日操作次数
+     */
+    List<Map<String, Object>> countDailyOperations(
+        @Param("startTime") Date startTime,
+        @Param("endTime") Date endTime
+    );
+
+    /**
+     * 查询高频操作用户
+     */
+    List<Map<String, Object>> selectFrequentUsers(@Param("limit") Integer limit);
+
+    /**
+     * 查询可疑操作日志
+     */
+    List<Log> selectSuspiciousLogs();
 } 

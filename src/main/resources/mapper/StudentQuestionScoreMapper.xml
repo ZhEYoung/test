@@ -35,6 +35,17 @@
         ORDER BY score DESC
     </select>
 
+    <!-- 插入单条题目得分记录 -->
+    <insert id="insert" parameterType="com.exam.entity.StudentQuestionScore" useGeneratedKeys="true" keyProperty="recordId">
+        INSERT INTO student_question_score (
+            exam_id, student_id, question_id, score_id,
+            answer, score, status
+        ) VALUES (
+            #{examId}, #{studentId}, #{questionId}, #{scoreId},
+            #{answer}, #{score}, #{status}
+        )
+    </insert>
+
     <!-- 批量插入题目得分记录 -->
     <insert id="batchInsert">
         INSERT INTO student_question_score (

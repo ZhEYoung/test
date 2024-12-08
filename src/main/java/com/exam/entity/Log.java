@@ -14,6 +14,9 @@ public class Log {
     private String actionDescription;// 操作描述
     private Date createdTime;        // 操作时间
     private String objectType;       // 操作对象
+    private String ipAddress;        // IP地址
+    private String deviceInfo;       // 设备信息
+    private String status;           // 操作状态
     
     // 关联信息
     private User user;               // 用户信息

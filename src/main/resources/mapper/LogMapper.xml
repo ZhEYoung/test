@@ -7,36 +7,45 @@
         <result column="user_id" property="userId"/>
         <result column="action_type" property="actionType"/>
         <result column="action_description" property="actionDescription"/>
-        <result column="created_at" property="createdAt"/>
+        <result column="created_time" property="createdTime"/>
         <result column="object_type" property="objectType"/>
+        <result column="ip_address" property="ipAddress"/>
+        <result column="device_info" property="deviceInfo"/>
+        <result column="status" property="status"/>
+        <!-- 关联用户信息 -->
+        <association property="user" javaType="com.exam.entity.User">
+            <id column="user_id" property="userId"/>
+            <result column="username" property="username"/>
+            <result column="role" property="role"/>
+        </association>
     </resultMap>
 
     <!-- 根据用户ID查询日志列表 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
         SELECT * FROM log 
         WHERE user_id = #{userId}
-        ORDER BY created_at DESC
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据操作类型查询日志列表 -->
     <select id="selectByActionType" resultMap="BaseResultMap">
         SELECT * FROM log 
         WHERE action_type = #{actionType}
-        ORDER BY created_at DESC
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据时间范围查询日志列表 -->
     <select id="selectByTimeRange" resultMap="BaseResultMap">
         SELECT * FROM log 
-        WHERE created_at BETWEEN #{startTime} AND #{endTime}
-        ORDER BY created_at DESC
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据操作对象查询日志列表 -->
     <select id="selectByObjectType" resultMap="BaseResultMap">
         SELECT * FROM log 
         WHERE object_type = #{objectType}
-        ORDER BY created_at DESC
+        ORDER BY created_time DESC
     </select>
 
     <!-- 批量插入日志 -->
@@ -85,10 +94,10 @@
         SELECT 
             user_id,
             COUNT(*) as action_count,
-            DATE_FORMAT(created_at, '%Y-%m-%d') as action_date
+            DATE_FORMAT(created_time, '%Y-%m-%d') as action_date
         FROM log
-        WHERE created_at BETWEEN #{startTime} AND #{endTime}
-        GROUP BY user_id, DATE_FORMAT(created_at, '%Y-%m-%d')
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY user_id, DATE_FORMAT(created_time, '%Y-%m-%d')
         ORDER BY action_date, action_count DESC
     </select>
 
@@ -98,7 +107,7 @@
             action_type,
             COUNT(*) as count
         FROM log
-        WHERE created_at BETWEEN #{startTime} AND #{endTime}
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
         GROUP BY action_type
     </select>
 
@@ -109,7 +118,7 @@
             action_type,
             COUNT(*) as error_count
         FROM log
-        WHERE created_at BETWEEN #{startTime} AND #{endTime}
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
         AND action_description LIKE '%error%'
         GROUP BY user_id, action_type
         ORDER BY error_count DESC
@@ -120,18 +129,18 @@
         SELECT 
             action_type,
             COUNT(*) as action_count,
-            DATE_FORMAT(created_at, '%H') as hour_of_day
+            DATE_FORMAT(created_time, '%H') as hour_of_day
         FROM log
         WHERE user_id = #{userId}
-        AND created_at BETWEEN #{startTime} AND #{endTime}
-        GROUP BY action_type, DATE_FORMAT(created_at, '%H')
+        AND created_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY action_type, DATE_FORMAT(created_time, '%H')
         ORDER BY hour_of_day, action_type
     </select>
 
     <!-- 清理过期日志 -->
-    <delete id="cleanExpiredLogs">
+    <delete id="deleteExpiredLogs">
         DELETE FROM log 
-        WHERE created_at &lt; #{expireTime}
+        WHERE created_time &lt; #{expireTime}
     </delete>
 
     <!-- 批量清理日志 -->
@@ -149,10 +158,10 @@
             action_type,
             object_type,
             COUNT(*) as operation_count,
-            DATE_FORMAT(created_at, '%Y-%m-%d') as operation_date
+            DATE_FORMAT(created_time, '%Y-%m-%d') as operation_date
         FROM log
-        WHERE created_at BETWEEN #{startTime} AND #{endTime}
-        GROUP BY action_type, object_type, DATE_FORMAT(created_at, '%Y-%m-%d')
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY action_type, object_type, DATE_FORMAT(created_time, '%Y-%m-%d')
         ORDER BY operation_date DESC
     </select>
 
@@ -160,11 +169,11 @@
     <select id="analyzeResponseTime" resultType="java.util.Map">
         SELECT 
             action_type,
-            AVG(TIMESTAMPDIFF(MICROSECOND, created_at, created_at)) as avg_response_time,
-            MAX(TIMESTAMPDIFF(MICROSECOND, created_at, created_at)) as max_response_time,
-            MIN(TIMESTAMPDIFF(MICROSECOND, created_at, created_at)) as min_response_time
+            AVG(TIMESTAMPDIFF(MICROSECOND, created_time, created_time)) as avg_response_time,
+            MAX(TIMESTAMPDIFF(MICROSECOND, created_time, created_time)) as max_response_time,
+            MIN(TIMESTAMPDIFF(MICROSECOND, created_time, created_time)) as min_response_time
         FROM log
-        WHERE created_at BETWEEN #{startTime} AND #{endTime}
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
         GROUP BY action_type
     </select>
 
@@ -184,21 +193,130 @@
         SELECT 
             COUNT(*) as total_logs,
             SUM(LENGTH(action_description)) as total_description_length,
-            MIN(created_at) as earliest_log,
-            MAX(created_at) as latest_log
+            MIN(created_time) as earliest_log,
+            MAX(created_time) as latest_log
         FROM log
     </select>
 
     <!-- 查询用户登录记录 -->
     <select id="selectLoginHistory" resultType="java.util.Map">
-        SELECT 
-            created_at as login_time,
+        SELECT
+            created_time as login_time,
             action_description,
             object_type as login_type
         FROM log
         WHERE user_id = #{userId}
         AND action_type = 3  -- LOGIN
-        AND created_at BETWEEN #{startTime} AND #{endTime}
-        ORDER BY created_at DESC
+        AND created_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据IP地址查询日志 -->
+    <select id="selectByIpAddress" resultMap="BaseResultMap">
+        SELECT l.*, u.username, u.role
+        FROM log l
+        LEFT JOIN user u ON l.user_id = u.user_id
+        WHERE l.ip_address = #{ipAddress}
+        ORDER BY l.created_time DESC
+    </select>
+
+    <!-- 根据状态查询日志 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT l.*, u.username, u.role
+        FROM log l
+        LEFT JOIN user u ON l.user_id = u.user_id
+        WHERE l.status = #{status}
+        ORDER BY l.created_time DESC
+    </select>
+
+    <!-- 查询用户最近的操作日志 -->
+    <select id="selectRecentLogs" resultMap="BaseResultMap">
+        SELECT l.*, u.username, u.role
+        FROM log l
+        LEFT JOIN user u ON l.user_id = u.user_id
+        WHERE l.user_id = #{userId}
+        ORDER BY l.created_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询异常日志 -->
+    <select id="selectExceptionLogs" resultMap="BaseResultMap">
+        SELECT l.*, u.username, u.role
+        FROM log l
+        LEFT JOIN user u ON l.user_id = u.user_id
+        WHERE l.status = 'ERROR'
+        AND l.created_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY l.created_time DESC
+    </select>
+
+    <!-- 统计用户操作次数 -->
+    <select id="countUserOperations" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM log
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 统计操作类型分布 -->
+    <select id="countByOperationType" resultType="java.util.Map">
+        SELECT 
+            action_type,
+            COUNT(*) as count
+        FROM log
+        GROUP BY action_type
+    </select>
+
+    <!-- 统计操作状态分布 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT 
+            status,
+            COUNT(*) as count
+        FROM log
+        GROUP BY status
+    </select>
+
+    <!-- 统计IP访问次数 -->
+    <select id="countByIpAddress" resultType="java.util.Map">
+        SELECT 
+            ip_address,
+            COUNT(*) as count
+        FROM log
+        GROUP BY ip_address
+        ORDER BY count DESC
+    </select>
+
+    <!-- 统计每日操作次数 -->
+    <select id="countDailyOperations" resultType="java.util.Map">
+        SELECT 
+            DATE(created_time) as date,
+            COUNT(*) as count
+        FROM log
+        WHERE created_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY DATE(created_time)
+        ORDER BY date
+    </select>
+
+    <!-- 查询高频操作用户 -->
+    <select id="selectFrequentUsers" resultType="java.util.Map">
+        SELECT 
+            l.user_id,
+            u.username,
+            COUNT(*) as operation_count
+        FROM log l
+        LEFT JOIN user u ON l.user_id = u.user_id
+        GROUP BY l.user_id, u.username
+        ORDER BY operation_count DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询可疑操作日志 -->
+    <select id="selectSuspiciousLogs" resultMap="BaseResultMap">
+        SELECT l.*, u.username, u.role
+        FROM log l
+        LEFT JOIN user u ON l.user_id = u.user_id
+        WHERE l.status = 'SUSPICIOUS'
+        OR l.action_description LIKE '%异常%'
+        OR l.action_description LIKE '%错误%'
+        OR l.action_description LIKE '%失败%'
+        ORDER BY l.created_time DESC
     </select>
 </mapper>

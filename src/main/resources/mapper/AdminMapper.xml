@@ -38,7 +38,7 @@
         SELECT l.* FROM log l
         INNER JOIN admin a ON l.user_id = a.user_id
         WHERE a.admin_id = #{adminId}
-        AND l.created_at BETWEEN #{startTime} AND #{endTime}
-        ORDER BY l.created_at DESC
+        AND l.created_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY l.created_time DESC
     </select>
 </mapper> 

@@ -118,11 +118,5 @@ public interface QuestionService extends BaseService<Question> {
      */
     int batchImport(List<Question> questions);
     
-    /**
-     * 智能推荐相似题目
-     * @param questionId 题目ID
-     * @param limit 推荐数量
-     * @return 推荐题目列表
-     */
-    List<Question> recommendSimilarQuestions(Integer questionId, Integer limit);
+
 } 

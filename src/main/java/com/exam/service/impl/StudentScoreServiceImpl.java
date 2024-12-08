@@ -1,5 +1,6 @@
 package com.exam.service.impl;
 
+import com.exam.entity.Exam;
 import com.exam.entity.StudentScore;
 import com.exam.mapper.StudentScoreMapper;
 import com.exam.mapper.ExamMapper;
@@ -105,16 +106,13 @@ public class StudentScoreServiceImpl extends BaseServiceImpl<StudentScore, Stude
         return baseMapper.analyzeScoreImprovement(studentId, subjectId);
     }
 
-    @Override
-    public Map<String, Object> getScoreSummary(Integer studentId, String academicTerm) {
-        return baseMapper.selectScoreSummary(studentId, academicTerm);
-    }
 
     @Override
     public Map<String, Object> exportScoreReport(Integer examId, Integer studentId) {
         Map<String, Object> report = new HashMap<>();
         
         // 获取考试信息
+        Exam exam = examMapper.selectById(examId);
         report.put("exam", examMapper.selectById(examId));
         
         // 获取学生信息
@@ -132,12 +130,11 @@ public class StudentScoreServiceImpl extends BaseServiceImpl<StudentScore, Stude
             report.put("distribution", getScoreDistribution(examId, null));
             
             // 获取历史成绩趋势
-            report.put("trend", getScoreTrend(studentId, score.getSubjectId(), null, null));
+            report.put("trend", getScoreTrend(studentId, exam.getSubjectId(), null, null));
             
             // 获取进步情况分析
-            report.put("improvement", analyzeScoreImprovement(studentId, score.getSubjectId()));
+            report.put("improvement", analyzeScoreImprovement(studentId, exam.getSubjectId()));
         }
-        
         return report;
     }
 

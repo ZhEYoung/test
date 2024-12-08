@@ -92,19 +92,9 @@ public interface ExamPaperQuestionMapper extends BaseMapper<ExamPaperQuestion> {
         @Param("endTime") String endTime
     );
 
-    /**
-     * 查询题目组合分析
-     */
-    List<Map<String, Object>> analyzeQuestionCombination(@Param("paperId") Integer paperId);
 
-    /**
-     * 更新题目分组
-     */
-    int updateQuestionGroup(
-        @Param("paperId") Integer paperId,
-        @Param("questionId") Integer questionId,
-        @Param("groupId") Integer groupId
-    );
+
+
 
     /**
      * 批量更新题目分组

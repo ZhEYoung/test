@@ -122,11 +122,11 @@ public class QuestionBankServiceImpl extends BaseServiceImpl<QuestionBank, Quest
             // 获取题目ID列表
             List<Integer> questionIds = new ArrayList<>();
             for (Question question : questions) {
-                questionIds.add(question.getId());
+                questionIds.add(question.getQuestionId());
             }
             
             // 建立题库和题目的关联
-            baseMapper.batchAddQuestions(bank.getId(), questionIds);
+            baseMapper.batchAddQuestions(bank.getQbId(), questionIds);
         }
         
         return result;

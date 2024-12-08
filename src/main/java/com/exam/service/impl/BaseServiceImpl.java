@@ -3,6 +3,7 @@ package com.exam.service.impl;
 import com.exam.mapper.BaseMapper;
 import com.exam.service.BaseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +14,10 @@ import java.util.Map;
  */
 public abstract class BaseServiceImpl<T, M extends BaseMapper<T>> implements BaseService<T> {
 
-    @Autowired
+    /**
+     * 使用@Resource注解替代@Autowired来处理泛型注入
+     */
+    @Resource
     protected M baseMapper;
 
     @Override

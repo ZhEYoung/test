@@ -92,10 +92,7 @@ public interface StudentScoreService extends BaseService<StudentScore> {
      */
     List<Map<String, Object>> analyzeScoreImprovement(Integer studentId, Integer subjectId);
     
-    /**
-     * 查询学生成绩汇总
-     */
-    Map<String, Object> getScoreSummary(Integer studentId, String academicTerm);
+
     
     /**
      * 导出成绩报告

@@ -147,44 +147,4 @@ public class QuestionServiceImpl extends BaseServiceImpl<Question, QuestionMappe
         return result;
     }
 
-    @Override
-    public List<Question> recommendSimilarQuestions(Integer questionId, Integer limit) {
-        // 获取原题目信息
-        Question question = baseMapper.selectById(questionId);
-        if (question == null) {
-            return new ArrayList<>();
-        }
-        
-        // 根据题目类型和难度范围查找相似题目
-        BigDecimal difficulty = question.getDifficulty();
-        BigDecimal minDifficulty = difficulty.subtract(new BigDecimal("0.2"));
-        BigDecimal maxDifficulty = difficulty.add(new BigDecimal("0.2"));
-        
-        Map<String, Object> condition = new HashMap<>();
-        condition.put("type", question.getType());
-        condition.put("minDifficulty", minDifficulty);
-        condition.put("maxDifficulty", maxDifficulty);
-        condition.put("subjectId", question.getSubjectId());
-        
-        List<Question> similarQuestions = baseMapper.selectByCondition(condition);
-        
-        // 排除原题目
-        similarQuestions.removeIf(q -> q.getId().equals(questionId));
-        
-        // 按使用次数和正确率排序
-        similarQuestions.sort((q1, q2) -> {
-            Long usage1 = countUsage(q1.getId());
-            Long usage2 = countUsage(q2.getId());
-            if (usage1.equals(usage2)) {
-                BigDecimal rate1 = calculateCorrectRate(q1.getId());
-                BigDecimal rate2 = calculateCorrectRate(q2.getId());
-                return rate2.compareTo(rate1);
-            }
-            return usage2.compareTo(usage1);
-        });
-        
-        // 返回指定数量的题目
-        return similarQuestions.size() > limit ? 
-               similarQuestions.subList(0, limit) : similarQuestions;
-    }
 } 
