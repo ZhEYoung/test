@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.ExamMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.Exam">
+        <id column="exam_id" property="examId"/>
+        <result column="exam_name" property="examName"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="paper_id" property="paperId"/>
+        <result column="exam_start_time" property="examStartTime"/>
+        <result column="exam_end_time" property="examEndTime"/>
+        <result column="exam_duration" property="examDuration"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="exam_status" property="examStatus"/>
+        <result column="exam_type" property="examType"/>
+    </resultMap>
+
+    <!-- 根据学科ID查询考试列表 -->
+    <select id="selectBySubjectId" resultMap="BaseResultMap">
+        SELECT * FROM exam WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 根据试卷ID查询考试列表 -->
+    <select id="selectByPaperId" resultMap="BaseResultMap">
+        SELECT * FROM exam WHERE paper_id = #{paperId}
+    </select>
+
+    <!-- 根据教师ID查询考试列表 -->
+    <select id="selectByTeacherId" resultMap="BaseResultMap">
+        SELECT * FROM exam WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 根据考试状态查询 -->
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM exam WHERE exam_status = #{examStatus}
+    </select>
+
+    <!-- 根据考试类型查询 -->
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT * FROM exam WHERE exam_type = #{examType}
+    </select>
+
+    <!-- 更新考试状态 -->
+    <update id="updateStatus">
+        UPDATE exam SET exam_status = #{status} WHERE exam_id = #{examId}
+    </update>
+
+    <!-- 查询学生参加的考试列表 -->
+    <select id="selectByStudentId" resultMap="BaseResultMap">
+        SELECT e.* FROM exam e
+        INNER JOIN exam_student es ON e.exam_id = es.exam_id
+        WHERE es.student_id = #{studentId}
+    </select>
+
+    <!-- 查询班级的考试列表 -->
+    <select id="selectByClassId" resultMap="BaseResultMap">
+        SELECT e.* FROM exam e
+        INNER JOIN exam_class ec ON e.exam_id = ec.exam_id
+        WHERE ec.class_id = #{classId}
+    </select>
+
+    <!-- 根据时间范围查询考试 -->
+    <select id="selectByTimeRange" resultMap="BaseResultMap">
+        SELECT * FROM exam 
+        WHERE exam_start_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY exam_start_time
+    </select>
+
+    <!-- 高级查询（支持多条件组合） -->
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT * FROM exam
+        <where>
+            <if test="subjectId != null">
+                AND subject_id = #{subjectId}
+            </if>
+            <if test="teacherId != null">
+                AND teacher_id = #{teacherId}
+            </if>
+            <if test="examType != null">
+                AND exam_type = #{examType}
+            </if>
+            <if test="examStatus != null">
+                AND exam_status = #{examStatus}
+            </if>
+            <if test="startTime != null">
+                AND exam_start_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND exam_end_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY exam_start_time DESC
+        <if test="offset != null and limit != null">
+            LIMIT #{offset}, #{limit}
+        </if>
+    </select>
+
+    <!-- 统计某个时间段内的考试数量 -->
+    <select id="countByTimeRange" resultType="Long">
+        SELECT COUNT(*) FROM exam
+        WHERE exam_start_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <!-- 更新考试时长 -->
+    <update id="updateDuration">
+        UPDATE exam SET exam_duration = #{duration} WHERE exam_id = #{examId}
+    </update>
+
+    <!-- 批量插入考试班级关联 -->
+    <insert id="batchInsertExamClass">
+        INSERT INTO exam_class (exam_id, class_id, create_time)
+        VALUES 
+        <foreach collection="classIds" item="classId" separator=",">
+            (#{examId}, #{classId}, CURRENT_TIMESTAMP)
+        </foreach>
+    </insert>
+
+    <!-- 删除考试班级关联 -->
+    <delete id="deleteExamClass">
+        DELETE FROM exam_class 
+        WHERE exam_id = #{examId} AND class_id = #{classId}
+    </delete>
+</mapper>

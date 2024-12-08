@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.UserMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.User">
+        <id column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="password" property="password"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="sex" property="sex"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 根据用户名查询用户 -->
+    <select id="selectByUsername" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+    <!-- 根据角色查询用户列表 -->
+    <select id="selectByRole" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE role = #{role}
+    </select>
+
+    <!-- 更新用户状态 -->
+    <update id="updateStatus">
+        UPDATE user SET status = #{status} WHERE user_id = #{userId}
+    </update>
+
+    <!-- 批量更新用户状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE user SET status = #{status}
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </update>
+
+    <!-- 修改密码 -->
+    <update id="updatePassword">
+        UPDATE user SET password = #{newPassword} WHERE user_id = #{userId}
+    </update>
+
+    <!-- 更新用户联系方式 -->
+    <update id="updateContact">
+        UPDATE user 
+        SET phone = #{phone}, email = #{email}
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 更新用户性别 -->
+    <update id="updateSex">
+        UPDATE user SET sex = #{sex} WHERE user_id = #{userId}
+    </update>
+
+    <!-- 根据邮箱查询用户 -->
+    <select id="selectByEmail" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE email = #{email}
+    </select>
+
+    <!-- 根据手机号查询用户 -->
+    <select id="selectByPhone" resultMap="BaseResultMap">
+        SELECT * FROM user WHERE phone = #{phone}
+    </select>
+
+    <!-- 更新用户注册时间 -->
+    <update id="updateCreatedTime">
+        UPDATE user SET created_time = #{createdTime} WHERE user_id = #{userId}
+    </update>
+</mapper> 

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.StudentScoreMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.StudentScore">
+        <id column="score_id" property="scoreId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="exam_id" property="examId"/>
+        <result column="score" property="score"/>
+        <result column="upload_time" property="uploadTime"/>
+    </resultMap>
+
+    <!-- 根据学生ID查询成绩列表 -->
+    <select id="selectByStudentId" resultMap="BaseResultMap">
+        SELECT * FROM student_score WHERE student_id = #{studentId}
+        ORDER BY upload_time DESC
+    </select>
+
+    <!-- 根据考试ID查询成绩列表 -->
+    <select id="selectByExamId" resultMap="BaseResultMap">
+        SELECT * FROM student_score WHERE exam_id = #{examId}
+        ORDER BY score DESC
+    </select>
+
+    <!-- 查询学生在指定考试的成绩 -->
+    <select id="selectByExamAndStudent" resultMap="BaseResultMap">
+        SELECT * FROM student_score 
+        WHERE exam_id = #{examId} AND student_id = #{studentId}
+    </select>
+
+    <!-- 根据分数范围查询成绩列表 -->
+    <select id="selectByScoreRange" resultMap="BaseResultMap">
+        SELECT * FROM student_score 
+        WHERE exam_id = #{examId}
+        AND score BETWEEN #{minScore} AND #{maxScore}
+        ORDER BY score DESC
+    </select>
+
+    <!-- 统计考试的成绩信息 -->
+    <select id="selectExamScoreStats" resultMap="BaseResultMap">
+        SELECT 
+            student_id,
+            exam_id,
+            score,
+            upload_time,
+            RANK() OVER (ORDER BY score DESC) as rank
+        FROM student_score
+        WHERE exam_id = #{examId}
+    </select>
+
+    <!-- 批量插入成绩 -->
+    <insert id="batchInsertScores">
+        INSERT INTO student_score (
+            student_id, exam_id, score, upload_time
+        ) VALUES 
+        <foreach collection="scores" item="score" separator=",">
+            (#{score.studentId}, #{score.examId}, #{score.score}, CURRENT_TIMESTAMP)
+        </foreach>
+    </insert>
+
+    <!-- 批量更新成绩 -->
+    <update id="batchUpdateScores">
+        <foreach collection="scores" item="score" separator=";">
+            UPDATE student_score 
+            SET score = #{score.score}, 
+                upload_time = CURRENT_TIMESTAMP
+            WHERE student_id = #{score.studentId} 
+            AND exam_id = #{score.examId}
+        </foreach>
+    </update>
+
+    <!-- 查询学生成绩排名 -->
+    <select id="selectStudentRank" resultType="Integer">
+        SELECT rank 
+        FROM (
+            SELECT 
+                student_id,
+                RANK() OVER (ORDER BY score DESC) as rank
+            FROM student_score
+            WHERE exam_id = #{examId}
+        ) ranked
+        WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 查询班级成绩排名 -->
+    <select id="selectClassRanking" resultType="java.util.Map">
+        SELECT 
+            s.student_id,
+            s.name as student_name,
+            ss.score,
+            RANK() OVER (ORDER BY ss.score DESC) as rank
+        FROM student_score ss
+        INNER JOIN student s ON ss.student_id = s.student_id
+        INNER JOIN student_class sc ON s.student_id = sc.student_id
+        WHERE ss.exam_id = #{examId}
+        AND sc.class_id = #{classId}
+        ORDER BY rank
+    </select>
+
+    <!-- 查询年级成绩排名 -->
+    <select id="selectGradeRanking" resultType="java.util.Map">
+        SELECT 
+            s.student_id,
+            s.name as student_name,
+            ss.score,
+            RANK() OVER (ORDER BY ss.score DESC) as rank
+        FROM student_score ss
+        INNER JOIN student s ON ss.student_id = s.student_id
+        WHERE ss.exam_id = #{examId}
+        AND s.grade = #{grade}
+        ORDER BY rank
+    </select>
+
+    <!-- 查询学生成绩趋势 -->
+    <select id="selectScoreTrend" resultType="java.util.Map">
+        SELECT 
+            ss.score,
+            e.exam_name,
+            e.exam_start_time
+        FROM student_score ss
+        INNER JOIN exam e ON ss.exam_id = e.exam_id
+        WHERE ss.student_id = #{studentId}
+        AND e.subject_id = #{subjectId}
+        AND e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY e.exam_start_time
+    </select>
+
+    <!-- 查询学生各科目平均分 -->
+    <select id="selectSubjectAverages" resultType="java.util.Map">
+        SELECT 
+            s.subject_name,
+            AVG(ss.score) as avg_score,
+            COUNT(ss.score_id) as exam_count
+        FROM student_score ss
+        INNER JOIN exam e ON ss.exam_id = e.exam_id
+        INNER JOIN subject s ON e.subject_id = s.subject_id
+        WHERE ss.student_id = #{studentId}
+        GROUP BY s.subject_id, s.subject_name
+    </select>
+
+    <!-- 查询成绩分布 -->
+    <select id="selectScoreDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN score >= 90 THEN '90-100'
+                WHEN score >= 80 THEN '80-89'
+                WHEN score >= 70 THEN '70-79'
+                WHEN score >= 60 THEN '60-69'
+                ELSE '0-59'
+            END as score_range,
+            COUNT(*) as count
+        FROM student_score ss
+        INNER JOIN student_class sc ON ss.student_id = sc.student_id
+        WHERE ss.exam_id = #{examId}
+        AND sc.class_id = #{classId}
+        GROUP BY score_range
+        ORDER BY score_range DESC
+    </select>
+
+    <!-- 查询优秀学生名单 -->
+    <select id="selectTopStudents" resultType="java.util.Map">
+        SELECT 
+            s.student_id,
+            s.name as student_name,
+            ss.score,
+            c.class_name
+        FROM student_score ss
+        INNER JOIN student s ON ss.student_id = s.student_id
+        INNER JOIN student_class sc ON s.student_id = sc.student_id
+        INNER JOIN class c ON sc.class_id = c.class_id
+        WHERE ss.exam_id = #{examId}
+        ORDER BY ss.score DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询需要补考的学生 -->
+    <select id="selectRetakeStudents" resultType="java.util.Map">
+        SELECT 
+            s.student_id,
+            s.name as student_name,
+            ss.score,
+            c.class_name
+        FROM student_score ss
+        INNER JOIN student s ON ss.student_id = s.student_id
+        INNER JOIN student_class sc ON s.student_id = sc.student_id
+        INNER JOIN class c ON sc.class_id = c.class_id
+        WHERE ss.exam_id = #{examId}
+        AND ss.score < #{passScore}
+    </select>
+
+    <!-- 统计学生成绩进步情况 -->
+    <select id="analyzeScoreImprovement" resultType="java.util.Map">
+        WITH exam_scores AS (
+            SELECT 
+                ss.score,
+                e.exam_start_time,
+                ROW_NUMBER() OVER (ORDER BY e.exam_start_time) as exam_order
+            FROM student_score ss
+            INNER JOIN exam e ON ss.exam_id = e.exam_id
+            WHERE ss.student_id = #{studentId}
+            AND e.subject_id = #{subjectId}
+        )
+        SELECT 
+            curr.score as current_score,
+            prev.score as previous_score,
+            curr.score - prev.score as improvement
+        FROM exam_scores curr
+        LEFT JOIN exam_scores prev ON curr.exam_order = prev.exam_order + 1
+        WHERE prev.score IS NOT NULL
+    </select>
+
+    <!-- 查询学生成绩汇总 -->
+    <select id="selectScoreSummary" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT ss.exam_id) as total_exams,
+            AVG(ss.score) as avg_score,
+            MAX(ss.score) as highest_score,
+            MIN(ss.score) as lowest_score,
+            COUNT(CASE WHEN ss.score >= 60 THEN 1 END) * 100.0 / COUNT(*) as pass_rate
+        FROM student_score ss
+        INNER JOIN exam e ON ss.exam_id = e.exam_id
+        WHERE ss.student_id = #{studentId}
+        AND e.academic_term = #{academicTerm}
+    </select>
+</mapper>

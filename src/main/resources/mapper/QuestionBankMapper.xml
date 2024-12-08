@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.QuestionBankMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.QuestionBank">
+        <id column="qb_id" property="qbId"/>
+        <result column="qb_name" property="qbName"/>
+        <result column="subject_id" property="subjectId"/>
+    </resultMap>
+
+    <!-- 根据学科ID查询题库列表 -->
+    <select id="selectBySubjectId" resultMap="BaseResultMap">
+        SELECT * FROM question_bank WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 根据题库名称查询 -->
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT * FROM question_bank WHERE qb_name = #{qbName}
+    </select>
+
+    <!-- 统计题库中的题目数量 -->
+    <select id="countQuestions" resultType="Integer">
+        SELECT COUNT(*) FROM question WHERE qb_id = #{qbId}
+    </select>
+
+    <!-- 根据学科ID统计题库数量 -->
+    <select id="countBySubjectId" resultType="Integer">
+        SELECT COUNT(*) FROM question_bank WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 添加题目到题库 -->
+    <update id="addQuestion">
+        UPDATE question SET qb_id = #{qbId} WHERE question_id = #{questionId}
+    </update>
+
+    <!-- 批量添加题目到题库 -->
+    <update id="batchAddQuestions">
+        UPDATE question SET qb_id = #{qbId}
+        WHERE question_id IN
+        <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
+            #{questionId}
+        </foreach>
+    </update>
+
+    <!-- 从题库移除题目 -->
+    <update id="removeQuestion">
+        UPDATE question SET qb_id = NULL WHERE qb_id = #{qbId} AND question_id = #{questionId}
+    </update>
+
+    <!-- 批量移除题目 -->
+    <update id="batchRemoveQuestions">
+        UPDATE question SET qb_id = NULL 
+        WHERE qb_id = #{qbId} 
+        AND question_id IN
+        <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
+            #{questionId}
+        </foreach>
+    </update>
+
+    <!-- 查询题库中的所有题目 -->
+    <select id="selectQuestions" resultType="com.exam.entity.Question">
+        SELECT * FROM question WHERE qb_id = #{qbId}
+    </select>
+
+    <!-- 按条件查询题库中的题目 -->
+    <select id="selectQuestionsByCondition" resultType="com.exam.entity.Question">
+        SELECT * FROM question 
+        WHERE qb_id = #{qbId}
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        <if test="minDifficulty != null and maxDifficulty != null">
+            AND difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+        </if>
+    </select>
+
+    <!-- 统计题库中各类型题目数量 -->
+    <select id="countQuestionsByType" resultType="java.util.Map">
+        SELECT type, COUNT(*) as count
+        FROM question
+        WHERE qb_id = #{qbId}
+        GROUP BY type
+    </select>
+
+    <!-- 统计题库中各难度题目数量 -->
+    <select id="countQuestionsByDifficulty" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN difficulty >= 4.5 THEN '很难'
+                WHEN difficulty >= 3.5 THEN '较难'
+                WHEN difficulty >= 2.5 THEN '中等'
+                WHEN difficulty >= 1.5 THEN '较易'
+                ELSE '简单'
+            END as difficulty_level,
+            COUNT(*) as count
+        FROM question
+        WHERE qb_id = #{qbId}
+        GROUP BY difficulty_level
+        ORDER BY MIN(difficulty)
+    </select>
+
+    <!-- 统计题库使用情况 -->
+    <select id="countBankUsage" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT epq.paper_id) as paper_count,
+            COUNT(DISTINCT e.exam_id) as exam_count
+        FROM question q
+        LEFT JOIN exam_paper_question epq ON q.question_id = epq.question_id
+        LEFT JOIN exam e ON epq.paper_id = e.paper_id
+        WHERE q.qb_id = #{qbId}
+    </select>
+
+    <!-- 复制题库（包含题目） -->
+    <insert id="copyBank" useGeneratedKeys="true" keyProperty="newQbId">
+        INSERT INTO question_bank (qb_name, subject_id)
+        SELECT #{newBankName}, #{subjectId}
+        FROM question_bank
+        WHERE qb_id = #{sourceQbId};
+
+        INSERT INTO question (qb_id, content, answer, type, difficulty)
+        SELECT #{newQbId}, content, answer, type, difficulty
+        FROM question
+        WHERE qb_id = #{sourceQbId}
+    </insert>
+
+    <!-- 合并题库 -->
+    <update id="mergeBanks">
+        UPDATE question 
+        SET qb_id = #{targetQbId}
+        WHERE qb_id IN
+        <foreach collection="sourceQbIds" item="sourceQbId" open="(" separator="," close=")">
+            #{sourceQbId}
+        </foreach>
+    </update>
+
+    <!-- 查询最近使用的题库 -->
+    <select id="selectRecentUsed" resultMap="BaseResultMap">
+        SELECT DISTINCT qb.* 
+        FROM question_bank qb
+        INNER JOIN question q ON qb.qb_id = q.qb_id
+        INNER JOIN exam_paper_question epq ON q.question_id = epq.question_id
+        INNER JOIN exam_paper ep ON epq.paper_id = ep.paper_id
+        ORDER BY ep.created_time DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 查询热门题库 -->
+    <select id="selectHotBanks" resultMap="BaseResultMap">
+        SELECT qb.*, COUNT(DISTINCT epq.paper_id) as usage_count
+        FROM question_bank qb
+        INNER JOIN question q ON qb.qb_id = q.qb_id
+        INNER JOIN exam_paper_question epq ON q.question_id = epq.question_id
+        GROUP BY qb.qb_id
+        ORDER BY usage_count DESC
+        LIMIT #{limit}
+    </select>
+</mapper>

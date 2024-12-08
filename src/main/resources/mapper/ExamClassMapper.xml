@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.ExamClassMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.ExamClass">
+        <id column="ec_id" property="ecId"/>
+        <result column="exam_id" property="examId"/>
+        <result column="class_id" property="classId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 根据考试ID查询班级关联列表 -->
+    <select id="selectByExamId" resultMap="BaseResultMap">
+        SELECT * FROM exam_class WHERE exam_id = #{examId}
+    </select>
+
+    <!-- 根据班级ID查询考试关联列表 -->
+    <select id="selectByClassId" resultMap="BaseResultMap">
+        SELECT * FROM exam_class WHERE class_id = #{classId}
+    </select>
+
+    <!-- 根据考试ID删除所有班级关联 -->
+    <delete id="deleteByExamId">
+        DELETE FROM exam_class WHERE exam_id = #{examId}
+    </delete>
+
+    <!-- 批量插入考试班级关联 -->
+    <insert id="batchInsert">
+        INSERT INTO exam_class (exam_id, class_id, create_time)
+        VALUES 
+        <foreach collection="list" item="ec" separator=",">
+            (#{ec.examId}, #{ec.classId}, CURRENT_TIMESTAMP)
+        </foreach>
+    </insert>
+
+    <!-- 批量删除考试班级关联 -->
+    <delete id="batchDelete">
+        DELETE FROM exam_class 
+        WHERE exam_id = #{examId}
+        AND class_id IN
+        <foreach collection="classIds" item="classId" open="(" separator="," close=")">
+            #{classId}
+        </foreach>
+    </delete>
+
+    <!-- 查询班级考试时间安排 -->
+    <select id="selectClassExamSchedule" resultType="java.util.Map">
+        SELECT 
+            e.exam_id,
+            e.exam_name,
+            e.exam_start_time,
+            e.exam_end_time,
+            e.exam_duration,
+            s.subject_name
+        FROM exam_class ec
+        INNER JOIN exam e ON ec.exam_id = e.exam_id
+        INNER JOIN subject s ON e.subject_id = s.subject_id
+        WHERE ec.class_id = #{classId}
+        AND e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY e.exam_start_time
+    </select>
+
+    <!-- 统计班级考试数量 -->
+    <select id="countClassExams" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_exams,
+            SUM(CASE WHEN e.exam_status = 0 THEN 1 ELSE 0 END) as pending_exams,
+            SUM(CASE WHEN e.exam_status = 1 THEN 1 ELSE 0 END) as ongoing_exams,
+            SUM(CASE WHEN e.exam_status = 2 THEN 1 ELSE 0 END) as completed_exams
+        FROM exam_class ec
+        INNER JOIN exam e ON ec.exam_id = e.exam_id
+        WHERE ec.class_id = #{classId}
+        AND e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <!-- 统计班级平均成绩 -->
+    <select id="calculateClassAvgScore" resultType="java.math.BigDecimal">
+        SELECT AVG(ss.score)
+        FROM exam_class ec
+        INNER JOIN student_class sc ON ec.class_id = sc.class_id
+        INNER JOIN student_score ss ON sc.student_id = ss.student_id
+        WHERE ec.class_id = #{classId}
+        AND ec.exam_id = #{examId}
+    </select>
+
+    <!-- 统计班级成绩分布 -->
+    <select id="analyzeClassScoreDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN score >= 90 THEN '90-100'
+                WHEN score >= 80 THEN '80-89'
+                WHEN score >= 70 THEN '70-79'
+                WHEN score >= 60 THEN '60-69'
+                ELSE '0-59'
+            END as score_range,
+            COUNT(*) as count
+        FROM exam_class ec
+        INNER JOIN student_class sc ON ec.class_id = sc.class_id
+        INNER JOIN student_score ss ON sc.student_id = ss.student_id
+        WHERE ec.class_id = #{classId}
+        AND ec.exam_id = #{examId}
+        GROUP BY score_range
+        ORDER BY score_range DESC
+    </select>
+
+    <!-- 查询班级排名 -->
+    <select id="selectClassRanking" resultType="java.util.Map">
+        SELECT 
+            c.class_id,
+            c.class_name,
+            AVG(ss.score) as avg_score,
+            COUNT(DISTINCT ss.student_id) as student_count
+        FROM exam_class ec
+        INNER JOIN class c ON ec.class_id = c.class_id
+        INNER JOIN student_class sc ON c.class_id = sc.class_id
+        INNER JOIN student_score ss ON sc.student_id = ss.student_id
+        WHERE ec.exam_id = #{examId}
+        GROUP BY c.class_id, c.class_name
+        ORDER BY avg_score DESC
+    </select>
+
+    <!-- 统计班级及格率 -->
+    <select id="calculateClassPassRate" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_students,
+            SUM(CASE WHEN ss.score >= #{passScore} THEN 1 ELSE 0 END) as passed_students,
+            CAST(SUM(CASE WHEN ss.score >= #{passScore} THEN 1 ELSE 0 END) AS DECIMAL(5,2)) * 100 
+            / COUNT(*) as pass_rate
+        FROM exam_class ec
+        INNER JOIN student_class sc ON ec.class_id = sc.class_id
+        INNER JOIN student_score ss ON sc.student_id = ss.student_id
+        WHERE ec.class_id = #{classId}
+        AND ec.exam_id = #{examId}
+    </select>
+
+    <!-- 查询班级考试完成情况 -->
+    <select id="selectClassExamCompletion" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT sc.student_id) as total_students,
+            COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as submitted_students,
+            COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students
+        FROM exam_class ec
+        INNER JOIN student_class sc ON ec.class_id = sc.class_id
+        LEFT JOIN exam_student es ON sc.student_id = es.student_id AND ec.exam_id = es.exam_id
+        WHERE ec.class_id = #{classId}
+        AND ec.exam_id = #{examId}
+    </select>
+
+    <!-- 查询班级考试时间冲突 -->
+    <select id="checkTimeConflict" resultType="java.util.Map">
+        SELECT 
+            e.exam_id,
+            e.exam_name,
+            e.exam_start_time,
+            e.exam_end_time
+        FROM exam_class ec
+        INNER JOIN exam e ON ec.exam_id = e.exam_id
+        WHERE ec.class_id = #{classId}
+        AND (
+            (e.exam_start_time BETWEEN #{examTime} AND DATE_ADD(#{examTime}, INTERVAL #{duration} MINUTE))
+            OR (e.exam_end_time BETWEEN #{examTime} AND DATE_ADD(#{examTime}, INTERVAL #{duration} MINUTE))
+            OR (#{examTime} BETWEEN e.exam_start_time AND e.exam_end_time)
+        )
+    </select>
+
+    <!-- 统计教师监考班级 -->
+    <select id="countTeacherInvigilateClasses" resultType="java.util.Map">
+        SELECT 
+            t.teacher_id,
+            t.name as teacher_name,
+            COUNT(DISTINCT ec.class_id) as class_count,
+            COUNT(DISTINCT e.exam_id) as exam_count
+        FROM exam_class ec
+        INNER JOIN exam e ON ec.exam_id = e.exam_id
+        INNER JOIN teacher t ON e.teacher_id = t.teacher_id
+        WHERE t.teacher_id = #{teacherId}
+        AND e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY t.teacher_id, t.name
+    </select>
+
+    <!-- 查询班级考试历史 -->
+    <select id="selectClassExamHistory" resultType="java.util.Map">
+        SELECT 
+            e.exam_id,
+            e.exam_name,
+            e.exam_start_time,
+            e.exam_status,
+            s.subject_name,
+            AVG(ss.score) as avg_score,
+            MIN(ss.score) as min_score,
+            MAX(ss.score) as max_score
+        FROM exam_class ec
+        INNER JOIN exam e ON ec.exam_id = e.exam_id
+        INNER JOIN subject s ON e.subject_id = s.subject_id
+        LEFT JOIN student_score ss ON e.exam_id = ss.exam_id
+        WHERE ec.class_id = #{classId}
+        <if test="subjectId != null">
+            AND e.subject_id = #{subjectId}
+        </if>
+        GROUP BY e.exam_id, e.exam_name, e.exam_start_time, e.exam_status, s.subject_name
+        ORDER BY e.exam_start_time DESC
+    </select>
+</mapper>

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.ExamStudentMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.ExamStudent">
+        <id column="es_id" property="esId"/>
+        <result column="exam_id" property="examId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="student_start_time" property="studentStartTime"/>
+        <result column="student_submit_time" property="studentSubmitTime"/>
+        <result column="absent" property="absent"/>
+        <result column="retake_needed" property="retakeNeeded"/>
+        <result column="disciplinary" property="disciplinary"/>
+        <result column="teacher_comment" property="teacherComment"/>
+    </resultMap>
+
+    <!-- 根据考试ID查询学生关联列表 -->
+    <select id="selectByExamId" resultMap="BaseResultMap">
+        SELECT * FROM exam_student WHERE exam_id = #{examId}
+    </select>
+
+    <!-- 根据学生ID查询考试关联列表 -->
+    <select id="selectByStudentId" resultMap="BaseResultMap">
+        SELECT * FROM exam_student WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 查询学生在指定考试的关联记录 -->
+    <select id="selectByExamAndStudent" resultMap="BaseResultMap">
+        SELECT * FROM exam_student 
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </select>
+
+    <!-- 更新考试状态 -->
+    <update id="updateStatus">
+        UPDATE exam_student 
+        SET absent = #{absent},
+            retake_needed = #{retakeNeeded},
+            disciplinary = #{disciplinary},
+            teacher_comment = #{teacherComments}
+        WHERE es_id = #{esId}
+    </update>
+
+    <!-- 批量插入考试学生关联 -->
+    <insert id="batchInsert">
+        INSERT INTO exam_student (
+            exam_id, student_id, student_start_time,
+            student_submit_time, absent, retake_needed,
+            disciplinary, teacher_comment
+        ) VALUES 
+        <foreach collection="list" item="es" separator=",">
+            (#{es.examId}, #{es.studentId}, #{es.studentStartTime},
+             #{es.studentSubmitTime}, #{es.absent}, #{es.retakeNeeded},
+             #{es.disciplinary}, #{es.teacherComment})
+        </foreach>
+    </insert>
+
+    <!-- 更新学生考试开始和提交时间 -->
+    <update id="updateExamTime">
+        UPDATE exam_student 
+        SET student_start_time = #{startTime},
+            student_submit_time = #{submitTime}
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </update>
+
+    <!-- 查询需要重考的学生列表 -->
+    <select id="selectNeedRetakeStudents" resultMap="BaseResultMap">
+        SELECT * FROM exam_student 
+        WHERE exam_id = #{examId}
+        AND retake_needed = 1
+    </select>
+
+    <!-- 查询学生的重考记录 -->
+    <select id="selectStudentRetakeExams" resultMap="BaseResultMap">
+        SELECT es.* FROM exam_student es
+        INNER JOIN exam e ON es.exam_id = e.exam_id
+        WHERE es.student_id = #{studentId}
+        AND e.exam_type = 1
+    </select>
+
+    <!-- 按学科查询需要重考的学生列表 -->
+    <select id="selectRetakeStudentsBySubject" resultType="java.util.Map">
+        SELECT 
+            s.student_id,
+            s.name as student_name,
+            s.student_no,
+            es.exam_id,
+            e.exam_name,
+            e.exam_start_time,
+            es.student_submit_time,
+            es.teacher_comment
+        FROM exam_student es
+        INNER JOIN student s ON es.student_id = s.student_id
+        INNER JOIN exam e ON es.exam_id = e.exam_id
+        WHERE e.subject_id = #{subjectId}
+        AND e.teacher_id = #{teacherId}
+        AND es.retake_needed = 1
+        <if test="studentName != null">
+            AND s.name LIKE CONCAT('%', #{studentName}, '%')
+        </if>
+        <if test="studentNo != null">
+            AND s.student_no = #{studentNo}
+        </if>
+        <if test="examTimeStart != null">
+            AND e.exam_start_time >= #{examTimeStart}
+        </if>
+        <if test="examTimeEnd != null">
+            AND e.exam_start_time &lt;= #{examTimeEnd}
+        </if>
+        ORDER BY e.exam_start_time DESC
+    </select>
+
+    <!-- 统计某学科的重考情况 -->
+    <select id="countRetakeBySubject" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT es.student_id) as retake_student_count,
+            COUNT(DISTINCT es.exam_id) as retake_exam_count,
+            AVG(CASE WHEN es.retake_needed = 1 THEN 1 ELSE 0 END) * 100 as retake_rate
+        FROM exam_student es
+        INNER JOIN exam e ON es.exam_id = e.exam_id
+        WHERE e.subject_id = #{subjectId}
+        AND e.teacher_id = #{teacherId}
+    </select>
+
+    <!-- 批量更新考试状态 -->
+    <update id="batchUpdateStatus">
+        UPDATE exam_student 
+        SET absent = #{status.absent},
+            retake_needed = #{status.retakeNeeded},
+            disciplinary = #{status.disciplinary}
+        WHERE exam_id = #{examId}
+        AND student_id IN
+        <foreach collection="studentIds" item="studentId" open="(" separator="," close=")">
+            #{studentId}
+        </foreach>
+    </update>
+
+    <!-- 查询考试进行状态 -->
+    <select id="selectExamProgress" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT es.student_id) as total_students,
+            COUNT(DISTINCT CASE WHEN es.student_start_time IS NOT NULL THEN es.student_id END) as started_students,
+            COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as submitted_students,
+            COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students
+        FROM exam_student es
+        WHERE es.exam_id = #{examId}
+    </select>
+
+    <!-- 查询考试时间异常的学生 -->
+    <select id="selectAbnormalTimeStudents" resultType="java.util.Map">
+        SELECT 
+            s.student_id,
+            s.name as student_name,
+            es.student_start_time,
+            es.student_submit_time,
+            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as used_time
+        FROM exam_student es
+        INNER JOIN student s ON es.student_id = s.student_id
+        WHERE es.exam_id = #{examId}
+        AND es.student_submit_time IS NOT NULL
+        AND TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) > #{timeThreshold}
+    </select>
+
+    <!-- 统计考试参与情况 -->
+    <select id="countExamParticipation" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT es.student_id) as total_students,
+            COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as completed_students,
+            COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students,
+            COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students
+        FROM exam_student es
+        WHERE es.exam_id = #{examId}
+    </select>
+
+    <!-- 查询学生考试时长统计 -->
+    <select id="selectExamDurationStats" resultType="java.util.Map">
+        SELECT 
+            MIN(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)) as min_duration,
+            MAX(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)) as max_duration,
+            AVG(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)) as avg_duration
+        FROM exam_student
+        WHERE exam_id = #{examId}
+        AND student_submit_time IS NOT NULL
+    </select>
+
+    <!-- 查询考试违纪情况 -->
+    <select id="selectDisciplinaryStats" resultType="java.util.Map">
+        SELECT 
+            e.exam_id,
+            e.exam_name,
+            COUNT(DISTINCT es.student_id) as total_students,
+            COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students,
+            GROUP_CONCAT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.teacher_comment END) as comments
+        FROM exam_student es
+        INNER JOIN exam e ON es.exam_id = e.exam_id
+        WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        AND es.disciplinary = 1
+        GROUP BY e.exam_id, e.exam_name
+    </select>
+
+    <!-- 更新考试监考记录 -->
+    <update id="updateInvigilationRecord">
+        UPDATE exam_student 
+        SET teacher_comment = #{record}
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </update>
+
+    <!-- 批量更新考试时间 -->
+    <update id="batchUpdateExamTime">
+        <foreach collection="studentTimes" item="st" separator=";">
+            UPDATE exam_student 
+            SET student_start_time = #{st.startTime},
+                student_submit_time = #{st.submitTime}
+            WHERE exam_id = #{examId} 
+            AND student_id = #{st.studentId}
+        </foreach>
+    </update>
+
+    <!-- 查询考试完成率 -->
+    <select id="selectExamCompletionRate" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT sc.student_id) as total_students,
+            COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as completed_students,
+            CAST(COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) AS DECIMAL(5,2)) * 100 
+            / COUNT(DISTINCT sc.student_id) as completion_rate
+        FROM student_class sc
+        LEFT JOIN exam_student es ON sc.student_id = es.student_id
+        WHERE sc.class_id = #{classId}
+        AND es.exam_id = #{examId}
+    </select>
+</mapper>

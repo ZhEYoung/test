@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.ClassMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.Class">
+        <id column="class_id" property="classId"/>
+        <result column="teacher_id" property="teacherId"/>
+        <result column="class_name" property="className"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="final_exam" property="finalExam"/>
+    </resultMap>
+
+    <!-- 根据教师ID查询班级列表 -->
+    <select id="selectByTeacherId" resultMap="BaseResultMap">
+        SELECT * FROM class WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 根据学科ID查询班级列表 -->
+    <select id="selectBySubjectId" resultMap="BaseResultMap">
+        SELECT * FROM class WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 根据班级名称查询 -->
+    <select id="selectByClassName" resultMap="BaseResultMap">
+        SELECT * FROM class WHERE class_name = #{className}
+    </select>
+
+    <!-- 更新期末考试状态 -->
+    <update id="updateFinalExam">
+        UPDATE class SET final_exam = #{finalExam} WHERE class_id = #{classId}
+    </update>
+
+    <!-- 查询班级学生列表 -->
+    <select id="selectClassStudents" resultType="com.exam.entity.Student">
+        SELECT s.* FROM student s
+        INNER JOIN student_class sc ON s.student_id = sc.student_id
+        WHERE sc.class_id = #{classId}
+        AND sc.status = 1
+    </select>
+
+    <!-- 查询班级考试列表 -->
+    <select id="selectClassExams" resultType="com.exam.entity.Exam">
+        SELECT e.* FROM exam e
+        INNER JOIN exam_class ec ON e.exam_id = ec.exam_id
+        WHERE ec.class_id = #{classId}
+        ORDER BY e.exam_start_time DESC
+    </select>
+
+    <!-- 查询班级期末考试 -->
+    <select id="selectFinalExam" resultType="com.exam.entity.Exam">
+        SELECT e.* FROM exam e
+        INNER JOIN exam_class ec ON e.exam_id = ec.exam_id
+        WHERE ec.class_id = #{classId}
+        AND e.exam_type = 0
+        ORDER BY e.exam_start_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 统计班级学生数量 -->
+    <select id="countStudents" resultType="Long">
+        SELECT COUNT(*) FROM student_class
+        WHERE class_id = #{classId}
+        AND status = 1
+    </select>
+
+    <!-- 统计班级考试数量 -->
+    <select id="countExams" resultType="Long">
+        SELECT COUNT(*) FROM exam_class
+        WHERE class_id = #{classId}
+    </select>
+
+    <!-- 查询班级平均成绩 -->
+    <select id="selectAvgScore" resultType="Double">
+        SELECT AVG(ss.score) FROM student_score ss
+        INNER JOIN exam_class ec ON ss.exam_id = ec.exam_id
+        WHERE ec.class_id = #{classId}
+        AND ss.exam_id = #{examId}
+    </select>
+
+    <!-- 查询班级成绩分布 -->
+    <select id="selectScoreDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN score >= 90 THEN '90-100'
+                WHEN score >= 80 THEN '80-89'
+                WHEN score >= 70 THEN '70-79'
+                WHEN score >= 60 THEN '60-69'
+                ELSE '0-59'
+            END as score_range,
+            COUNT(*) as count
+        FROM student_score ss
+        INNER JOIN exam_class ec ON ss.exam_id = ec.exam_id
+        WHERE ec.class_id = #{classId}
+        AND ss.exam_id = #{examId}
+        GROUP BY score_range
+        ORDER BY score_range DESC
+    </select>
+
+    <!-- 查询班级考试日程 -->
+    <select id="selectExamSchedule" resultType="com.exam.entity.Exam">
+        SELECT e.* FROM exam e
+        INNER JOIN exam_class ec ON e.exam_id = ec.exam_id
+        WHERE ec.class_id = #{classId}
+        AND e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY e.exam_start_time
+    </select>
+
+    <!-- 批量添加学生到班级 -->
+    <insert id="batchAddStudents">
+        INSERT INTO student_class (student_id, class_id, status, join_time)
+        VALUES 
+        <foreach collection="studentIds" item="studentId" separator=",">
+            (#{studentId}, #{classId}, 1, CURRENT_TIMESTAMP)
+        </foreach>
+    </insert>
+
+    <!-- 批量移除班级学生 -->
+    <update id="batchRemoveStudents">
+        UPDATE student_class 
+        SET status = 0, left_time = CURRENT_TIMESTAMP
+        WHERE class_id = #{classId}
+        AND student_id IN
+        <foreach collection="studentIds" item="studentId" open="(" separator="," close=")">
+            #{studentId}
+        </foreach>
+    </update>
+</mapper>

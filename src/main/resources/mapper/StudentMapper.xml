@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.StudentMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.Student">
+        <id column="student_id" property="studentId"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="grade" property="grade"/>
+        <result column="college_id" property="collegeId"/>
+        <result column="other" property="other"/>
+    </resultMap>
+
+    <!-- 根据用户ID查询学生信息 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM student WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据学院ID查询学生列表 -->
+    <select id="selectByCollegeId" resultMap="BaseResultMap">
+        SELECT * FROM student WHERE college_id = #{collegeId}
+    </select>
+
+    <!-- 根据年级查询学生列表 -->
+    <select id="selectByGrade" resultMap="BaseResultMap">
+        SELECT * FROM student WHERE grade = #{grade}
+    </select>
+
+    <!-- 根据学生姓名查询 -->
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT * FROM student WHERE name = #{name}
+    </select>
+
+    <!-- 更新学生备注信息 -->
+    <update id="updateOther">
+        UPDATE student SET other = #{other} WHERE student_id = #{studentId}
+    </update>
+
+    <!-- 查询学生所在的班级列表 -->
+    <select id="selectStudentClasses" resultType="com.exam.entity.StudentClass">
+        SELECT sc.* FROM student_class sc
+        WHERE sc.student_id = #{studentId}
+        AND sc.status = 1
+    </select>
+
+    <!-- 加入班级 -->
+    <insert id="joinClass">
+        INSERT INTO student_class (student_id, class_id, status, join_time)
+        VALUES (#{studentId}, #{classId}, 1, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- 退出班级 -->
+    <update id="leaveClass">
+        UPDATE student_class 
+        SET status = 0, left_time = #{leftTime}
+        WHERE student_id = #{studentId} 
+        AND class_id = #{classId}
+    </update>
+
+    <!-- 查询学生在某个考试中的成绩 -->
+    <select id="selectScore" resultType="com.exam.entity.StudentScore">
+        SELECT * FROM student_score
+        WHERE student_id = #{studentId}
+        AND exam_id = #{examId}
+    </select>
+
+    <!-- 查询学生的所有成绩 -->
+    <select id="selectAllScores" resultType="com.exam.entity.StudentScore">
+        SELECT * FROM student_score
+        WHERE student_id = #{studentId}
+        ORDER BY upload_time DESC
+    </select>
+
+    <!-- 插入学生成绩 -->
+    <insert id="insertScore">
+        INSERT INTO student_score (student_id, exam_id, score, upload_time)
+        VALUES (#{studentId}, #{examId}, #{score}, CURRENT_TIMESTAMP)
+    </insert>
+
+    <!-- 更新学生成绩 -->
+    <update id="updateScore">
+        UPDATE student_score 
+        SET score = #{score}, upload_time = CURRENT_TIMESTAMP
+        WHERE student_id = #{studentId} 
+        AND exam_id = #{examId}
+    </update>
+
+    <!-- 统计学院学生性别分布 -->
+    <select id="countByGender" resultType="java.util.Map">
+        SELECT u.sex as gender, COUNT(*) as count
+        FROM student s
+        JOIN user u ON s.user_id = u.user_id
+        WHERE s.college_id = #{collegeId}
+        GROUP BY u.sex
+    </select>
+
+    <!-- 统计学院学生年级分布 -->
+    <select id="countByGrade" resultType="java.util.Map">
+        SELECT grade, COUNT(*) as count
+        FROM student
+        WHERE college_id = #{collegeId}
+        GROUP BY grade
+        ORDER BY grade
+    </select>
+</mapper> 

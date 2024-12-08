@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.AdminMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.Admin">
+        <id column="admin_id" property="adminId"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="other" property="other"/>
+    </resultMap>
+
+    <!-- 根据用户ID查询管理员信息 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM admin WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据管理员姓名查询 -->
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT * FROM admin WHERE name = #{name}
+    </select>
+
+    <!-- 更新管理员备注信息 -->
+    <update id="updateOther">
+        UPDATE admin SET other = #{other} WHERE admin_id = #{adminId}
+    </update>
+
+    <!-- 批量更新管理员备注信息 -->
+    <update id="batchUpdateOther">
+        UPDATE admin SET other = #{other}
+        WHERE admin_id IN
+        <foreach collection="adminIds" item="adminId" open="(" separator="," close=")">
+            #{adminId}
+        </foreach>
+    </update>
+
+    <!-- 查询管理员的操作日志 -->
+    <select id="selectAdminLogs" resultType="java.util.Map">
+        SELECT l.* FROM log l
+        INNER JOIN admin a ON l.user_id = a.user_id
+        WHERE a.admin_id = #{adminId}
+        AND l.created_at BETWEEN #{startTime} AND #{endTime}
+        ORDER BY l.created_at DESC
+    </select>
+</mapper> 

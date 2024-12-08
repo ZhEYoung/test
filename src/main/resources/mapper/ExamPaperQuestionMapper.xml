@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.ExamPaperQuestionMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.ExamPaperQuestion">
+        <id column="epq_id" property="epqId"/>
+        <result column="paper_id" property="paperId"/>
+        <result column="question_id" property="questionId"/>
+        <result column="question_order" property="questionOrder"/>
+        <result column="question_score" property="questionScore"/>
+    </resultMap>
+
+    <!-- 根据试卷ID查询题目关联列表 -->
+    <select id="selectByPaperId" resultMap="BaseResultMap">
+        SELECT * FROM exam_paper_question 
+        WHERE paper_id = #{paperId}
+        ORDER BY question_order
+    </select>
+
+    <!-- 根据题目ID查询试卷关联列表 -->
+    <select id="selectByQuestionId" resultMap="BaseResultMap">
+        SELECT * FROM exam_paper_question 
+        WHERE question_id = #{questionId}
+    </select>
+
+    <!-- 根据试卷ID删除所有题目关联 -->
+    <delete id="deleteByPaperId">
+        DELETE FROM exam_paper_question WHERE paper_id = #{paperId}
+    </delete>
+
+    <!-- 批量插入试卷题目关联 -->
+    <insert id="batchInsert">
+        INSERT INTO exam_paper_question (
+            paper_id, question_id, question_order, question_score
+        ) VALUES 
+        <foreach collection="list" item="epq" separator=",">
+            (#{epq.paperId}, #{epq.questionId}, #{epq.questionOrder}, #{epq.questionScore})
+        </foreach>
+    </insert>
+
+    <!-- 更新题目分值 -->
+    <update id="updateScore">
+        UPDATE exam_paper_question 
+        SET question_score = #{score}
+        WHERE epq_id = #{epqId}
+    </update>
+
+    <!-- 批量更新题目分值 -->
+    <update id="batchUpdateScore">
+        <foreach collection="scores" item="score" separator=";">
+            UPDATE exam_paper_question 
+            SET question_score = #{score.score}
+            WHERE epq_id = #{score.epqId}
+        </foreach>
+    </update>
+
+    <!-- 更新题目顺序 -->
+    <update id="updateQuestionOrder">
+        UPDATE exam_paper_question 
+        SET question_order = #{newOrder}
+        WHERE paper_id = #{paperId} 
+        AND question_id = #{questionId}
+    </update>
+
+    <!-- 批量更新题目顺序 -->
+    <update id="batchUpdateOrder">
+        <foreach collection="orders" item="order" separator=";">
+            UPDATE exam_paper_question 
+            SET question_order = #{order.newOrder}
+            WHERE paper_id = #{order.paperId} 
+            AND question_id = #{order.questionId}
+        </foreach>
+    </update>
+
+    <!-- 统计试卷总分 -->
+    <select id="calculateTotalScore" resultType="java.math.BigDecimal">
+        SELECT SUM(question_score)
+        FROM exam_paper_question
+        WHERE paper_id = #{paperId}
+    </select>
+
+    <!-- 统计各题型分值分布 -->
+    <select id="analyzeScoreDistribution" resultType="java.util.Map">
+        SELECT 
+            q.type,
+            COUNT(*) as question_count,
+            SUM(epq.question_score) as total_score,
+            AVG(epq.question_score) as avg_score
+        FROM exam_paper_question epq
+        INNER JOIN question q ON epq.question_id = q.question_id
+        WHERE epq.paper_id = #{paperId}
+        GROUP BY q.type
+    </select>
+
+    <!-- 统计题目难度分布 -->
+    <select id="analyzeDifficultyDistribution" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN q.difficulty >= 4.5 THEN '很难'
+                WHEN q.difficulty >= 3.5 THEN '较难'
+                WHEN q.difficulty >= 2.5 THEN '中等'
+                WHEN q.difficulty >= 1.5 THEN '较易'
+                ELSE '简单'
+            END as difficulty_level,
+            COUNT(*) as question_count,
+            SUM(epq.question_score) as total_score
+        FROM exam_paper_question epq
+        INNER JOIN question q ON epq.question_id = q.question_id
+        WHERE epq.paper_id = #{paperId}
+        GROUP BY difficulty_level
+        ORDER BY MIN(q.difficulty)
+    </select>
+
+    <!-- 查询试卷题目覆盖的知识点 -->
+    <select id="selectCoveredKnowledgePoints" resultType="java.util.Map">
+        SELECT 
+            q.type,
+            GROUP_CONCAT(DISTINCT q.content) as content_list,
+            COUNT(*) as question_count
+        FROM exam_paper_question epq
+        INNER JOIN question q ON epq.question_id = q.question_id
+        WHERE epq.paper_id = #{paperId}
+        GROUP BY q.type
+    </select>
+
+    <!-- 检查试卷题目重复 -->
+    <select id="checkDuplicateQuestions" resultType="java.util.Map">
+        SELECT 
+            q.question_id,
+            q.content,
+            COUNT(*) as usage_count,
+            GROUP_CONCAT(ep.paper_name) as paper_list
+        FROM exam_paper_question epq
+        INNER JOIN question q ON epq.question_id = q.question_id
+        INNER JOIN exam_paper ep ON epq.paper_id = ep.paper_id
+        WHERE q.question_id IN (
+            SELECT question_id
+            FROM exam_paper_question
+            WHERE paper_id = #{paperId}
+        )
+        GROUP BY q.question_id, q.content
+        HAVING COUNT(*) > 1
+    </select>
+
+    <!-- 查询试卷题目完整性 -->
+    <select id="checkPaperCompleteness" resultType="java.util.Map">
+        SELECT 
+            COUNT(*) as total_questions,
+            SUM(CASE WHEN q.content IS NULL THEN 1 ELSE 0 END) as missing_content,
+            SUM(CASE WHEN q.answer IS NULL THEN 1 ELSE 0 END) as missing_answer,
+            SUM(CASE WHEN epq.question_score IS NULL THEN 1 ELSE 0 END) as missing_score
+        FROM exam_paper_question epq
+        LEFT JOIN question q ON epq.question_id = q.question_id
+        WHERE epq.paper_id = #{paperId}
+    </select>
+
+    <!-- 统计题目使用频率 -->
+    <select id="analyzeQuestionUsage" resultType="java.util.Map">
+        SELECT 
+            q.question_id,
+            q.content,
+            COUNT(DISTINCT epq.paper_id) as paper_count,
+            COUNT(DISTINCT e.exam_id) as exam_count
+        FROM exam_paper_question epq
+        INNER JOIN question q ON epq.question_id = q.question_id
+        LEFT JOIN exam e ON epq.paper_id = e.paper_id
+        WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        GROUP BY q.question_id, q.content
+        ORDER BY paper_count DESC, exam_count DESC
+    </select>
+
+    <!-- 查询题目组合分析 -->
+    <select id="analyzeQuestionCombination" resultType="java.util.Map">
+        WITH question_pairs AS (
+            SELECT 
+                a.question_id as q1_id,
+                b.question_id as q2_id,
+                COUNT(*) as combination_count
+            FROM exam_paper_question a
+            INNER JOIN exam_paper_question b 
+                ON a.paper_id = b.paper_id 
+                AND a.question_id < b.question_id
+            WHERE a.paper_id = #{paperId}
+            GROUP BY a.question_id, b.question_id
+        )
+        SELECT 
+            q1.content as q1_content,
+            q2.content as q2_content,
+            qp.combination_count
+        FROM question_pairs qp
+        INNER JOIN question q1 ON qp.q1_id = q1.question_id
+        INNER JOIN question q2 ON qp.q2_id = q2.question_id
+        ORDER BY qp.combination_count DESC
+    </select>
+
+    <!-- 更新题目分组 -->
+    <update id="updateQuestionGroup">
+        UPDATE exam_paper_question 
+        SET group_id = #{groupId}
+        WHERE paper_id = #{paperId} 
+        AND question_id = #{questionId}
+    </update>
+
+    <!-- 批量更新题目分组 -->
+    <update id="batchUpdateGroup">
+        <foreach collection="groups" item="group" separator=";">
+            UPDATE exam_paper_question 
+            SET group_id = #{group.groupId}
+            WHERE paper_id = #{group.paperId} 
+            AND question_id = #{group.questionId}
+        </foreach>
+    </update>
+</mapper>

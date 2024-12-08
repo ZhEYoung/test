@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.TeacherMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.Teacher">
+        <id column="teacher_id" property="teacherId"/>
+        <result column="user_id" property="userId"/>
+        <result column="name" property="name"/>
+        <result column="permission" property="permission"/>
+        <result column="college_id" property="collegeId"/>
+        <result column="other" property="other"/>
+    </resultMap>
+
+    <!-- 根据用户ID查询教师信息 -->
+    <select id="selectByUserId" resultMap="BaseResultMap">
+        SELECT * FROM teacher WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据学院ID查询教师列表 -->
+    <select id="selectByCollegeId" resultMap="BaseResultMap">
+        SELECT * FROM teacher WHERE college_id = #{collegeId}
+    </select>
+
+    <!-- 根据教师姓名查询 -->
+    <select id="selectByName" resultMap="BaseResultMap">
+        SELECT * FROM teacher WHERE name = #{name}
+    </select>
+
+    <!-- 根据权限等级查询 -->
+    <select id="selectByPermission" resultMap="BaseResultMap">
+        SELECT * FROM teacher WHERE permission = #{permission}
+    </select>
+
+    <!-- 更新教师备注信息 -->
+    <update id="updateOther">
+        UPDATE teacher SET other = #{other} WHERE teacher_id = #{teacherId}
+    </update>
+
+    <!-- 更新教师权限 -->
+    <update id="updatePermission">
+        UPDATE teacher SET permission = #{permission} WHERE teacher_id = #{teacherId}
+    </update>
+
+    <!-- 批量更新教师权限 -->
+    <update id="batchUpdatePermission">
+        UPDATE teacher SET permission = #{permission}
+        WHERE teacher_id IN
+        <foreach collection="teacherIds" item="teacherId" open="(" separator="," close=")">
+            #{teacherId}
+        </foreach>
+    </update>
+
+    <!-- 查询教师所教授的班级 -->
+    <select id="selectTeacherClasses" resultType="com.exam.entity.Class">
+        SELECT c.* FROM class c
+        WHERE c.teacher_id = #{teacherId}
+    </select>
+
+
+
+    <!-- 统计教师所教授的班级数量 -->
+    <select id="countTeacherClasses" resultType="Long">
+        SELECT COUNT(*) FROM class
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 根据学科ID查询教师列表及统计信息 -->
+    <select id="selectBySubjectId" resultType="java.util.Map">
+        SELECT 
+            t.teacher_id,
+            t.name,
+            t.permission,
+            t.other,
+            COUNT(DISTINCT c.class_id) as class_count,
+            COUNT(DISTINCT sc.student_id) as student_count,
+            COUNT(DISTINCT e.exam_id) as exam_count,
+            AVG(ss.score) as avg_score
+        FROM teacher t
+        LEFT JOIN class c ON t.teacher_id = c.teacher_id AND c.subject_id = #{subjectId}
+        LEFT JOIN student_class sc ON c.class_id = sc.class_id
+        LEFT JOIN exam e ON e.teacher_id = t.teacher_id AND e.subject_id = #{subjectId}
+        LEFT JOIN student_score ss ON ss.exam_id = e.exam_id
+        WHERE EXISTS (
+            SELECT 1 FROM class c2 
+            WHERE c2.teacher_id = t.teacher_id 
+            AND c2.subject_id = #{subjectId}
+        )
+        GROUP BY t.teacher_id, t.name, t.permission, t.other
+    </select>
+</mapper> 

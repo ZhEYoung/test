@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.StudentClassMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.StudentClass">
+        <id column="sc_id" property="scId"/>
+        <result column="student_id" property="studentId"/>
+        <result column="class_id" property="classId"/>
+        <result column="status" property="status"/>
+        <result column="join_time" property="joinedAt"/>
+        <result column="left_time" property="leftAt"/>
+    </resultMap>
+
+    <!-- 根据学生ID查询关联记录 -->
+    <select id="selectByStudentId" resultMap="BaseResultMap">
+        SELECT * FROM student_class 
+        WHERE student_id = #{studentId}
+        ORDER BY join_time DESC
+    </select>
+
+    <!-- 根据班级ID查询关联记录 -->
+    <select id="selectByClassId" resultMap="BaseResultMap">
+        SELECT * FROM student_class 
+        WHERE class_id = #{classId}
+        ORDER BY join_time DESC
+    </select>
+
+    <!-- 查询学生在指定班级的关联记录 -->
+    <select id="selectByStudentAndClass" resultMap="BaseResultMap">
+        SELECT * FROM student_class 
+        WHERE student_id = #{studentId} 
+        AND class_id = #{classId}
+    </select>
+
+    <!-- 更新学生状态和时间 -->
+    <update id="updateStatusAndTime">
+        UPDATE student_class 
+        SET status = #{status},
+            join_time = #{joinedAt},
+            left_time = #{leftAt}
+        WHERE sc_id = #{scId}
+    </update>
+
+    <!-- 批量插入学生班级关联 -->
+    <insert id="batchInsert">
+        INSERT INTO student_class (
+            student_id, class_id, status, join_time
+        ) VALUES 
+        <foreach collection="list" item="sc" separator=",">
+            (#{sc.studentId}, #{sc.classId}, #{sc.status}, #{sc.joinedAt})
+        </foreach>
+    </insert>
+</mapper>
