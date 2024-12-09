@@ -220,4 +220,17 @@
         ORDER BY avg_score ASC
         LIMIT #{limit}
     </select>
+
+    <!-- 统计学科关联的题库数量 -->
+    <select id="countQuestionBanks" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM question_bank
+        WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 删除指定学科关联的所有题库 -->
+    <delete id="deleteQuestionBanks">
+        DELETE FROM question_bank
+        WHERE subject_id = #{subjectId}
+    </delete>
 </mapper>

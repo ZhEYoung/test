@@ -1,19 +1,17 @@
-package com.exam.mapper;
+package com.exam.service;
 
 import com.exam.entity.StudentClass;
 import com.exam.entity.Student;
 import com.exam.entity.Class;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
 import java.util.List;
-import java.util.Date;
 import java.util.Map;
+import java.util.Date;
 
 /**
- * 学生-班级关联Mapper接口
+ * 学生-班级关联服务接口
  */
-@Mapper
-public interface StudentClassMapper {
+public interface StudentClassService {
+    
     /**
      * 插入关联记录
      * @param studentClass 关联实体
@@ -26,7 +24,7 @@ public interface StudentClassMapper {
      * @param scId 关联ID
      * @return 影响行数
      */
-    int deleteById(@Param("scId") Integer scId);
+    int deleteById(Integer scId);
 
     /**
      * 更新关联信息
@@ -40,7 +38,7 @@ public interface StudentClassMapper {
      * @param scId 关联ID
      * @return 关联实体
      */
-    StudentClass selectById(@Param("scId") Integer scId);
+    StudentClass selectById(Integer scId);
 
     /**
      * 查询所有关联记录
@@ -53,14 +51,14 @@ public interface StudentClassMapper {
      * @param studentId 学生ID
      * @return 关联列表
      */
-    List<StudentClass> selectByStudentId(@Param("studentId") Integer studentId);
+    List<StudentClass> getByStudentId(Integer studentId);
 
     /**
      * 根据班级ID查询关联记录
      * @param classId 班级ID
      * @return 关联列表
      */
-    List<StudentClass> selectByClassId(@Param("classId") Integer classId);
+    List<StudentClass> getByClassId(Integer classId);
 
     /**
      * 查询学生在指定班级的关联记录
@@ -68,27 +66,24 @@ public interface StudentClassMapper {
      * @param classId 班级ID
      * @return 关联记录
      */
-    StudentClass selectByStudentAndClass(@Param("studentId") Integer studentId, @Param("classId") Integer classId);
+    StudentClass getByStudentAndClass(Integer studentId, Integer classId);
 
     /**
      * 更新学生状态和时间
      * @param scId 关联ID
      * @param status 状态
-     * @param joinedAt 加入时间
-     * @param leftAt 退出时间
+     * @param joinTime 加入时间
+     * @param leftTime 退出时间
      * @return 影响行数
      */
-    int updateStatusAndTime(@Param("scId") Integer scId, 
-                          @Param("status") Boolean status,
-                          @Param("joinTime") Date joinedAt,
-                          @Param("leftTime") Date leftAt);
+    int updateStatusAndTime(Integer scId, Boolean status, Date joinTime, Date leftTime);
 
     /**
      * 批量插入学生班级关联
      * @param list 关联列表
      * @return 影响行数
      */
-    int batchInsert(@Param("list") List<StudentClass> list);
+    int batchInsert(List<StudentClass> list);
 
     /**
      * 批量更新学生状态
@@ -97,39 +92,35 @@ public interface StudentClassMapper {
      * @param status 状态
      * @return 影响行数
      */
-    int batchUpdateStatus(
-        @Param("studentIds") List<Integer> studentIds,
-        @Param("classId") Integer classId,
-        @Param("status") Boolean status
-    );
+    int batchUpdateStatus(List<Integer> studentIds, Integer classId, Boolean status);
 
     /**
      * 统计班级学生数量
      * @param classId 班级ID
      * @return 学生数量
      */
-    int countStudentsByClass(@Param("classId") Integer classId);
+    int countStudentsByClass(Integer classId);
 
     /**
      * 统计学生所在班级数量
      * @param studentId 学生ID
      * @return 班级数量
      */
-    int countClassesByStudent(@Param("studentId") Integer studentId);
+    int countClassesByStudent(Integer studentId);
 
     /**
      * 查询班级的活跃学生
      * @param classId 班级ID
      * @return 学生列表
      */
-    List<Student> selectActiveStudents(@Param("classId") Integer classId);
+    List<Student> getActiveStudents(Integer classId);
 
     /**
      * 查询学生的所有班级
      * @param studentId 学生ID
      * @return 班级列表
      */
-    List<Class> selectStudentClasses(@Param("studentId") Integer studentId);
+    List<Class> getStudentClasses(Integer studentId);
 
     /**
      * 统计班级学生加入退出情况
@@ -138,18 +129,14 @@ public interface StudentClassMapper {
      * @param endTime 结束时间
      * @return 统计信息
      */
-    List<Map<String, Object>> analyzeClassStudentFlow(
-        @Param("classId") Integer classId,
-        @Param("startTime") Date startTime,
-        @Param("endTime") Date endTime
-    );
+    List<Map<String, Object>> analyzeClassStudentFlow(Integer classId, Date startTime, Date endTime);
 
     /**
      * 批量删除关联记录
      * @param scIds 关联ID列表
      * @return 影响行数
      */
-    int batchDelete(@Param("scIds") List<Integer> scIds);
+    int batchDelete(List<Integer> scIds);
 
     /**
      * 检查学生是否在班级中
@@ -157,8 +144,28 @@ public interface StudentClassMapper {
      * @param classId 班级ID
      * @return 是否存在且有效
      */
-    boolean checkStudentInClass(
-        @Param("studentId") Integer studentId,
-        @Param("classId") Integer classId
-    );
+    boolean checkStudentInClass(Integer studentId, Integer classId);
+    
+    /**
+     * 学生加入班级
+     * @param studentId 学生ID
+     * @param classId 班级ID
+     * @return 影响行数
+     */
+    int joinClass(Integer studentId, Integer classId);
+    
+    /**
+     * 学生退出班级
+     * @param studentId 学生ID
+     * @param classId 班级ID
+     * @return 影响行数
+     */
+    int leaveClass(Integer studentId, Integer classId);
+    
+    /**
+     * 验证关联数据
+     * @param studentClass 关联实体
+     * @return 是否有效
+     */
+    boolean validateStudentClass(StudentClass studentClass);
 } 

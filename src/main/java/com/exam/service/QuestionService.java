@@ -35,31 +35,6 @@ public interface QuestionService {
      * 查询所有记录
      */
     List<Question> selectAll();
-
-    /**
-     * 分页查询
-     */
-    List<Question> selectPage(Integer pageNum, Integer pageSize);
-
-    /**
-     * 查询总记录数
-     */
-    Long selectCount();
-
-    /**
-     * 条件查询
-     */
-    List<Question> selectByCondition(Map<String, Object> condition);
-
-    /**
-     * 条件查询记录数
-     */
-    Long selectCountByCondition(Map<String, Object> condition);
-
-    /**
-     * 条件分页查询
-     */
-    List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据题库ID查询题目列表
@@ -167,4 +142,41 @@ public interface QuestionService {
      * @return 导入结果
      */
     int batchImport(List<Question> questions);
+
+    /**
+     * 分页查询题目
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 题目列表
+     */
+    List<Question> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询题目总数
+     * @return 总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询题目
+     * @param condition 查询条件
+     * @return 题目列表
+     */
+    List<Question> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询题目总数
+     * @param condition 查询条件
+     * @return 记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询题目
+     * @param condition 查询条件
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 题目列表
+     */
+    List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
 } 

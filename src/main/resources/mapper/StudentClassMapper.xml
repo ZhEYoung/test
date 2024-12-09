@@ -7,8 +7,8 @@
         <result column="student_id" property="studentId"/>
         <result column="class_id" property="classId"/>
         <result column="status" property="status"/>
-        <result column="join_time" property="joinedAt"/>
-        <result column="left_time" property="leftAt"/>
+        <result column="join_time" property="joinTime"/>
+        <result column="left_time" property="leftTime"/>
     </resultMap>
 
     <!-- 基础列 -->
@@ -21,7 +21,7 @@
         INSERT INTO student_class (
             student_id, class_id, status, join_time, left_time
         ) VALUES (
-            #{studentId}, #{classId}, #{status}, #{joinedAt}, #{leftAt}
+            #{studentId}, #{classId}, #{status}, #{joinTime}, #{leftTime}
         )
     </insert>
 
@@ -37,8 +37,8 @@
             <if test="studentId != null">student_id = #{studentId},</if>
             <if test="classId != null">class_id = #{classId},</if>
             <if test="status != null">status = #{status},</if>
-            <if test="joinedAt != null">join_time = #{joinedAt},</if>
-            <if test="leftAt != null">left_time = #{leftAt},</if>
+            <if test="joinTime != null">join_time = #{joinTime},</if>
+            <if test="leftTime != null">left_time = #{leftTime},</if>
         </set>
         WHERE sc_id = #{scId}
     </update>
@@ -87,8 +87,8 @@
         UPDATE student_class 
         <set>
             <if test="status != null">status = #{status},</if>
-            <if test="joinedAt != null">join_time = #{joinedAt},</if>
-            <if test="leftAt != null">left_time = #{leftAt},</if>
+            <if test="joinTime != null">join_time = #{joinTime},</if>
+            <if test="leftTime != null">left_time = #{leftTime},</if>
         </set>
         WHERE sc_id = #{scId}
     </update>
@@ -99,7 +99,7 @@
             student_id, class_id, status, join_time
         ) VALUES 
         <foreach collection="list" item="sc" separator=",">
-            (#{sc.studentId}, #{sc.classId}, #{sc.status}, #{sc.joinedAt})
+            (#{sc.studentId}, #{sc.classId}, #{sc.status}, #{sc.joinTime})
         </foreach>
     </insert>
 

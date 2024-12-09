@@ -48,6 +48,40 @@ public interface QuestionBankMapper {
     List<QuestionBank> selectAll();
 
     /**
+     * 分页查询题库
+     * @param params 分页参数（offset, limit）
+     * @return 题库列表
+     */
+    List<QuestionBank> selectPage(@Param("params") Map<String, Object> params);
+
+    /**
+     * 条件查询题库
+     * @param condition 查询条件
+     * @return 题库列表
+     */
+    List<QuestionBank> selectByCondition(@Param("condition") Map<String, Object> condition);
+
+    /**
+     * 条件分页查询题库
+     * @param condition 查询条件（包含offset, limit）
+     * @return 题库列表
+     */
+    List<QuestionBank> selectPageByCondition(@Param("condition") Map<String, Object> condition);
+
+    /**
+     * 查询题库总数
+     * @return 总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询题库总数
+     * @param condition 查询条件
+     * @return 记录数
+     */
+    Long selectCountByCondition(@Param("condition") Map<String, Object> condition);
+
+    /**
      * 根据学科ID查询题库列表
      * @param subjectId 学科ID
      * @return 题库列表
@@ -187,4 +221,11 @@ public interface QuestionBankMapper {
      * @return 热门题库列表
      */
     List<QuestionBank> selectHotBanks(@Param("limit") Integer limit);
+
+    /**
+     * 根据学科ID删除题库
+     * @param subjectId 学科ID
+     * @return 影响行数
+     */
+    int deleteBySubjectId(@Param("subjectId") Integer subjectId);
 } 

@@ -133,10 +133,7 @@ public interface StudentQuestionScoreService {
      */
     List<Map<String, Object>> analyzeAnswerPattern(Integer studentId, Integer examId);
     
-    /**
-     * 统计题目类型得分情况
-     */
-    List<Map<String, Object>> analyzeScoreByQuestionType(Integer studentId, Integer examId);
+
     
     /**
      * 查询需要人工批改的题目
@@ -148,10 +145,7 @@ public interface StudentQuestionScoreService {
      */
     int batchUpdateGradingStatus(List<Integer> recordIds, String status, Integer graderId);
     
-    /**
-     * 统计批改进度
-     */
-    Map<String, Object> countGradingProgress(Integer examId);
+
     
     /**
      * 导出题目得分报告

@@ -27,10 +27,14 @@
     <!-- 更新题库信息 -->
     <update id="update" parameterType="com.exam.entity.QuestionBank">
         UPDATE question_bank
-        <set>
-            <if test="qbName != null">qb_name = #{qbName},</if>
-            <if test="subjectId != null">subject_id = #{subjectId},</if>
-        </set>
+        SET
+        <if test="qbName != null">
+            qb_name = #{qbName}
+            <if test="subjectId != null">,</if>
+        </if>
+        <if test="subjectId != null">
+            subject_id = #{subjectId}
+        </if>
         WHERE qb_id = #{qbId}
     </update>
 
@@ -192,8 +196,8 @@
         FROM question_bank
         WHERE qb_id = #{sourceQbId};
 
-        INSERT INTO question (qb_id, content, answer, type, difficulty, score, analysis)
-        SELECT #{newQbId}, content, answer, type, difficulty, score, analysis
+        INSERT INTO question (qb_id, content, answer, type, difficulty)
+        SELECT #{newQbId}, content, answer, type, difficulty
         FROM question
         WHERE qb_id = #{sourceQbId}
     </insert>
@@ -234,4 +238,69 @@
         ORDER BY usage_count DESC
         LIMIT #{limit}
     </select>
+
+    <!-- 分页查询题库 -->
+    <select id="selectPage" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        ORDER BY qb_id DESC
+        LIMIT #{params.offset}, #{params.limit}
+    </select>
+
+    <!-- 条件查询题库 -->
+    <select id="selectByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        <where>
+            <if test="condition.qbName != null and condition.qbName != ''">
+                AND qb_name LIKE CONCAT('%', #{condition.qbName}, '%')
+            </if>
+            <if test="condition.subjectId != null">
+                AND subject_id = #{condition.subjectId}
+            </if>
+        </where>
+        ORDER BY qb_id DESC
+    </select>
+
+    <!-- 条件分页查询题库 -->
+    <select id="selectPageByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        <where>
+            <if test="condition.qbName != null and condition.qbName != ''">
+                AND qb_name LIKE CONCAT('%', #{condition.qbName}, '%')
+            </if>
+            <if test="condition.subjectId != null">
+                AND subject_id = #{condition.subjectId}
+            </if>
+        </where>
+        ORDER BY qb_id DESC
+        LIMIT #{condition.offset}, #{condition.limit}
+    </select>
+
+    <!-- 查询题库总数 -->
+    <select id="selectCount" resultType="Long">
+        SELECT COUNT(1)
+        FROM question_bank
+    </select>
+
+    <!-- 条件查询题库总数 -->
+    <select id="selectCountByCondition" parameterType="java.util.Map" resultType="Long">
+        SELECT COUNT(1)
+        FROM question_bank
+        <where>
+            <if test="condition.qbName != null and condition.qbName != ''">
+                AND qb_name LIKE CONCAT('%', #{condition.qbName}, '%')
+            </if>
+            <if test="condition.subjectId != null">
+                AND subject_id = #{condition.subjectId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据学科ID删除题库 -->
+    <delete id="deleteBySubjectId">
+        DELETE FROM question_bank
+        WHERE subject_id = #{subjectId}
+    </delete>
 </mapper>

@@ -146,7 +146,8 @@
 
     <!-- 更新用户状态 -->
     <update id="updateStatus">
-        UPDATE user SET status = #{status}
+        UPDATE user 
+        SET status = #{status,jdbcType=BOOLEAN}
         WHERE user_id = #{userId}
     </update>
 

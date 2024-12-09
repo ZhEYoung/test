@@ -96,8 +96,34 @@
     </select>
 
     <!-- 统计学生总数 -->
-    <select id="selectCount" resultType="int">
+    <select id="selectCount" resultType="Long">
         SELECT COUNT(1) FROM student
+    </select>
+
+    <!-- 根据条件查询学生数量 -->
+    <select id="selectCountByCondition" parameterType="java.util.Map" resultType="Long">
+        SELECT COUNT(1)
+        FROM student
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="name != null">AND name LIKE CONCAT('%', #{name}, '%')</if>
+            <if test="grade != null">AND grade = #{grade}</if>
+            <if test="collegeId != null">AND college_id = #{collegeId}</if>
+        </where>
+    </select>
+
+    <!-- 根据条件分页查询学生 -->
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student
+        <where>
+            <if test="condition.userId != null">AND user_id = #{condition.userId}</if>
+            <if test="condition.name != null">AND name LIKE CONCAT('%', #{condition.name}, '%')</if>
+            <if test="condition.grade != null">AND grade = #{condition.grade}</if>
+            <if test="condition.collegeId != null">AND college_id = #{condition.collegeId}</if>
+        </where>
+        ORDER BY student_id DESC
+        LIMIT #{offset}, #{pageSize}
     </select>
 
     <!-- 根据条件查询学生 -->

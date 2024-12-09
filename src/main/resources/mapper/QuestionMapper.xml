@@ -16,6 +16,83 @@
         question_id, qb_id, content, answer, type, difficulty
     </sql>
 
+    <!-- 分页查询题目 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        ORDER BY question_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询题目总数 -->
+    <select id="selectCount" resultType="Long">
+        SELECT COUNT(1)
+        FROM question
+    </select>
+
+    <!-- 条件查询题目 -->
+    <select id="selectByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        <where>
+            <if test="qbId != null">
+                AND qb_id = #{qbId}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="content != null and content != ''">
+                AND content LIKE CONCAT('%', #{content}, '%')
+            </if>
+            <if test="minDifficulty != null and maxDifficulty != null">
+                AND difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+            </if>
+        </where>
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 条件查询题目总数 -->
+    <select id="selectCountByCondition" parameterType="java.util.Map" resultType="Long">
+        SELECT COUNT(1)
+        FROM question
+        <where>
+            <if test="qbId != null">
+                AND qb_id = #{qbId}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="content != null and content != ''">
+                AND content LIKE CONCAT('%', #{content}, '%')
+            </if>
+            <if test="minDifficulty != null and maxDifficulty != null">
+                AND difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+            </if>
+        </where>
+    </select>
+
+    <!-- 条件分页查询题目 -->
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        <where>
+            <if test="condition.qbId != null">
+                AND qb_id = #{condition.qbId}
+            </if>
+            <if test="condition.type != null">
+                AND type = #{condition.type}
+            </if>
+            <if test="condition.content != null and condition.content != ''">
+                AND content LIKE CONCAT('%', #{condition.content}, '%')
+            </if>
+            <if test="condition.minDifficulty != null and condition.maxDifficulty != null">
+                AND difficulty BETWEEN #{condition.minDifficulty} AND #{condition.maxDifficulty}
+            </if>
+        </where>
+        ORDER BY question_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
     <!-- 插入题目记录 -->
     <insert id="insert" parameterType="com.exam.entity.Question" useGeneratedKeys="true" keyProperty="questionId">
         INSERT INTO question (qb_id, content, answer, type, difficulty)
@@ -256,4 +333,10 @@
             WHERE question_id = #{questionId}
         </foreach>
     </update>
+
+    <!-- 根据题库ID删除题目 -->
+    <delete id="deleteByBankId">
+        DELETE FROM question
+        WHERE qb_id = #{qbId}
+    </delete>
 </mapper>

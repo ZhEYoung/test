@@ -162,4 +162,18 @@ public interface SubjectMapper {
      * @return 学科列表
      */
     List<Subject> selectDifficultSubjects(@Param("limit") Integer limit);
+
+    /**
+     * 统计学科关联的题库数量
+     * @param subjectId 学科ID
+     * @return 题库数量
+     */
+    Long countQuestionBanks(@Param("subjectId") Integer subjectId);
+
+    /**
+     * 删除指定学科关联的所有题库
+     * @param subjectId 学科ID
+     * @return 影响行数
+     */
+    int deleteQuestionBanks(@Param("subjectId") Integer subjectId);
 } 

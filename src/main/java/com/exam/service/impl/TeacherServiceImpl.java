@@ -1,7 +1,6 @@
 package com.exam.service.impl;
 
 import com.exam.entity.Teacher;
-import com.exam.entity.Class;
 import com.exam.mapper.TeacherMapper;
 import com.exam.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,23 +19,90 @@ public class TeacherServiceImpl implements TeacherService {
     private TeacherMapper teacherMapper;
 
     @Override
-    public int insert(Teacher record) {
-        return teacherMapper.insert(record);
+    public int insert(Teacher teacher) {
+        // 验证教师数据
+        if (!validateTeacher(teacher)) {
+            return 0;
+        }
+        
+        // 检查用户ID是否已经被使用
+        Teacher existingTeacher = teacherMapper.selectByUserId(teacher.getUserId());
+        if (existingTeacher != null) {
+            System.out.println("用户ID已被使用: " + teacher.getUserId());
+            return 0;
+        }
+
+        return teacherMapper.insert(teacher);
+    }
+
+    /**
+     * 验证教师数据
+     * @param teacher 教师信息
+     * @return true 如果数据有效，false 如果数据无效
+     */
+    private boolean validateTeacher(Teacher teacher) {
+        if (teacher == null) {
+            System.out.println("教师对象为空");
+            return false;
+        }
+
+        // 验证名称
+        if (teacher.getName() == null || teacher.getName().trim().isEmpty()) {
+            System.out.println("教师姓名为空");
+            return false;
+        }
+
+        // 验证用户ID
+        if (teacher.getUserId() == null || teacher.getUserId() <= 0) {
+            System.out.println("用户ID无效: " + teacher.getUserId());
+            return false;
+        }
+
+        // 验证学院ID
+        if (teacher.getCollegeId() == null || teacher.getCollegeId() <= 0) {
+            System.out.println("学院ID无效: " + teacher.getCollegeId());
+            return false;
+        }
+
+        // 验证权限值（允许为null，默认为0）
+        if (teacher.getPermission() == null) {
+            teacher.setPermission(0);
+        } else if (teacher.getPermission() < 0) {
+            System.out.println("权限值无效: " + teacher.getPermission());
+            return false;
+        }
+
+        return true;
     }
 
     @Override
-    public int deleteById(Integer id) {
-        return teacherMapper.deleteById(id);
+    public int batchInsert(List<Teacher> teachers) {
+        return teacherMapper.batchInsert(teachers);
     }
 
     @Override
-    public int updateById(Teacher record) {
-        return teacherMapper.updateById(record);
+    public int deleteById(Integer teacherId) {
+        return teacherMapper.deleteById(teacherId);
     }
 
     @Override
-    public Teacher selectById(Integer id) {
-        return teacherMapper.selectById(id);
+    public int batchDelete(List<Integer> teacherIds) {
+        return teacherMapper.batchDelete(teacherIds);
+    }
+
+    @Override
+    public int updateById(Teacher teacher) {
+        return teacherMapper.updateById(teacher);
+    }
+
+    @Override
+    public int batchUpdate(List<Teacher> teachers) {
+        return teacherMapper.batchUpdate(teachers);
+    }
+
+    @Override
+    public Teacher selectById(Integer teacherId) {
+        return teacherMapper.selectById(teacherId);
     }
 
     @Override
@@ -51,43 +117,32 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public Long selectCount() {
+    public int selectCount() {
         return teacherMapper.selectCount();
     }
 
     @Override
-    public List<Teacher> selectByCondition(Map<String, Object> condition) {
-        return teacherMapper.selectByCondition(condition);
+    public List<Teacher> selectByCondition(Teacher teacher) {
+        return teacherMapper.selectByCondition(teacher);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
-        return teacherMapper.selectCountByCondition(condition);
-    }
-
-    @Override
-    public List<Teacher> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
-        int offset = (pageNum - 1) * pageSize;
-        return teacherMapper.selectPageByCondition(condition, offset, pageSize);
-    }
-
-    @Override
-    public Teacher getByUserId(Integer userId) {
+    public Teacher selectByUserId(Integer userId) {
         return teacherMapper.selectByUserId(userId);
     }
 
     @Override
-    public List<Teacher> getByCollegeId(Integer collegeId) {
+    public List<Teacher> selectByCollegeId(Integer collegeId) {
         return teacherMapper.selectByCollegeId(collegeId);
     }
 
     @Override
-    public List<Teacher> getByName(String name) {
+    public List<Teacher> selectByName(String name) {
         return teacherMapper.selectByName(name);
     }
 
     @Override
-    public List<Teacher> getByPermission(Integer permission) {
+    public List<Teacher> selectByPermission(Integer permission) {
         return teacherMapper.selectByPermission(permission);
     }
 
@@ -107,23 +162,22 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public List<Class> getTeacherClasses(Integer teacherId) {
-        return teacherMapper.selectTeacherClasses(teacherId);
+    public int countByCollege(Integer collegeId) {
+        return teacherMapper.countByCollege(collegeId);
     }
 
     @Override
-    public Long countTeacherClasses(Integer teacherId) {
-        return teacherMapper.countTeacherClasses(teacherId);
+    public List<Map<String, Object>> countByPermission() {
+        return teacherMapper.countByPermission();
     }
 
     @Override
-    public int batchImport(List<Teacher> teachers) {
-        // 批量导入前进行数据验证
-        for (Teacher teacher : teachers) {
-            if (teacher.getTeacherId() == null || teacher.getName() == null) {
-                return 0;
-            }
-        }
-        return teacherMapper.batchInsert(teachers);
+    public Map<String, Object> selectExamStats(Integer teacherId) {
+        return teacherMapper.selectExamStats(teacherId);
+    }
+
+    @Override
+    public List<Map<String, Object>> selectTeacherExams(Integer teacherId) {
+        return teacherMapper.selectTeacherExams(teacherId);
     }
 } 

@@ -81,7 +81,23 @@ public interface StudentMapper {
      * 统计学生总数
      * @return 学生总数
      */
-    int selectCount();
+    Long selectCount();
+
+    /**
+     * 根据条件查询学生数量
+     * @param condition 查询条件
+     * @return 学生数量
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 根据条件分页查询学生
+     * @param condition 查询条件
+     * @param offset 偏移量
+     * @param pageSize 每页记录数
+     * @return 学生列表
+     */
+    List<Student> selectPageByCondition(Map<String, Object> condition, Integer offset, Integer pageSize);
 
     /**
      * 根据条件查询学生

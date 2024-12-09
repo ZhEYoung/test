@@ -12,54 +12,66 @@ import java.math.BigDecimal;
 public interface QuestionBankService {
     
     /**
-     * 插入一条记录
+     * 插入题库记录
      */
-    int insert(QuestionBank record);
+    int insert(QuestionBank questionBank);
 
     /**
-     * 根据ID删除
+     * 根据ID删除题库
      */
-    int deleteById(Integer id);
+    int deleteById(Integer qbId);
 
     /**
-     * 根据ID更新
+     * 更新题库信息
      */
-    int updateById(QuestionBank record);
+    int update(QuestionBank questionBank);
 
     /**
-     * 根据ID查询
+     * 根据ID查询题库
      */
-    QuestionBank selectById(Integer id);
+    QuestionBank selectById(Integer qbId);
 
     /**
-     * 查询所有记录
+     * 查询所有题库
      */
     List<QuestionBank> selectAll();
-
+    
     /**
-     * 分页查询
+     * 分页查询题库
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 题库列表
      */
     List<QuestionBank> selectPage(Integer pageNum, Integer pageSize);
-
+    
     /**
-     * 查询总记录数
-     */
-    Long selectCount();
-
-    /**
-     * 条件查询
+     * 条件查询题库
+     * @param condition 查询条件
+     * @return 题库列表
      */
     List<QuestionBank> selectByCondition(Map<String, Object> condition);
-
+    
     /**
-     * 条件查询记录数
-     */
-    Long selectCountByCondition(Map<String, Object> condition);
-
-    /**
-     * 条件分页查询
+     * 条件分页查询题库
+     * @param condition 查询条件
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 题库列表
      */
     List<QuestionBank> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    
+    /**
+     * 查询题库总数
+     * @return 总记录数
+     */
+    Long selectCount();
+    
+    /**
+     * 条件查询题库总数
+     * @param condition 查询条件
+     * @return 记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
     
     /**
      * 根据学科ID查询题库列表
@@ -146,19 +158,4 @@ public interface QuestionBankService {
      * 查询热门题库
      */
     List<QuestionBank> getHotBanks(Integer limit);
-    
-    /**
-     * 导入题库
-     * @param bank 题库信息
-     * @param questions 题目列表
-     * @return 导入结果
-     */
-    int importBank(QuestionBank bank, List<Question> questions);
-    
-    /**
-     * 导出题库
-     * @param qbId 题库ID
-     * @return 导出数据
-     */
-    Map<String, Object> exportBank(Integer qbId);
 } 

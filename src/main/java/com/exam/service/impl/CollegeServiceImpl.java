@@ -6,6 +6,7 @@ import com.exam.entity.Teacher;
 import com.exam.entity.Student;
 import com.exam.mapper.CollegeMapper;
 import com.exam.service.CollegeService;
+import com.exam.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,14 +23,39 @@ public class CollegeServiceImpl implements CollegeService {
     @Autowired
     private CollegeMapper collegeMapper;
 
+    @Autowired
+    private StudentService studentService;
+
     @Override
     public int insert(College record) {
+        // 验证学院名称
+        if (record == null || record.getCollegeName() == null || 
+            record.getCollegeName().trim().isEmpty() || 
+            record.getCollegeName().length() > 50) {
+            System.out.println("学院名称无效");
+            return 0;
+        }
+
+        // 检查学院名称是否已存在
+        College existingCollege = collegeMapper.selectByCollegeName(record.getCollegeName());
+        if (existingCollege != null) {
+            System.out.println("学院名称已存在");
+            return 0;
+        }
+
+        // 设置默认描述
+        if (record.getDescription() == null) {
+            record.setDescription("");
+        }
+
         return collegeMapper.insert(record);
     }
 
     @Override
+    @Transactional
     public int deleteById(Integer id) {
-        return collegeMapper.deleteById(id);
+        // 学院不允许删除
+        return 0;
     }
 
     @Override
@@ -121,47 +147,28 @@ public class CollegeServiceImpl implements CollegeService {
     @Override
     @Transactional
     public int deleteCollege(Integer collegeId) {
-        // 检查是否有关联的学科、教师和学生
-        Long subjectCount = collegeMapper.countSubjects(collegeId);
-        Long teacherCount = collegeMapper.countTeachers(collegeId);
-        Long studentCount = collegeMapper.countStudents(collegeId);
-        
-        // 如果有关联数据，不能删除
-        if (subjectCount > 0 || teacherCount > 0 || studentCount > 0) {
-            return 0;
-        }
-        
-        // 删除学院记录
-        return collegeMapper.deleteById(collegeId);
+        // 学院不允许删除
+        return 0;
     }
 
     @Override
     public Map<String, Object> exportStudentList(Integer collegeId) {
-        Map<String, Object> exportData = new HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         
         // 获取学院信息
         College college = collegeMapper.selectById(collegeId);
-        exportData.put("college", college);
+        if (college == null) {
+            return result;
+        }
         
         // 获取学生列表
-        List<Student> students = collegeMapper.selectCollegeStudents(collegeId);
-        exportData.put("students", students);
+        List<Student> students = studentService.getByCollegeId(collegeId);
         
-        // 获取教师列表
-        List<Teacher> teachers = collegeMapper.selectCollegeTeachers(collegeId);
-        exportData.put("teachers", teachers);
+        // 组装数据
+        result.put("college", college);
+        result.put("students", students);
+        result.put("totalCount", students.size());
         
-        // 获取学科列表
-        List<Subject> subjects = collegeMapper.selectCollegeSubjects(collegeId);
-        exportData.put("subjects", subjects);
-        
-        // 获取统计信息
-        Map<String, Long> stats = new HashMap<>();
-        stats.put("studentCount", collegeMapper.countStudents(collegeId));
-        stats.put("teacherCount", collegeMapper.countTeachers(collegeId));
-        stats.put("subjectCount", collegeMapper.countSubjects(collegeId));
-        exportData.put("statistics", stats);
-        
-        return exportData;
+        return result;
     }
 } 

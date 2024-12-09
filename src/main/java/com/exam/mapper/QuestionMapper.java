@@ -206,4 +206,52 @@ public interface QuestionMapper {
         @Param("questionIds") List<Integer> questionIds,
         @Param("difficulties") List<BigDecimal> difficulties
     );
+
+    /**
+     * 分页查询题目
+     * @param offset 偏移量
+     * @param limit 每页记录数
+     * @return 题目列表
+     */
+    List<Question> selectPage(@Param("offset") Integer offset, @Param("limit") Integer limit);
+
+    /**
+     * 查询题目总数
+     * @return 总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询题目
+     * @param condition 查询条件
+     * @return 题目列表
+     */
+    List<Question> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询题目总数
+     * @param condition 查询条件
+     * @return 记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询题目
+     * @param condition 查询条件
+     * @param offset 偏移量
+     * @param limit 每页记录数
+     * @return 题目列表
+     */
+    List<Question> selectPageByCondition(
+        @Param("condition") Map<String, Object> condition,
+        @Param("offset") Integer offset,
+        @Param("limit") Integer limit
+    );
+
+    /**
+     * 根据题库ID删除题目
+     * @param qbId 题库ID
+     * @return 影响行数
+     */
+    int deleteByBankId(@Param("qbId") Integer qbId);
 } 

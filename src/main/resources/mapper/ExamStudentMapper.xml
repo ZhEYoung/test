@@ -219,7 +219,6 @@
         SELECT 
             s.student_id,
             s.name as student_name,
-            s.student_no,
             es.student_start_time,
             es.student_submit_time,
             TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as used_time,
@@ -266,6 +265,7 @@
         SELECT 
             e.exam_id,
             e.exam_name,
+            e.exam_start_time,
             COUNT(DISTINCT es.student_id) as total_students,
             COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students,
             ROUND(COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) * 100.0 
@@ -277,7 +277,7 @@
         INNER JOIN student s ON es.student_id = s.student_id
         WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
         AND es.disciplinary = 1
-        GROUP BY e.exam_id, e.exam_name
+        GROUP BY e.exam_id, e.exam_name, e.exam_start_time
         ORDER BY e.exam_start_time DESC
     </select>
 
@@ -384,31 +384,12 @@
         AND student_id = #{studentId}
     </update>
 
-    <!-- 查询考试时间异常的学生 -->
-    <select id="selectAbnormalTimeStudents" resultType="map">
-        SELECT 
-            es.exam_id,
-            es.student_id,
-            s.name as student_name,
-            es.student_start_time,
-            es.student_submit_time,
-            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as duration,
-            e.exam_duration as expected_duration
-        FROM exam_student es
-        INNER JOIN exam e ON es.exam_id = e.exam_id
-        INNER JOIN student s ON es.student_id = s.student_id
-        WHERE es.exam_id = #{examId}
-        AND es.student_start_time IS NOT NULL
-        AND es.student_submit_time IS NOT NULL
-        AND ABS(TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) - e.exam_duration) > #{timeThreshold}
-        ORDER BY duration DESC
-    </select>
-
     <!-- 查询违纪记录 -->
     <select id="selectDisciplinaryRecords" resultType="map">
         SELECT 
             e.exam_id,
             e.exam_name,
+            e.exam_start_time,
             COUNT(es.student_id) as disciplinary_count,
             GROUP_CONCAT(
                 CASE WHEN es.disciplinary = 1 
@@ -419,7 +400,7 @@
         INNER JOIN student s ON es.student_id = s.student_id
         WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
         AND es.disciplinary = 1
-        GROUP BY e.exam_id, e.exam_name
+        GROUP BY e.exam_id, e.exam_name, e.exam_start_time
         ORDER BY e.exam_start_time DESC
     </select>
 </mapper>

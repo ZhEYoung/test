@@ -1,10 +1,14 @@
 package com.exam.service.impl;
 
-import com.exam.entity.Exam;
 import com.exam.entity.Subject;
+import com.exam.entity.QuestionBank;
+import com.exam.entity.Question;
 import com.exam.mapper.SubjectMapper;
 import com.exam.mapper.TeacherMapper;
 import com.exam.mapper.ExamMapper;
+import com.exam.mapper.QuestionBankMapper;
+import com.exam.mapper.QuestionMapper;
+import com.exam.mapper.QuestionOptionMapper;
 import com.exam.service.SubjectService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,13 +31,73 @@ public class SubjectServiceImpl implements SubjectService {
     @Autowired
     private ExamMapper examMapper;
 
+    @Autowired
+    private QuestionBankMapper questionBankMapper;
+
+    @Autowired
+    private QuestionMapper questionMapper;
+
+    @Autowired
+    private QuestionOptionMapper optionMapper;
+
     @Override
     public int insert(Subject record) {
+        // 验证学科数据
+        if (!validateSubject(record)) {
+            return 0;
+        }
         return subjectMapper.insert(record);
     }
 
+    /**
+     * 验证学科数据
+     * @param subject 学科信息
+     * @return true 如果数据有效，false 如果数据无效
+     */
+    private boolean validateSubject(Subject subject) {
+        if (subject == null) {
+            return false;
+        }
+
+        // 验证学科名称
+        if (subject.getSubjectName() == null || 
+            subject.getSubjectName().trim().isEmpty() || 
+            subject.getSubjectName().length() > 50) {
+            return false;
+        }
+
+        // 验证学院ID
+        if (subject.getCollegeId() == null || subject.getCollegeId() <= 0) {
+            return false;
+        }
+
+        return true;
+    }
+
     @Override
+    @Transactional
     public int deleteById(Integer id) {
+        // 1. 获取该学科下的所有题库
+        List<QuestionBank> questionBanks = questionBankMapper.selectBySubjectId(id);
+        
+        // 2. 对每个题库
+        for (QuestionBank qb : questionBanks) {
+            // 2.1 获取题库下的所有题目
+            List<Question> questions = questionMapper.selectByBankId(qb.getQbId());
+            
+            // 2.2 对每个题目，删除其选项
+            for (Question q : questions) {
+                optionMapper.deleteByQuestionId(q.getQuestionId());
+            }
+            
+            // 2.3 删除题库下的所有题目
+            questionMapper.deleteByBankId(qb.getQbId());
+        }
+        
+        // 3. 删除所有题库
+        questionBankMapper.deleteBySubjectId(id);
+        
+        // 4. 最后删除学科
         return subjectMapper.deleteById(id);
     }
 
@@ -60,23 +124,55 @@ public class SubjectServiceImpl implements SubjectService {
 
     @Override
     public Long selectCount() {
-        return subjectMapper.selectCount();
+        return Long.valueOf(subjectMapper.selectCount());
     }
 
     @Override
     public List<Subject> selectByCondition(Map<String, Object> condition) {
-        return subjectMapper.selectByCondition(condition);
+        Subject subject = new Subject();
+        if (condition.containsKey("subjectName")) {
+            subject.setSubjectName((String) condition.get("subjectName"));
+        }
+        if (condition.containsKey("collegeId")) {
+            subject.setCollegeId((Integer) condition.get("collegeId"));
+        }
+        if (condition.containsKey("description")) {
+            subject.setDescription((String) condition.get("description"));
+        }
+        return subjectMapper.selectByCondition(subject);
     }
 
     @Override
     public Long selectCountByCondition(Map<String, Object> condition) {
-        return subjectMapper.selectCountByCondition(condition);
+        Subject subject = new Subject();
+        if (condition.containsKey("subjectName")) {
+            subject.setSubjectName((String) condition.get("subjectName"));
+        }
+        if (condition.containsKey("collegeId")) {
+            subject.setCollegeId((Integer) condition.get("collegeId"));
+        }
+        if (condition.containsKey("description")) {
+            subject.setDescription((String) condition.get("description"));
+        }
+        return Long.valueOf(subjectMapper.selectByCondition(subject).size());
     }
 
     @Override
     public List<Subject> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
-        int offset = (pageNum - 1) * pageSize;
-        return subjectMapper.selectPageByCondition(condition, offset, pageSize);
+        Subject subject = new Subject();
+        if (condition.containsKey("subjectName")) {
+            subject.setSubjectName((String) condition.get("subjectName"));
+        }
+        if (condition.containsKey("collegeId")) {
+            subject.setCollegeId((Integer) condition.get("collegeId"));
+        }
+        if (condition.containsKey("description")) {
+            subject.setDescription((String) condition.get("description"));
+        }
+        List<Subject> allResults = subjectMapper.selectByCondition(subject);
+        int start = (pageNum - 1) * pageSize;
+        int end = Math.min(start + pageSize, allResults.size());
+        return start < end ? allResults.subList(start, end) : new ArrayList<>();
     }
 
     @Override
@@ -141,13 +237,6 @@ public class SubjectServiceImpl implements SubjectService {
         if (result == 0) {
             return 0;
         }
-        
-        // 建立教师和学科的关联
-        if (!teacherIds.isEmpty()) {
-            // TODO: 实现教师和学科的关联
-            // 需要在TeacherMapper中添加相关方法
-        }
-        
         return result;
     }
 
@@ -160,12 +249,6 @@ public class SubjectServiceImpl implements SubjectService {
                 return 0; // 有关联的考试，不能删除
             }
         }
-        
-        // 删除教师和学科的关联
-        // TODO: 实现删除教师和学科的关联
-        // 需要在TeacherMapper中添加相关方法
-        
-        // 删除学科记录
         return subjectMapper.deleteById(subjectId);
     }
 
@@ -179,10 +262,6 @@ public class SubjectServiceImpl implements SubjectService {
             return statistics;
         }
         statistics.put("subject", subject);
-        
-        // 获取教师列表
-        List<Map<String, Object>> teachers = teacherMapper.selectBySubjectId(subjectId);
-        statistics.put("teachers", teachers);
         
         // 统计考试信息
         List<Map<String, Object>> examStats = countExamsBySubject();

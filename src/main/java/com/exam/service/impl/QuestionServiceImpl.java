@@ -24,62 +24,89 @@ public class QuestionServiceImpl implements QuestionService {
     @Autowired
     private QuestionOptionMapper optionMapper;
 
-    // 基础CRUD方法
     @Override
     public int insert(Question record) {
-        return questionMapper.insert(record);
+        // 验证基本数据
+        if (record == null || 
+            record.getContent() == null || 
+            record.getContent().trim().isEmpty() ||
+            record.getContent().length() > 1000) {
+            return 0;
+        }
+
+        // 验证题库ID
+        if (record.getQbId() == null || record.getQbId() <= 0) {
+            return 0;
+        }
+
+        // 验证题目类型
+        if (record.getType() == null || record.getType() < 0) {
+            return 0;
+        }
+
+        // 验证难度值
+        if (record.getDifficulty() == null || 
+            record.getDifficulty().compareTo(BigDecimal.ZERO) < 0 || 
+            record.getDifficulty().compareTo(BigDecimal.ONE) > 0) {
+            return 0;
+        }
+
+        // 验证分数
+        if (record.getScore() == null || record.getScore().compareTo(BigDecimal.ZERO) <= 0) {
+            return 0;
+        }
+
+        int result = questionMapper.insert(record);
+        if (result > 0 && record.getOptions() != null && !record.getOptions().isEmpty()) {
+            for (QuestionOption option : record.getOptions()) {
+                option.setQuestionId(record.getQuestionId());
+            }
+            optionMapper.batchInsert(record.getOptions());
+        }
+        return result;
     }
 
     @Override
     public int deleteById(Integer id) {
+        // 先删除题目的所有选项
+        optionMapper.deleteByQuestionId(id);
+        // 再删除题目
         return questionMapper.deleteById(id);
     }
 
     @Override
     public int updateById(Question record) {
-        return questionMapper.updateById(record);
+        return questionMapper.update(record);
     }
 
     @Override
     public Question selectById(Integer id) {
-        return questionMapper.selectById(id);
+        Question question = questionMapper.selectById(id);
+        if (question != null) {
+            // 加载题目选项
+            question.setOptions(optionMapper.selectByQuestionId(id));
+        }
+        return question;
     }
 
     @Override
     public List<Question> selectAll() {
-        return questionMapper.selectAll();
-    }
-
-    @Override
-    public List<Question> selectPage(Integer pageNum, Integer pageSize) {
-        int offset = (pageNum - 1) * pageSize;
-        return questionMapper.selectPage(offset, pageSize);
-    }
-
-    @Override
-    public Long selectCount() {
-        return questionMapper.selectCount();
-    }
-
-    @Override
-    public List<Question> selectByCondition(Map<String, Object> condition) {
-        return questionMapper.selectByCondition(condition);
-    }
-
-    @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
-        return questionMapper.selectCountByCondition(condition);
-    }
-
-    @Override
-    public List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
-        int offset = (pageNum - 1) * pageSize;
-        return questionMapper.selectPageByCondition(condition, offset, pageSize);
+        List<Question> questions = questionMapper.selectAll();
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
     }
 
     @Override
     public List<Question> getByBankId(Integer qbId) {
-        return questionMapper.selectByBankId(qbId);
+        List<Question> questions = questionMapper.selectByBankId(qbId);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
     }
 
     @Override
@@ -99,37 +126,52 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public List<Question> getByIds(List<Integer> questionIds) {
-        return questionMapper.selectByIds(questionIds);
+        List<Question> questions = questionMapper.selectByIds(questionIds);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
     }
 
     @Override
     public List<QuestionOption> getOptions(Integer questionId) {
-        return questionMapper.selectOptions(questionId);
+        return optionMapper.selectByQuestionId(questionId);
     }
 
     @Override
     public int addOption(Integer questionId, QuestionOption option) {
-        return questionMapper.insertOption(questionId, option);
+        option.setQuestionId(questionId);
+        return optionMapper.insert(option);
     }
 
     @Override
     public int batchAddOptions(Integer questionId, List<QuestionOption> options) {
-        return questionMapper.batchInsertOptions(questionId, options);
+        for (QuestionOption option : options) {
+            option.setQuestionId(questionId);
+        }
+        return optionMapper.batchInsert(options);
     }
 
     @Override
     public int updateOption(Integer optionId, QuestionOption option) {
-        return questionMapper.updateOption(optionId, option);
+        option.setOptionId(optionId);
+        return optionMapper.update(option);
     }
 
     @Override
     public int deleteOption(Integer optionId) {
-        return questionMapper.deleteOption(optionId);
+        return optionMapper.deleteById(optionId);
     }
 
     @Override
     public List<Question> getByPaperId(Integer paperId) {
-        return questionMapper.selectByPaperId(paperId);
+        List<Question> questions = questionMapper.selectByPaperId(paperId);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
     }
 
     @Override
@@ -164,7 +206,12 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public List<Question> getMostMistakes(Integer limit) {
-        return questionMapper.selectMostMistakes(limit);
+        List<Question> questions = questionMapper.selectMostMistakes(limit);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
     }
 
     @Override
@@ -191,15 +238,64 @@ public class QuestionServiceImpl implements QuestionService {
             }
         }
         
-        int result = questionMapper.batchInsert(questions);
-        
-        // 批量插入选项
+        // 逐个插入题目，以便获取自增主键
+        int successCount = 0;
         for (Question question : questions) {
-            if (question.getOptions() != null && !question.getOptions().isEmpty()) {
-                optionMapper.batchInsert(question.getOptions());
+            int result = questionMapper.insert(question);
+            if (result > 0) {
+                successCount++;
+                // 插入选项
+                if (question.getOptions() != null && !question.getOptions().isEmpty()) {
+                    for (QuestionOption option : question.getOptions()) {
+                        option.setQuestionId(question.getQuestionId());
+                    }
+                    optionMapper.batchInsert(question.getOptions());
+                }
             }
         }
         
-        return result;
+        return successCount;
+    }
+
+    @Override
+    public List<Question> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        List<Question> questions = questionMapper.selectPage(offset, pageSize);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
+    }
+
+    @Override
+    public Long selectCount() {
+        return questionMapper.selectCount();
+    }
+
+    @Override
+    public List<Question> selectByCondition(Map<String, Object> condition) {
+        List<Question> questions = questionMapper.selectByCondition(condition);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return questionMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        List<Question> questions = questionMapper.selectPageByCondition(condition, offset, pageSize);
+        // 加载所有题目的选项
+        for (Question question : questions) {
+            question.setOptions(optionMapper.selectByQuestionId(question.getQuestionId()));
+        }
+        return questions;
     }
 } 

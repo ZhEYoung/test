@@ -4,6 +4,7 @@ import com.exam.entity.Student;
 import com.exam.entity.StudentClass;
 import com.exam.entity.StudentScore;
 import com.exam.mapper.StudentMapper;
+import com.exam.mapper.UserMapper;
 import com.exam.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,13 +21,64 @@ public class StudentServiceImpl implements StudentService {
     @Autowired
     private StudentMapper studentMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     public int insert(Student record) {
+        // 验证学生数据
+        if (!validateStudent(record)) {
+            return 0;
+        }
         return studentMapper.insert(record);
     }
 
+    /**
+     * 验证学生数据
+     * @param student 学生信息
+     * @return true 如果数据有效，false 如果数据无效
+     */
+    private boolean validateStudent(Student student) {
+        if (student == null) {
+            return false;
+        }
+
+        // 验证名称
+        if (student.getName() == null || student.getName().trim().isEmpty()) {
+            return false;
+        }
+
+        // 验证用户ID
+        if (student.getUserId() == null || student.getUserId() <= 0) {
+            return false;
+        }
+
+        // 验证学院ID
+        if (student.getCollegeId() == null || student.getCollegeId() <= 0) {
+            return false;
+        }
+
+        // 验证年级格式（假设年级应该是4位数字）
+        if (student.getGrade() == null || !student.getGrade().matches("\\d{4}")) {
+            return false;
+        }
+
+        return true;
+    }
+
     @Override
+    @Transactional
     public int deleteById(Integer id) {
+        // 1. 获取要删除的学生信息
+        Student student = studentMapper.selectById(id);
+        if (student == null) {
+            return 0;
+        }
+
+        // 2. 禁用关联的用户账号
+        userMapper.updateStatus(student.getUserId(), false);
+
+        // 3. 删除学生记录
         return studentMapper.deleteById(id);
     }
 
@@ -58,7 +110,12 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<Student> selectByCondition(Map<String, Object> condition) {
-        return studentMapper.selectByCondition(condition);
+        return studentMapper.selectByCondition(new Student() {{
+            if (condition.get("userId") != null) setUserId((Integer) condition.get("userId"));
+            if (condition.get("name") != null) setName((String) condition.get("name"));
+            if (condition.get("grade") != null) setGrade((String) condition.get("grade"));
+            if (condition.get("collegeId") != null) setCollegeId((Integer) condition.get("collegeId"));
+        }});
     }
 
     @Override
