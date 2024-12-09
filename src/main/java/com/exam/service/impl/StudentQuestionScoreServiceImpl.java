@@ -16,8 +16,11 @@ import java.math.BigDecimal;
  */
 @Service
 @Transactional
-public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQuestionScore, StudentQuestionScoreMapper> implements StudentQuestionScoreService {
+public class StudentQuestionScoreServiceImpl implements StudentQuestionScoreService {
 
+    @Autowired
+    private StudentQuestionScoreMapper studentQuestionScoreMapper;
+    
     @Autowired
     private ExamMapper examMapper;
     
@@ -25,18 +28,70 @@ public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQues
     private QuestionMapper questionMapper;
 
     @Override
+    public int insert(StudentQuestionScore record) {
+        return studentQuestionScoreMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return studentQuestionScoreMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(StudentQuestionScore record) {
+        return studentQuestionScoreMapper.updateById(record);
+    }
+
+    @Override
+    public StudentQuestionScore selectById(Integer id) {
+        return studentQuestionScoreMapper.selectById(id);
+    }
+
+    @Override
+    public List<StudentQuestionScore> selectAll() {
+        return studentQuestionScoreMapper.selectAll();
+    }
+
+    @Override
+    public List<StudentQuestionScore> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return studentQuestionScoreMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long selectCount() {
+        return studentQuestionScoreMapper.selectCount();
+    }
+
+    @Override
+    public List<StudentQuestionScore> selectByCondition(Map<String, Object> condition) {
+        return studentQuestionScoreMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return studentQuestionScoreMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<StudentQuestionScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return studentQuestionScoreMapper.selectPageByCondition(condition, offset, pageSize);
+    }
+
+    @Override
     public List<StudentQuestionScore> getByScoreId(Integer scoreId) {
-        return baseMapper.selectByScoreId(scoreId);
+        return studentQuestionScoreMapper.selectByScoreId(scoreId);
     }
 
     @Override
     public List<StudentQuestionScore> getByExamAndStudent(Integer examId, Integer studentId) {
-        return baseMapper.selectByExamAndStudent(examId, studentId);
+        return studentQuestionScoreMapper.selectByExamAndStudent(examId, studentId);
     }
 
     @Override
     public List<StudentQuestionScore> getByQuestionId(Integer questionId) {
-        return baseMapper.selectByQuestionId(questionId);
+        return studentQuestionScoreMapper.selectByQuestionId(questionId);
     }
 
     @Override
@@ -66,7 +121,7 @@ public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQues
         }
 
         try {
-            return baseMapper.batchInsert(list);
+            return studentQuestionScoreMapper.batchInsert(list);
         } catch (Exception e) {
             throw new RuntimeException("批量插入题目得分记录失败", e);
         }
@@ -74,67 +129,67 @@ public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQues
 
     @Override
     public int updateScoreAndStatus(Integer recordId, BigDecimal score, String status) {
-        return baseMapper.updateScoreAndStatus(recordId, score, status);
+        return studentQuestionScoreMapper.updateScoreAndStatus(recordId, score, status);
     }
 
     @Override
     public int batchUpdateScore(List<Map<String, Object>> records) {
-        return baseMapper.batchUpdateScore(records);
+        return studentQuestionScoreMapper.batchUpdateScore(records);
     }
 
     @Override
     public Map<String, Object> calculateQuestionCorrectRate(Integer questionId, Integer examId) {
-        return baseMapper.calculateQuestionCorrectRate(questionId, examId);
+        return studentQuestionScoreMapper.calculateQuestionCorrectRate(questionId, examId);
     }
 
     @Override
     public List<Map<String, Object>> analyzeScoreDistribution(Integer questionId, Integer examId) {
-        return baseMapper.analyzeScoreDistribution(questionId, examId);
+        return studentQuestionScoreMapper.analyzeScoreDistribution(questionId, examId);
     }
 
     @Override
     public List<Map<String, Object>> analyzeAnswerTimeDistribution(Integer questionId, Integer examId) {
-        return baseMapper.analyzeAnswerTimeDistribution(questionId, examId);
+        return studentQuestionScoreMapper.analyzeAnswerTimeDistribution(questionId, examId);
     }
 
     @Override
     public BigDecimal calculateAverageScore(Integer questionId, Integer examId) {
-        return baseMapper.calculateAverageScore(questionId, examId);
+        return studentQuestionScoreMapper.calculateAverageScore(questionId, examId);
     }
 
     @Override
     public List<Map<String, Object>> getDifficultQuestions(Integer examId, Integer limit) {
-        return baseMapper.selectDifficultQuestions(examId, limit);
+        return studentQuestionScoreMapper.selectDifficultQuestions(examId, limit);
     }
 
     @Override
     public List<Map<String, Object>> getEasyQuestions(Integer examId, Integer limit) {
-        return baseMapper.selectEasyQuestions(examId, limit);
+        return studentQuestionScoreMapper.selectEasyQuestions(examId, limit);
     }
 
     @Override
     public List<Map<String, Object>> analyzeAnswerPattern(Integer studentId, Integer examId) {
-        return baseMapper.analyzeAnswerPattern(studentId, examId);
+        return studentQuestionScoreMapper.analyzeAnswerPattern(studentId, examId);
     }
 
     @Override
     public List<Map<String, Object>> analyzeScoreByQuestionType(Integer studentId, Integer examId) {
-        return baseMapper.analyzeScoreByQuestionType(studentId, examId);
+        return studentQuestionScoreMapper.analyzeScoreByQuestionType(studentId, examId);
     }
 
     @Override
     public List<StudentQuestionScore> getNeedManualGrading(Integer examId, Integer teacherId) {
-        return baseMapper.selectNeedManualGrading(examId, teacherId);
+        return studentQuestionScoreMapper.selectNeedManualGrading(examId, teacherId);
     }
 
     @Override
     public int batchUpdateGradingStatus(List<Integer> recordIds, String status, Integer graderId) {
-        return baseMapper.batchUpdateGradingStatus(recordIds, status, graderId);
+        return studentQuestionScoreMapper.batchUpdateGradingStatus(recordIds, status, graderId);
     }
 
     @Override
     public Map<String, Object> countGradingProgress(Integer examId) {
-        return baseMapper.countGradingProgress(examId);
+        return studentQuestionScoreMapper.countGradingProgress(examId);
     }
 
     @Override
@@ -186,7 +241,6 @@ public class StudentQuestionScoreServiceImpl extends BaseServiceImpl<StudentQues
         if (record.getStatus() == null) {
             record.setStatus(0);
         }
-        return baseMapper.insert(record);
+        return studentQuestionScoreMapper.insert(record);
     }
-
 } 

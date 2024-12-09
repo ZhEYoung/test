@@ -10,7 +10,37 @@ import java.util.Date;
 /**
  * 学生成绩Mapper接口
  */
-public interface StudentScoreMapper extends BaseMapper<StudentScore> {
+public interface StudentScoreMapper {
+    /**
+     * 插入学生成绩
+     */
+    int insert(StudentScore record);
+
+    /**
+     * 根据主键删除成绩记录
+     */
+    int deleteByPrimaryKey(Integer scoreId);
+
+    /**
+     * 更新成绩记录
+     */
+    int updateByPrimaryKey(StudentScore record);
+
+    /**
+     * 根据主键查询成绩记录
+     */
+    StudentScore selectByPrimaryKey(Integer scoreId);
+
+    /**
+     * 查询所有成绩记录
+     */
+    List<StudentScore> selectAll();
+
+    /**
+     * 根据条件查询成绩记录
+     */
+    List<StudentScore> selectByCondition(StudentScore record);
+
     /**
      * 根据学生ID查询成绩列表
      */
@@ -122,6 +152,4 @@ public interface StudentScoreMapper extends BaseMapper<StudentScore> {
         @Param("studentId") Integer studentId,
         @Param("subjectId") Integer subjectId
     );
-
-
 } 
