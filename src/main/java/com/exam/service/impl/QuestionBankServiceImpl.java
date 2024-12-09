@@ -16,107 +16,163 @@ import java.math.BigDecimal;
  */
 @Service
 @Transactional
-public class QuestionBankServiceImpl extends BaseServiceImpl<QuestionBank, QuestionBankMapper> implements QuestionBankService {
+public class QuestionBankServiceImpl implements QuestionBankService {
 
+    @Autowired
+    private QuestionBankMapper questionBankMapper;
+    
     @Autowired
     private QuestionMapper questionMapper;
 
+    // 基础CRUD方法
+    @Override
+    public int insert(QuestionBank record) {
+        return questionBankMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return questionBankMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(QuestionBank record) {
+        return questionBankMapper.updateById(record);
+    }
+
+    @Override
+    public QuestionBank selectById(Integer id) {
+        return questionBankMapper.selectById(id);
+    }
+
+    @Override
+    public List<QuestionBank> selectAll() {
+        return questionBankMapper.selectAll();
+    }
+
+    @Override
+    public List<QuestionBank> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return questionBankMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long selectCount() {
+        return questionBankMapper.selectCount();
+    }
+
+    @Override
+    public List<QuestionBank> selectByCondition(Map<String, Object> condition) {
+        return questionBankMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return questionBankMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<QuestionBank> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return questionBankMapper.selectPageByCondition(condition, offset, pageSize);
+    }
+
     @Override
     public List<QuestionBank> getBySubjectId(Integer subjectId) {
-        return baseMapper.selectBySubjectId(subjectId);
+        return questionBankMapper.selectBySubjectId(subjectId);
     }
 
     @Override
     public QuestionBank getByName(String qbName) {
-        return baseMapper.selectByName(qbName);
+        return questionBankMapper.selectByName(qbName);
     }
 
     @Override
     public Integer countQuestions(Integer qbId) {
-        return baseMapper.countQuestions(qbId);
+        return questionBankMapper.countQuestions(qbId);
     }
 
     @Override
     public Integer countBySubjectId(Integer subjectId) {
-        return baseMapper.countBySubjectId(subjectId);
+        return questionBankMapper.countBySubjectId(subjectId);
     }
 
     @Override
     public int addQuestion(Integer qbId, Integer questionId) {
-        return baseMapper.addQuestion(qbId, questionId);
+        return questionBankMapper.addQuestion(qbId, questionId);
     }
 
     @Override
     public int batchAddQuestions(Integer qbId, List<Integer> questionIds) {
-        return baseMapper.batchAddQuestions(qbId, questionIds);
+        return questionBankMapper.batchAddQuestions(qbId, questionIds);
     }
 
     @Override
     public int removeQuestion(Integer qbId, Integer questionId) {
-        return baseMapper.removeQuestion(qbId, questionId);
+        return questionBankMapper.removeQuestion(qbId, questionId);
     }
 
     @Override
     public int batchRemoveQuestions(Integer qbId, List<Integer> questionIds) {
-        return baseMapper.batchRemoveQuestions(qbId, questionIds);
+        return questionBankMapper.batchRemoveQuestions(qbId, questionIds);
     }
 
     @Override
     public List<Question> getQuestions(Integer qbId) {
-        return baseMapper.selectQuestions(qbId);
+        return questionBankMapper.selectQuestions(qbId);
     }
 
     @Override
     public List<Question> getQuestionsByCondition(Integer qbId, Integer type, 
                                                 BigDecimal minDifficulty, BigDecimal maxDifficulty) {
-        return baseMapper.selectQuestionsByCondition(qbId, type, minDifficulty, maxDifficulty);
+        return questionBankMapper.selectQuestionsByCondition(qbId, type, minDifficulty, maxDifficulty);
     }
 
     @Override
     public List<Map<String, Object>> countQuestionsByType(Integer qbId) {
-        return baseMapper.countQuestionsByType(qbId);
+        return questionBankMapper.countQuestionsByType(qbId);
     }
 
     @Override
     public List<Map<String, Object>> countQuestionsByDifficulty(Integer qbId) {
-        return baseMapper.countQuestionsByDifficulty(qbId);
+        return questionBankMapper.countQuestionsByDifficulty(qbId);
     }
 
     @Override
     public List<Map<String, Object>> countBankUsage(Integer qbId) {
-        return baseMapper.countBankUsage(qbId);
+        return questionBankMapper.countBankUsage(qbId);
     }
 
     @Override
     public int copyBank(Integer sourceQbId, String newBankName, Integer subjectId) {
-        return baseMapper.copyBank(sourceQbId, newBankName, subjectId);
+        return questionBankMapper.copyBank(sourceQbId, newBankName, subjectId);
     }
 
     @Override
     public int mergeBanks(Integer targetQbId, List<Integer> sourceQbIds) {
-        return baseMapper.mergeBanks(targetQbId, sourceQbIds);
+        return questionBankMapper.mergeBanks(targetQbId, sourceQbIds);
     }
 
     @Override
     public List<QuestionBank> getRecentUsed(Integer limit) {
-        return baseMapper.selectRecentUsed(limit);
+        return questionBankMapper.selectRecentUsed(limit);
     }
 
     @Override
     public List<QuestionBank> getHotBanks(Integer limit) {
-        return baseMapper.selectHotBanks(limit);
+        return questionBankMapper.selectHotBanks(limit);
     }
 
     @Override
     public int importBank(QuestionBank bank, List<Question> questions) {
         // 先插入题库
-        int result = baseMapper.insert(bank);
+        int result = insert(bank);
         if (result == 0) {
             return 0;
         }
         
         // 批量插入题目
-        if (!questions.isEmpty()) {
+        if (questions != null && !questions.isEmpty()) {
             questionMapper.batchInsert(questions);
             
             // 获取题目ID列表
@@ -126,7 +182,7 @@ public class QuestionBankServiceImpl extends BaseServiceImpl<QuestionBank, Quest
             }
             
             // 建立题库和题目的关联
-            baseMapper.batchAddQuestions(bank.getQbId(), questionIds);
+            batchAddQuestions(bank.getQbId(), questionIds);
         }
         
         return result;
@@ -137,14 +193,14 @@ public class QuestionBankServiceImpl extends BaseServiceImpl<QuestionBank, Quest
         Map<String, Object> data = new HashMap<>();
         
         // 获取题库信息
-        QuestionBank bank = baseMapper.selectById(qbId);
+        QuestionBank bank = selectById(qbId);
         if (bank == null) {
             return data;
         }
         data.put("bank", bank);
         
         // 获取题库中的所有题目
-        List<Question> questions = baseMapper.selectQuestions(qbId);
+        List<Question> questions = getQuestions(qbId);
         data.put("questions", questions);
         
         // 获取题目统计信息

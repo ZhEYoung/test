@@ -16,8 +16,11 @@ import java.util.*;
  */
 @Service
 @Transactional
-public class SubjectServiceImpl extends BaseServiceImpl<Subject, SubjectMapper> implements SubjectService {
+public class SubjectServiceImpl implements SubjectService {
 
+    @Autowired
+    private SubjectMapper subjectMapper;
+    
     @Autowired
     private TeacherMapper teacherMapper;
     
@@ -25,64 +28,116 @@ public class SubjectServiceImpl extends BaseServiceImpl<Subject, SubjectMapper> 
     private ExamMapper examMapper;
 
     @Override
+    public int insert(Subject record) {
+        return subjectMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return subjectMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(Subject record) {
+        return subjectMapper.updateById(record);
+    }
+
+    @Override
+    public Subject selectById(Integer id) {
+        return subjectMapper.selectById(id);
+    }
+
+    @Override
+    public List<Subject> selectAll() {
+        return subjectMapper.selectAll();
+    }
+
+    @Override
+    public List<Subject> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return subjectMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long selectCount() {
+        return subjectMapper.selectCount();
+    }
+
+    @Override
+    public List<Subject> selectByCondition(Map<String, Object> condition) {
+        return subjectMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return subjectMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<Subject> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return subjectMapper.selectPageByCondition(condition, offset, pageSize);
+    }
+
+    @Override
     public List<Subject> getByCollegeId(Integer collegeId) {
-        return baseMapper.selectByCollegeId(collegeId);
+        return subjectMapper.selectByCollegeId(collegeId);
     }
 
     @Override
     public Subject getBySubjectName(String subjectName) {
-        return baseMapper.selectBySubjectName(subjectName);
+        return subjectMapper.selectBySubjectName(subjectName);
     }
 
     @Override
     public int updateDescription(Integer subjectId, String description) {
-        return baseMapper.updateDescription(subjectId, description);
+        return subjectMapper.updateDescription(subjectId, description);
     }
 
     @Override
     public int batchUpdateDescription(List<Integer> subjectIds, String description) {
-        return baseMapper.batchUpdateDescription(subjectIds, description);
+        return subjectMapper.batchUpdateDescription(subjectIds, description);
     }
 
     @Override
     public List<Subject> getSubjectsWithExams() {
-        return baseMapper.selectSubjectsWithExams();
+        return subjectMapper.selectSubjectsWithExams();
     }
 
     @Override
     public List<Subject> getByTeacherId(Integer teacherId) {
-        return baseMapper.selectByTeacherId(teacherId);
+        return subjectMapper.selectByTeacherId(teacherId);
     }
 
     @Override
     public List<Subject> getByStudentId(Integer studentId) {
-        return baseMapper.selectByStudentId(studentId);
+        return subjectMapper.selectByStudentId(studentId);
     }
 
     @Override
     public List<Map<String, Object>> countExamsBySubject() {
-        return baseMapper.countExamsBySubject();
+        return subjectMapper.countExamsBySubject();
     }
 
     @Override
     public List<Map<String, Object>> getAvgScoreBySubject() {
-        return baseMapper.avgScoreBySubject();
+        return subjectMapper.avgScoreBySubject();
     }
 
     @Override
     public List<Subject> getHotSubjects(Integer limit) {
-        return baseMapper.selectHotSubjects(limit);
+        return subjectMapper.selectHotSubjects(limit);
     }
 
     @Override
     public List<Subject> getDifficultSubjects(Integer limit) {
-        return baseMapper.selectDifficultSubjects(limit);
+        return subjectMapper.selectDifficultSubjects(limit);
     }
 
     @Override
     public int createSubject(Subject subject, List<Integer> teacherIds) {
         // 插入学科记录
-        int result = baseMapper.insert(subject);
+        int result = subjectMapper.insert(subject);
         if (result == 0) {
             return 0;
         }
@@ -111,7 +166,7 @@ public class SubjectServiceImpl extends BaseServiceImpl<Subject, SubjectMapper> 
         // 需要在TeacherMapper中添加相关方法
         
         // 删除学科记录
-        return baseMapper.deleteById(subjectId);
+        return subjectMapper.deleteById(subjectId);
     }
 
     @Override
@@ -119,7 +174,7 @@ public class SubjectServiceImpl extends BaseServiceImpl<Subject, SubjectMapper> 
         Map<String, Object> statistics = new HashMap<>();
         
         // 获取学科基本信息
-        Subject subject = baseMapper.selectById(subjectId);
+        Subject subject = subjectMapper.selectById(subjectId);
         if (subject == null) {
             return statistics;
         }
@@ -149,5 +204,4 @@ public class SubjectServiceImpl extends BaseServiceImpl<Subject, SubjectMapper> 
         
         return statistics;
     }
-
 } 

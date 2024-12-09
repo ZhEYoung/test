@@ -9,7 +9,57 @@ import java.math.BigDecimal;
 /**
  * 题库服务接口
  */
-public interface QuestionBankService extends BaseService<QuestionBank> {
+public interface QuestionBankService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(QuestionBank record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(QuestionBank record);
+
+    /**
+     * 根据ID查询
+     */
+    QuestionBank selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<QuestionBank> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<QuestionBank> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<QuestionBank> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<QuestionBank> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学科ID查询题库列表

@@ -10,7 +10,57 @@ import java.util.Date;
 /**
  * 班级服务接口
  */
-public interface ClassService extends BaseService<Class> {
+public interface ClassService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Class record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Class record);
+
+    /**
+     * 根据ID查询
+     */
+    Class selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Class> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<Class> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<Class> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Class> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据教师ID查询班级列表
@@ -70,7 +120,7 @@ public interface ClassService extends BaseService<Class> {
     /**
      * 查询班级考试日程
      */
-    List<Exam> getExamSchedule(Integer classId, Date startTime, Date endTime);
+    List<Exam> getExamSchedule(Integer classId);
     
     /**
      * 批量添加学生到班级

@@ -8,7 +8,57 @@ import java.util.Map;
 /**
  * 教师服务接口
  */
-public interface TeacherService extends BaseService<Teacher> {
+public interface TeacherService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Teacher record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Teacher record);
+
+    /**
+     * 根据ID查询
+     */
+    Teacher selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Teacher> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<Teacher> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<Teacher> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Teacher> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据用户ID查询教师信息
@@ -51,8 +101,6 @@ public interface TeacherService extends BaseService<Teacher> {
      */
     List<Class> getTeacherClasses(Integer teacherId);
     
-
-    
     /**
      * 统计教师所教授的班级数量
      */
@@ -64,6 +112,4 @@ public interface TeacherService extends BaseService<Teacher> {
      * @return 导入结果
      */
     int batchImport(List<Teacher> teachers);
-
-
 } 

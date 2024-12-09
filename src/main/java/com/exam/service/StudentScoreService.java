@@ -9,7 +9,57 @@ import java.util.Date;
 /**
  * 学生成绩服务接口
  */
-public interface StudentScoreService extends BaseService<StudentScore> {
+public interface StudentScoreService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(StudentScore record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(StudentScore record);
+
+    /**
+     * 根据ID查询
+     */
+    StudentScore selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<StudentScore> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<StudentScore> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<StudentScore> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<StudentScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学生ID查询成绩列表
@@ -91,8 +141,6 @@ public interface StudentScoreService extends BaseService<StudentScore> {
      * 统计学生成绩进步情况
      */
     List<Map<String, Object>> analyzeScoreImprovement(Integer studentId, Integer subjectId);
-    
-
     
     /**
      * 导出成绩报告

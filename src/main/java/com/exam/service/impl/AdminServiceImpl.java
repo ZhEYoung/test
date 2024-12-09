@@ -14,34 +14,90 @@ import java.util.*;
  */
 @Service
 @Transactional
-public class AdminServiceImpl extends BaseServiceImpl<Admin, AdminMapper> implements AdminService {
+public class AdminServiceImpl implements AdminService {
+
+    @Autowired
+    private AdminMapper adminMapper;
 
     @Autowired
     private UserMapper userMapper;
 
+    // 基础CRUD方法
+    @Override
+    public int insert(Admin record) {
+        return adminMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return adminMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(Admin record) {
+        return adminMapper.updateById(record);
+    }
+
+    @Override
+    public Admin selectById(Integer id) {
+        return adminMapper.selectById(id);
+    }
+
+    @Override
+    public List<Admin> selectAll() {
+        return adminMapper.selectAll();
+    }
+
+    @Override
+    public List<Admin> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return adminMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long selectCount() {
+        return adminMapper.selectCount();
+    }
+
+    @Override
+    public List<Admin> selectByCondition(Map<String, Object> condition) {
+        return adminMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return adminMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<Admin> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return adminMapper.selectPageByCondition(condition, offset, pageSize);
+    }
+
     @Override
     public Admin getByUserId(Integer userId) {
-        return baseMapper.selectByUserId(userId);
+        return adminMapper.selectByUserId(userId);
     }
 
     @Override
     public Admin getByName(String name) {
-        return baseMapper.selectByName(name);
+        return adminMapper.selectByName(name);
     }
 
     @Override
     public int updateOther(Integer adminId, String other) {
-        return baseMapper.updateOther(adminId, other);
+        return adminMapper.updateOther(adminId, other);
     }
 
     @Override
     public int batchUpdateOther(List<Integer> adminIds, String other) {
-        return baseMapper.batchUpdateOther(adminIds, other);
+        return adminMapper.batchUpdateOther(adminIds, other);
     }
 
     @Override
     public List<Map<String, Object>> getAdminLogs(Integer adminId, Date startTime, Date endTime) {
-        return baseMapper.selectAdminLogs(adminId, startTime, endTime);
+        return adminMapper.selectAdminLogs(adminId, startTime, endTime);
     }
 
     @Override
@@ -83,8 +139,4 @@ public class AdminServiceImpl extends BaseServiceImpl<Admin, AdminMapper> implem
         
         return resourceStats;
     }
-
-
-
-
 } 

@@ -10,6 +10,68 @@
         <result column="upload_time" property="uploadTime"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        score_id, student_id, exam_id, score, upload_time
+    </sql>
+
+    <!-- 插入成绩记录 -->
+    <insert id="insert" parameterType="com.exam.entity.StudentScore">
+        INSERT INTO student_score (
+            student_id, exam_id, score, upload_time
+        ) VALUES (
+            #{studentId}, #{examId}, #{score}, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <!-- 根据主键删除成绩记录 -->
+    <delete id="deleteByPrimaryKey">
+        DELETE FROM student_score 
+        WHERE score_id = #{scoreId}
+    </delete>
+
+    <!-- 更新成绩记录 -->
+    <update id="updateByPrimaryKey" parameterType="com.exam.entity.StudentScore">
+        UPDATE student_score
+        SET student_id = #{studentId},
+            exam_id = #{examId},
+            score = #{score},
+            upload_time = CURRENT_TIMESTAMP
+        WHERE score_id = #{scoreId}
+    </update>
+
+    <!-- 根据主键查询成绩记录 -->
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student_score
+        WHERE score_id = #{scoreId}
+    </select>
+
+    <!-- 查询所有成绩记录 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student_score
+        ORDER BY upload_time DESC
+    </select>
+
+    <!-- 根据条件查询成绩记录 -->
+    <select id="selectByCondition" parameterType="com.exam.entity.StudentScore" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student_score
+        <where>
+            <if test="studentId != null">
+                AND student_id = #{studentId}
+            </if>
+            <if test="examId != null">
+                AND exam_id = #{examId}
+            </if>
+            <if test="score != null">
+                AND score = #{score}
+            </if>
+        </where>
+        ORDER BY upload_time DESC
+    </select>
+
     <!-- 根据学生ID查询成绩列表 -->
     <select id="selectByStudentId" resultMap="BaseResultMap">
         SELECT * FROM student_score WHERE student_id = #{studentId}
@@ -43,7 +105,7 @@
             exam_id,
             score,
             upload_time,
-            RANK() OVER (ORDER BY score DESC) as rank
+            RANK() OVER (ORDER BY score DESC) as `rank`
         FROM student_score
         WHERE exam_id = #{examId}
     </select>
@@ -71,11 +133,11 @@
 
     <!-- 查询学生成绩排名 -->
     <select id="selectStudentRank" resultType="Integer">
-        SELECT rank 
+        SELECT `rank`
         FROM (
-            SELECT 
+            SELECT
                 student_id,
-                RANK() OVER (ORDER BY score DESC) as rank
+                RANK() OVER (ORDER BY score DESC) as `rank`
             FROM student_score
             WHERE exam_id = #{examId}
         ) ranked
@@ -88,7 +150,7 @@
             s.student_id,
             s.name as student_name,
             ss.score,
-            RANK() OVER (ORDER BY ss.score DESC) as rank
+            RANK() OVER (ORDER BY ss.score DESC) as `rank`
         FROM student_score ss
         INNER JOIN student s ON ss.student_id = s.student_id
         INNER JOIN student_class sc ON s.student_id = sc.student_id
@@ -103,7 +165,7 @@
             s.student_id,
             s.name as student_name,
             ss.score,
-            RANK() OVER (ORDER BY ss.score DESC) as rank
+            RANK() OVER (ORDER BY ss.score DESC) as `rank`
         FROM student_score ss
         INNER JOIN student s ON ss.student_id = s.student_id
         WHERE ss.exam_id = #{examId}
@@ -185,7 +247,7 @@
         INNER JOIN student_class sc ON s.student_id = sc.student_id
         INNER JOIN class c ON sc.class_id = c.class_id
         WHERE ss.exam_id = #{examId}
-        AND ss.score < #{passScore}
+        AND CAST(ss.score AS DECIMAL(10,2)) &lt; #{passScore}
     </select>
 
     <!-- 统计学生成绩进步情况 -->
