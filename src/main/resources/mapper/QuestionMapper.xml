@@ -254,9 +254,10 @@
             CAST(SUM(CASE WHEN sqs.score = epq.question_score THEN 1 ELSE 0 END) AS DECIMAL(5,2)) * 100 
             / NULLIF(COUNT(*), 0) as correct_rate
         FROM student_question_score sqs
+        INNER JOIN exam e ON sqs.exam_id = e.exam_id
         INNER JOIN exam_paper_question epq 
             ON sqs.question_id = epq.question_id
-            AND sqs.paper_id = epq.paper_id
+            AND e.paper_id = epq.paper_id
         WHERE sqs.question_id = #{questionId}
     </select>
 
@@ -308,9 +309,10 @@
             MAX(sqs.score / epq.question_score) as max_score_rate
         FROM question q
         INNER JOIN student_question_score sqs ON q.question_id = sqs.question_id
+        INNER JOIN exam e ON sqs.exam_id = e.exam_id
         INNER JOIN exam_paper_question epq 
             ON q.question_id = epq.question_id
-            AND sqs.paper_id = epq.paper_id
+            AND e.paper_id = epq.paper_id
         GROUP BY 
             q.question_id, q.qb_id, q.content, q.answer, q.type, q.difficulty
         HAVING avg_score_rate &lt; 0.6
@@ -339,4 +341,33 @@
         DELETE FROM question
         WHERE qb_id = #{qbId}
     </delete>
+
+    <!-- 根据题型和科目查询题目 -->
+    <select id="selectByTypeAndSubject" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT q.*
+        FROM question q
+        INNER JOIN question_bank qb ON q.qb_id = qb.qb_id
+        WHERE qb.subject_id = #{subjectId}
+        AND q.type = #{type}
+        <if test="minDifficulty != null">
+            AND q.difficulty >= #{minDifficulty}
+        </if>
+        <if test="maxDifficulty != null">
+            AND q.difficulty &lt;= #{maxDifficulty}
+        </if>
+        ORDER BY RAND()
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据科目ID查询题库列表 -->
+    <select id="selectQuestionBanksBySubject" resultType="java.util.Map">
+        SELECT qb.qb_id, qb.qb_name, qb.subject_id,
+               COUNT(q.question_id) as question_count
+        FROM question_bank qb
+        LEFT JOIN question q ON qb.qb_id = q.qb_id
+        WHERE qb.subject_id = #{subjectId}
+        GROUP BY qb.qb_id, qb.qb_name, qb.subject_id
+    </select>
 </mapper>

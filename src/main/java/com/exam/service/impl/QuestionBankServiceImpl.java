@@ -42,7 +42,21 @@ public class QuestionBankServiceImpl implements QuestionBankService {
             return 0;
         }
         
-        return questionBankMapper.insert(questionBank);
+        // 插入题库并获取生成的ID
+        int result = questionBankMapper.insert(questionBank);
+        if (result > 0) {
+            // 确保qbId已经被设置
+            if (questionBank.getQbId() == null || questionBank.getQbId() <= 0) {
+                // 如果没有自动设置ID，则查询获取
+                QuestionBank inserted = questionBankMapper.selectByName(questionBank.getQbName());
+                if (inserted != null) {
+                    questionBank.setQbId(inserted.getQbId());
+                } else {
+                    return 0;
+                }
+            }
+        }
+        return result;
     }
 
     @Override

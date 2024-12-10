@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.math.RoundingMode;
 
 /**
  * 试卷服务实现类
@@ -190,7 +191,7 @@ public class ExamPaperServiceImpl implements ExamPaperService {
     @Transactional
     public ExamPaper generatePaper(Integer subjectId, String paperName, 
                                  BigDecimal difficulty, Map<Integer, Integer> questionTypeCount,
-                                 Map<Integer, BigDecimal> typeScoreRatio) {
+                                 Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId) {
         // 验证题型数量和分数比例
         Map<Integer, BigDecimal> finalScoreRatio = new HashMap<>();
         BigDecimal totalRatio = BigDecimal.ZERO;
@@ -210,12 +211,18 @@ public class ExamPaperServiceImpl implements ExamPaperService {
                 totalRatio = totalRatio.add(ratio);
             }
             
-            // 验证分数比例总和是否为1
+            // 如果总比例不等于1，调整最后一个题型的比例
             if (totalRatio.compareTo(BigDecimal.ONE) != 0) {
-                throw new IllegalArgumentException("题型分数比例之和必须为1");
+                Integer lastType = finalScoreRatio.keySet().stream().max(Integer::compareTo).get();
+                finalScoreRatio.put(lastType, finalScoreRatio.get(lastType)
+                    .add(BigDecimal.ONE.subtract(totalRatio)));
             }
         } else {
-            // 根据题型数量自动计算分数比例
+            // 自动计算分值比例
+            // 计算总题目数量
+            int totalQuestions = questionTypeCount.values().stream().mapToInt(Integer::intValue).sum();
+            
+            // 根据每种题型的题目数量和难度系数计算分值比例
             for (Map.Entry<Integer, Integer> entry : questionTypeCount.entrySet()) {
                 Integer type = entry.getKey();
                 Integer count = entry.getValue();
@@ -224,19 +231,42 @@ public class ExamPaperServiceImpl implements ExamPaperService {
                     continue;
                 }
                 
-                // 计算该题型在总题数中的占比作为分数比例
-                BigDecimal ratio = new BigDecimal(count)
-                    .divide(new BigDecimal(questionTypeCount.values().stream()
-                        .mapToInt(Integer::intValue).sum()), 2, BigDecimal.ROUND_HALF_UP);
+                // 基础分值比例 = 题目数量 / 总题目数量
+                BigDecimal baseRatio = new BigDecimal(count)
+                    .divide(new BigDecimal(totalQuestions), 4, BigDecimal.ROUND_HALF_UP);
+                
+                // 根据题型调整权重
+                BigDecimal weight;
+                switch (type) {
+                    case 0: // 单选题
+                        weight = new BigDecimal("1.0");
+                        break;
+                    case 1: // 多选题
+                        weight = new BigDecimal("1.5");
+                        break;
+                    case 2: // 判断题
+                        weight = new BigDecimal("0.8");
+                        break;
+                    case 3: // 填空题
+                        weight = new BigDecimal("1.2");
+                        break;
+                    case 4: // 简答题
+                        weight = new BigDecimal("2.0");
+                        break;
+                    default:
+                        weight = BigDecimal.ONE;
+                }
+                
+                BigDecimal ratio = baseRatio.multiply(weight);
                 finalScoreRatio.put(type, ratio);
                 totalRatio = totalRatio.add(ratio);
             }
             
-            // 调整最后一个题型的比例，确保总和为1
-            if (totalRatio.compareTo(BigDecimal.ONE) != 0 && !finalScoreRatio.isEmpty()) {
-                Integer lastType = finalScoreRatio.keySet().stream().max(Integer::compareTo).get();
-                finalScoreRatio.put(lastType, finalScoreRatio.get(lastType)
-                    .add(BigDecimal.ONE.subtract(totalRatio)));
+            // 归一化处理，确保总分值比例为1
+            for (Integer type : finalScoreRatio.keySet()) {
+                BigDecimal normalizedRatio = finalScoreRatio.get(type)
+                    .divide(totalRatio, 4, BigDecimal.ROUND_HALF_UP);
+                finalScoreRatio.put(type, normalizedRatio);
             }
         }
         
@@ -244,99 +274,133 @@ public class ExamPaperServiceImpl implements ExamPaperService {
         ExamPaper paper = new ExamPaper();
         paper.setPaperName(paperName);
         paper.setSubjectId(subjectId);
+        paper.setTeacherId(teacherId);
         paper.setPaperStatus(0); // 未发布
         paper.setCreatedTime(new Date());
+        paper.setPaperDifficulty(difficulty); // 设置目标难度系数
         
         // 插入试卷记录
-        int result = examPaperMapper.insert(paper);
-        if (result == 0) {
-            return null;
+        if (examPaperMapper.insert(paper) <= 0) {
+            throw new RuntimeException("创建试卷失败");
         }
         
-        BigDecimal totalDifficultyScore = BigDecimal.ZERO;
-        BigDecimal totalScore = BigDecimal.ZERO;
-        
         // 为每种题型选择题目
-        for (Map.Entry<Integer, Integer> entry : questionTypeCount.entrySet()) {
-            Integer type = entry.getKey();
-            Integer count = entry.getValue();
-            
-            if (count <= 0 || !finalScoreRatio.containsKey(type)) {
+        BigDecimal totalDifficulty = BigDecimal.ZERO;
+        int totalSelectedQuestions = 0;
+        int currentOrder = 1; // 题目顺序从1开始
+        
+        // 用于存储简答题和当前总分
+        List<Map<String, Object>> essayQuestions = new ArrayList<>();
+        BigDecimal currentTotalScore = BigDecimal.ZERO;
+        
+        // 按题型顺序添加题目
+        List<Integer> sortedTypes = new ArrayList<>(questionTypeCount.keySet());
+        Collections.sort(sortedTypes); // 确保题型按顺序处理
+        
+        for (Integer type : sortedTypes) {
+            Integer count = questionTypeCount.get(type);
+            if (count <= 0) {
                 continue;
             }
             
-            // 计算该题型的总分
-            BigDecimal typeScore = new BigDecimal("100").multiply(finalScoreRatio.get(type));
-            // 计算每道题的分���
-            BigDecimal questionScore = typeScore.divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
+            // 查找符合条件的题目
+            Map<String, Object> params = new HashMap<>();
+            params.put("subjectId", subjectId);
+            params.put("type", type);
+            params.put("limit", count * 2); // 多查一些题目以便随机选择
             
-            // 根据难度范围查询题目
-            List<Question> questions = questionMapper.selectByType(type);
-            questions = questions.stream()
-                .filter(q -> q.getDifficulty().compareTo(difficulty.subtract(new BigDecimal("0.2"))) >= 0
-                    && q.getDifficulty().compareTo(difficulty.add(new BigDecimal("0.2"))) <= 0)
-                .collect(java.util.stream.Collectors.toList());
+            System.out.println("开始查询题型" + type + "的题目");
+            System.out.println("查询参数：" + params);
+            System.out.println("科目ID：" + subjectId);
             
-            // 如果题目数量不足，返回null
-            if (questions.size() < count) {
-                return null;
+            // 先查询该科目下的所有题库
+            List<Map<String, Object>> questionBanks = questionMapper.selectQuestionBanksBySubject(subjectId);
+            System.out.println("该科目下的题库：" + questionBanks);
+            
+            List<Question> questions = questionMapper.selectByTypeAndSubject(params);
+            System.out.println("查询到题型" + type + "的题目数量：" + questions.size() + "，需要数量：" + count);
+            if (!questions.isEmpty()) {
+                System.out.println("第一道题目信息：" + questions.get(0));
             }
             
-            // 随机打乱题目列表
-            Collections.shuffle(questions);
+            if (questions.size() < count) {
+                throw new RuntimeException("题型" + type + "的题目数量不足");
+            }
             
             // 随机选择指定数量的题目
+            Collections.shuffle(questions);
             List<Question> selectedQuestions = questions.subList(0, count);
             
-            // 计算选中题目的平均难度
-            BigDecimal avgDifficulty = selectedQuestions.stream()
-                .map(Question::getDifficulty)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(new BigDecimal(count), 2, BigDecimal.ROUND_HALF_UP);
-                
-            // 如果随机选择的题目平均难度偏离目标难度太多，重新选择
-            if (avgDifficulty.subtract(difficulty).abs().compareTo(new BigDecimal("0.2")) > 0) {
-                // 重新按难度排序并选择
-                selectedQuestions = questions.stream()
-                    .sorted((q1, q2) -> {
-                        BigDecimal diff1 = q1.getDifficulty().subtract(difficulty).abs();
-                        BigDecimal diff2 = q2.getDifficulty().subtract(difficulty).abs();
-                        return diff1.compareTo(diff2);
-                    })
-                    .limit(count)
-                    .collect(java.util.stream.Collectors.toList());
+            // 计算每道题的分值
+            BigDecimal typeScore = finalScoreRatio.get(type).multiply(new BigDecimal("100"));
+            
+            // 特殊处理简答题（type=4），将其放到最后处理
+            if (type == 4) {
+                // 先记录简答题信息，稍后处理
+                for (int i = 0; i < selectedQuestions.size(); i++) {
+                    Question question = selectedQuestions.get(i);
+                    Map<String, Object> paperQuestion = new HashMap<>();
+                    paperQuestion.put("paperId", paper.getPaperId());
+                    paperQuestion.put("questionId", question.getQuestionId());
+                    paperQuestion.put("questionOrder", currentOrder++);
+                    essayQuestions.add(paperQuestion);
+                }
+                continue;
             }
             
-            List<Integer> questionIds = selectedQuestions.stream()
-                .map(Question::getQuestionId)
-                .toList();
+            // 处理其他题型
+            BigDecimal baseScore = typeScore.divide(new BigDecimal(count), 4, RoundingMode.HALF_UP);
+            BigDecimal questionScore = baseScore.setScale(2, RoundingMode.HALF_UP);
             
-            // 计算该题型的加权难度
-            BigDecimal typeDifficultyScore = selectedQuestions.stream()
-                .map(q -> q.getDifficulty().multiply(questionScore))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-            
-            totalDifficultyScore = totalDifficultyScore.add(typeDifficultyScore);
-            totalScore = totalScore.add(typeScore);
-            
-            // 批量添加题目到试卷
-            List<BigDecimal> scores = new ArrayList<>(Collections.nCopies(count, questionScore));
-            questionMapper.batchAddToPaper(paper.getPaperId(), questionIds, scores);
+            // 为每道题设置分值并添加到试卷
+            for (int i = 0; i < selectedQuestions.size(); i++) {
+                Question question = selectedQuestions.get(i);
+                
+                // 添加试题到试卷
+                Map<String, Object> paperQuestion = new HashMap<>();
+                paperQuestion.put("paperId", paper.getPaperId());
+                paperQuestion.put("questionId", question.getQuestionId());
+                paperQuestion.put("questionScore", questionScore);
+                paperQuestion.put("questionOrder", currentOrder++);
+                
+                if (examPaperMapper.insertPaperQuestion(paperQuestion) <= 0) {
+                    throw new RuntimeException("添加试题失败");
+                }
+                
+                currentTotalScore = currentTotalScore.add(questionScore);
+            }
         }
         
-        // 计算试卷的平均难度
-        BigDecimal paperDifficulty = totalDifficultyScore.divide(totalScore, 2, BigDecimal.ROUND_HALF_UP);
-        
-        // 检查试卷难度是否在允许范围内
-        if (paperDifficulty.subtract(difficulty).abs().compareTo(new BigDecimal("0.02")) > 0) {
-            // 如果难度不符合要求，删除试卷
-            examPaperMapper.deleteById(paper.getPaperId());
-            return null;
+        // 最后处理简答题分值
+        if (!essayQuestions.isEmpty()) {
+            BigDecimal remainingScore = new BigDecimal("100").subtract(currentTotalScore);
+            BigDecimal essayBaseScore = remainingScore.divide(new BigDecimal(essayQuestions.size()), 2, RoundingMode.HALF_UP);
+            
+            // 为每道简答题设置分值
+            for (int i = 0; i < essayQuestions.size(); i++) {
+                Map<String, Object> paperQuestion = essayQuestions.get(i);
+                if (i == essayQuestions.size() - 1) {
+                    // 最后一道简答题分值 = 剩余总分 - 前面简答题总分
+                    BigDecimal lastScore = remainingScore.subtract(
+                        essayBaseScore.multiply(new BigDecimal(essayQuestions.size() - 1))
+                    );
+                    paperQuestion.put("questionScore", lastScore);
+                } else {
+                    paperQuestion.put("questionScore", essayBaseScore);
+                }
+                
+                if (examPaperMapper.insertPaperQuestion(paperQuestion) <= 0) {
+                    throw new RuntimeException("添加试题失败");
+                }
+            }
         }
         
-        // 更新试卷难度
-        paper.setPaperDifficulty(paperDifficulty);
-        examPaperMapper.update(paper);
+        // 计算实际难度系数
+        if (totalSelectedQuestions > 0) {
+            BigDecimal actualDifficulty = totalDifficulty.divide(new BigDecimal(totalSelectedQuestions), 2, BigDecimal.ROUND_HALF_UP);
+            paper.setPaperDifficulty(actualDifficulty);
+            examPaperMapper.update(paper);
+        }
         
         return paper;
     }

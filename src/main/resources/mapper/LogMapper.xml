@@ -138,7 +138,7 @@
             <if test="userId != null">
                 AND l.user_id = #{userId}
             </if>
-            <if test="actionType != null and actionType != ''">
+            <if test="actionType != null">
                 AND l.action_type = #{actionType}
             </if>
             <if test="objectType != null and objectType != ''">
@@ -415,14 +415,33 @@
 
     <!-- 查询可疑操作日志 -->
     <select id="selectSuspiciousLogs" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List_With_User"/>
+        SELECT DISTINCT l.*
         FROM log l
-        LEFT JOIN user u ON l.user_id = u.user_id
-        WHERE l.status = 'ERROR'
-        OR l.action_description LIKE '%error%'
-        OR l.action_description LIKE '%exception%'
-        OR l.action_description LIKE '%fail%'
-        OR l.action_description LIKE '%denied%'
+        WHERE EXISTS (
+            SELECT 1 
+            FROM log l2 
+            WHERE l2.user_id = l.user_id 
+            AND l2.action_type = 3
+            AND l2.status = 'FAILED'
+            AND l2.created_time >= DATE_SUB(NOW(), INTERVAL 1 HOUR)
+            GROUP BY l2.user_id
+            HAVING COUNT(*) >= 3
+        )
+        OR EXISTS (
+            SELECT 1 
+            FROM log l2 
+            WHERE l2.user_id = l.user_id 
+            AND l2.action_type = 2
+            AND l2.created_time >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+            GROUP BY l2.user_id
+            HAVING COUNT(*) >= 5
+        )
+        OR (HOUR(l.created_time) BETWEEN 0 AND 5 
+            AND l.action_type IN (1, 2, 4)
+            AND l.object_type IN ('SYSTEM', 'PERMISSION'))
+        OR (l.action_type = 4
+            AND l.object_type = 'PERMISSION')
+        OR l.status = 'FAILED'
         ORDER BY l.created_time DESC
     </select>
 

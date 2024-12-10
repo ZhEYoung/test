@@ -3,8 +3,12 @@ package com.exam.service.impl;
 import com.exam.entity.Admin;
 import com.exam.mapper.AdminMapper;
 import com.exam.mapper.UserMapper;
+import com.exam.mapper.ExamMapper;
+import com.exam.mapper.QuestionMapper;
+import com.exam.mapper.SubjectMapper;
 import com.exam.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -22,10 +26,41 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private ExamMapper examMapper;
+
+    @Autowired
+    private QuestionMapper questionMapper;
+
+    @Autowired
+    private SubjectMapper subjectMapper;
+
     // 基础CRUD方法
     @Override
     public int insert(Admin record) {
-        return adminMapper.insert(record);
+        if (record == null) {
+            throw new DataIntegrityViolationException("管理员记录不能为空");
+        }
+
+        if (record.getUserId() == null) {
+            throw new DataIntegrityViolationException("用户ID不能为空");
+        }
+
+        // 检查用户ID是否存在
+        if (userMapper.selectById(record.getUserId()) == null) {
+            throw new DataIntegrityViolationException("关联的用户ID不存在");
+        }
+
+        // 检查是否已经存在该用户的管理员记录
+        if (adminMapper.selectByUserId(record.getUserId()) != null) {
+            throw new DataIntegrityViolationException("该用户已经是管理员");
+        }
+
+        try {
+            return adminMapper.insert(record);
+        } catch (Exception e) {
+            throw new DataIntegrityViolationException("插入管理员记录失败", e);
+        }
     }
 
     @Override
@@ -109,34 +144,31 @@ public class AdminServiceImpl implements AdminService {
         userStats.put("teacherCount", (long) userMapper.selectByRole(1).size());
         userStats.put("studentCount", (long) userMapper.selectByRole(2).size());
         
-        // 计算总用户数
+        // 计算总用户数和活跃用户数
         Long totalUsers = userStats.values().stream().mapToLong(Long::longValue).sum();
         userStats.put("totalUsers", totalUsers);
+        
+        // 统计活跃用户数
+        Map<String, Object> activeCondition = new HashMap<>();
+        activeCondition.put("status", true);
+        userStats.put("activeUsers", userMapper.selectCountByCondition(activeCondition));
         
         return userStats;
     }
 
     @Override
     public Map<String, Object> getSystemResourceStats() {
-        Map<String, Object> resourceStats = new HashMap<>();
+        Map<String, Object> stats = new HashMap<>();
         
-        // 获取系统运行时信息
-        Runtime runtime = Runtime.getRuntime();
+        // 统计考试总数
+        stats.put("totalExams", examMapper.selectAll().size());
         
-        // 内存使用情况
-        long totalMemory = runtime.totalMemory();
-        long freeMemory = runtime.freeMemory();
-        long usedMemory = totalMemory - freeMemory;
+        // 统计题目总数
+        stats.put("totalQuestions", questionMapper.selectCount());
         
-        resourceStats.put("totalMemory", totalMemory);
-        resourceStats.put("usedMemory", usedMemory);
-        resourceStats.put("freeMemory", freeMemory);
-        resourceStats.put("memoryUsagePercent", (double) usedMemory / totalMemory * 100);
+        // 统计科目总数
+        stats.put("totalSubjects", subjectMapper.selectCount());
         
-        // CPU使用情况
-        int processors = runtime.availableProcessors();
-        resourceStats.put("processors", processors);
-        
-        return resourceStats;
+        return stats;
     }
 } 

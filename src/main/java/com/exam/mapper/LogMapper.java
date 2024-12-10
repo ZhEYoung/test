@@ -99,7 +99,7 @@ public interface LogMapper {
      */
     List<Log> selectByConditions(
         @Param("userId") Integer userId,
-        @Param("actionType") String actionType,
+        @Param("actionType") Integer actionType,
         @Param("objectType") String objectType,
         @Param("startTime") Date startTime,
         @Param("endTime") Date endTime,

@@ -168,9 +168,10 @@ public interface ExamPaperService {
      * @param difficulty 难度系数
      * @param questionTypeCount 各题型数量
      * @param typeScoreRatio 各题型分数比例（可选，如果为null则根据题目数量自动计算）
+     * @param teacherId 教师ID
      * @return 组卷结果
      */
     ExamPaper generatePaper(Integer subjectId, String paperName, 
                           BigDecimal difficulty, Map<Integer, Integer> questionTypeCount,
-                          Map<Integer, BigDecimal> typeScoreRatio);
+                          Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId);
 } 

@@ -78,7 +78,8 @@
     <select id="selectByTeacherId" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List"/>
         FROM exam_paper 
-        SELECT * FROM exam_paper WHERE teacher_id = #{teacherId}
+        WHERE teacher_id = #{teacherId}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据试卷名称查询 -->
@@ -388,4 +389,13 @@
         ORDER BY ep.created_time DESC
         LIMIT #{condition.offset}, #{condition.limit}
     </select>
+
+    <!-- 添加题目到试卷 -->
+    <insert id="insertPaperQuestion">
+        INSERT INTO exam_paper_question (
+            paper_id, question_id, question_score, question_order
+        ) VALUES (
+            #{paperId}, #{questionId}, #{questionScore}, #{questionOrder}
+        )
+    </insert>
 </mapper>

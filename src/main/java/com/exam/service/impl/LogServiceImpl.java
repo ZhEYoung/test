@@ -57,7 +57,7 @@ public class LogServiceImpl implements LogService {
     @Override
     public List<Log> selectByCondition(Map<String, Object> condition) {
         Integer userId = (Integer) condition.get("userId");
-        String actionType = (String) condition.get("actionType");
+        Integer actionType = (Integer) condition.get("actionType");
         String objectType = (String) condition.get("objectType");
         Date startTime = (Date) condition.get("startTime");
         Date endTime = (Date) condition.get("endTime");
@@ -75,7 +75,7 @@ public class LogServiceImpl implements LogService {
     public List<Log> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         Integer userId = (Integer) condition.get("userId");
-        String actionType = (String) condition.get("actionType");
+        Integer actionType = (Integer) condition.get("actionType");
         String objectType = (String) condition.get("objectType");
         Date startTime = (Date) condition.get("startTime");
         Date endTime = (Date) condition.get("endTime");

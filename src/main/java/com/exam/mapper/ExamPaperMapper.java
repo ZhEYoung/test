@@ -239,4 +239,11 @@ public interface ExamPaperMapper {
      * @return 试卷列表
      */
     List<ExamPaper> selectPageByCondition(@Param("condition") Map<String, Object> condition);
+
+    /**
+     * 添加题目到试卷
+     * @param params 参数Map，包含paperId、questionId、question_order、questionScore等
+     * @return 影响行数
+     */
+    int insertPaperQuestion(Map<String, Object> params);
 } 

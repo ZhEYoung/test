@@ -254,4 +254,18 @@ public interface QuestionMapper {
      * @return 影响行数
      */
     int deleteByBankId(@Param("qbId") Integer qbId);
+
+    /**
+     * 根据题型和科目查询题目
+     * @param params 查询参数，包含subjectId、type、minDifficulty、maxDifficulty、limit等
+     * @return 题目列表
+     */
+    List<Question> selectByTypeAndSubject(Map<String, Object> params);
+
+    /**
+     * 根据科目ID查询题库列表
+     * @param subjectId 科目ID
+     * @return 题库列表
+     */
+    List<Map<String, Object>> selectQuestionBanksBySubject(@Param("subjectId") Integer subjectId);
 } 
