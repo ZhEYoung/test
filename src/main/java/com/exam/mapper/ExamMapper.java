@@ -10,7 +10,41 @@ import java.util.Date;
  * 考试管理Mapper接口
  */
 @Mapper
-public interface ExamMapper extends BaseMapper<Exam> {
+public interface ExamMapper {
+    
+    /**
+     * 插入考试记录
+     * @param exam 考试实体
+     * @return 影响行数
+     */
+    int insert(Exam exam);
+
+    /**
+     * 根据ID删除考试记录
+     * @param examId 考试ID
+     * @return 影响行数
+     */
+    int deleteById(@Param("examId") Integer examId);
+
+    /**
+     * 更新考试记录
+     * @param exam 考试实体
+     * @return 影响行数
+     */
+    int update(Exam exam);
+
+    /**
+     * 根据ID查询考试
+     * @param examId 考试ID
+     * @return 考试实体
+     */
+    Exam selectById(@Param("examId") Integer examId);
+
+    /**
+     * 查询所有考试
+     * @return 考试列表
+     */
+    List<Exam> selectAll();
     
     /**
      * 根据学科ID查询考试列表
@@ -131,4 +165,5 @@ public interface ExamMapper extends BaseMapper<Exam> {
      * @return 删除结果
      */
     int deleteExamClass(@Param("examId") Integer examId, @Param("classId") Integer classId);
+
 }

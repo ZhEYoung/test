@@ -14,14 +14,72 @@
         <result column="paper_difficulty" property="paperDifficulty"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        paper_id, paper_name, paper_status, subject_id, teacher_id,
+        created_time, exam_type, academic_term, paper_difficulty
+    </sql>
+
+    <!-- 插入试卷记录 -->
+    <insert id="insert" parameterType="com.exam.entity.ExamPaper" useGeneratedKeys="true" keyProperty="paperId">
+        INSERT INTO exam_paper (
+            paper_name, paper_status, subject_id, teacher_id,
+            exam_type, academic_term, paper_difficulty
+        )
+        VALUES (
+            #{paperName}, #{paperStatus}, #{subjectId}, #{teacherId},
+            #{examType}, #{academicTerm}, #{paperDifficulty}
+        )
+    </insert>
+
+    <!-- 根据ID删除试卷 -->
+    <delete id="deleteById">
+        DELETE FROM exam_paper WHERE paper_id = #{paperId}
+    </delete>
+
+    <!-- 更新试卷信息 -->
+    <update id="update" parameterType="com.exam.entity.ExamPaper">
+        UPDATE exam_paper
+        <set>
+            <if test="paperName != null">paper_name = #{paperName},</if>
+            <if test="paperStatus != null">paper_status = #{paperStatus},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="teacherId != null">teacher_id = #{teacherId},</if>
+            <if test="examType != null">exam_type = #{examType},</if>
+            <if test="academicTerm != null">academic_term = #{academicTerm},</if>
+            <if test="paperDifficulty != null">paper_difficulty = #{paperDifficulty}</if>
+        </set>
+        WHERE paper_id = #{paperId}
+    </update>
+
+    <!-- 根据ID查询试卷 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper 
+        WHERE paper_id = #{paperId}
+    </select>
+
+    <!-- 查询所有试卷 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper
+        ORDER BY created_time DESC
+    </select>
+
     <!-- 根据学科ID查询试卷列表 -->
     <select id="selectBySubjectId" resultMap="BaseResultMap">
-        SELECT * FROM exam_paper WHERE subject_id = #{subjectId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper 
+        WHERE subject_id = #{subjectId}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据教师ID查询试卷列表 -->
     <select id="selectByTeacherId" resultMap="BaseResultMap">
-        SELECT * FROM exam_paper WHERE teacher_id = #{teacherId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper 
+        WHERE teacher_id = #{teacherId}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据试卷名称查询 -->
@@ -183,5 +241,161 @@
             #{newPaperId}, question_id, question_order, question_score
         FROM exam_paper_question
         WHERE paper_id = #{sourcePaperId}
+    </insert>
+
+    <!-- 查询总记录数 -->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM exam_paper
+    </select>
+    
+    <!-- 条件查询 -->
+    <select id="selectByCondition" resultType="com.exam.entity.ExamPaper">
+        SELECT 
+            ep.*,
+            s.subject_name,
+            t.name as teacher_name
+        FROM exam_paper ep
+        LEFT JOIN subject s ON ep.subject_id = s.subject_id
+        LEFT JOIN teacher t ON ep.teacher_id = t.teacher_id
+        <where>
+            <if test="subjectId != null">
+                AND ep.subject_id = #{subjectId}
+            </if>
+            <if test="teacherId != null">
+                AND ep.teacher_id = #{teacherId}
+            </if>
+            <if test="paperStatus != null">
+                AND ep.paper_status = #{paperStatus}
+            </if>
+            <if test="examType != null">
+                AND ep.exam_type = #{examType}
+            </if>
+            <if test="minDifficulty != null">
+                AND ep.paper_difficulty >= #{minDifficulty}
+            </if>
+            <if test="maxDifficulty != null">
+                AND ep.paper_difficulty &lt;= #{maxDifficulty}
+            </if>
+            <if test="startTime != null">
+                AND ep.created_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ep.created_time &lt;= #{endTime}
+            </if>
+            <if test="academicTerm != null">
+                AND ep.academic_term = #{academicTerm}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    ep.paper_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR s.subject_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR t.name LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY ep.created_time DESC
+    </select>
+    
+    <!-- 条件查询记录数 -->
+    <select id="selectCountByCondition" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM exam_paper ep
+        LEFT JOIN subject s ON ep.subject_id = s.subject_id
+        LEFT JOIN teacher t ON ep.teacher_id = t.teacher_id
+        <where>
+            <if test="subjectId != null">
+                AND ep.subject_id = #{subjectId}
+            </if>
+            <if test="teacherId != null">
+                AND ep.teacher_id = #{teacherId}
+            </if>
+            <if test="paperStatus != null">
+                AND ep.paper_status = #{paperStatus}
+            </if>
+            <if test="examType != null">
+                AND ep.exam_type = #{examType}
+            </if>
+            <if test="minDifficulty != null">
+                AND ep.paper_difficulty >= #{minDifficulty}
+            </if>
+            <if test="maxDifficulty != null">
+                AND ep.paper_difficulty &lt;= #{maxDifficulty}
+            </if>
+            <if test="startTime != null">
+                AND ep.created_time >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                AND ep.created_time &lt;= #{endTime}
+            </if>
+            <if test="academicTerm != null">
+                AND ep.academic_term = #{academicTerm}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    ep.paper_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR s.subject_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR t.name LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+    </select>
+    
+    <!-- 条件分页查询 -->
+    <select id="selectPageByCondition" resultType="com.exam.entity.ExamPaper">
+        SELECT 
+            ep.*,
+            s.subject_name,
+            t.name as teacher_name
+        FROM exam_paper ep
+        LEFT JOIN subject s ON ep.subject_id = s.subject_id
+        LEFT JOIN teacher t ON ep.teacher_id = t.teacher_id
+        <where>
+            <if test="condition.subjectId != null">
+                AND ep.subject_id = #{condition.subjectId}
+            </if>
+            <if test="condition.teacherId != null">
+                AND ep.teacher_id = #{condition.teacherId}
+            </if>
+            <if test="condition.paperStatus != null">
+                AND ep.paper_status = #{condition.paperStatus}
+            </if>
+            <if test="condition.examType != null">
+                AND ep.exam_type = #{condition.examType}
+            </if>
+            <if test="condition.minDifficulty != null">
+                AND ep.paper_difficulty >= #{condition.minDifficulty}
+            </if>
+            <if test="condition.maxDifficulty != null">
+                AND ep.paper_difficulty &lt;= #{condition.maxDifficulty}
+            </if>
+            <if test="condition.startTime != null">
+                AND ep.created_time >= #{condition.startTime}
+            </if>
+            <if test="condition.endTime != null">
+                AND ep.created_time &lt;= #{condition.endTime}
+            </if>
+            <if test="condition.academicTerm != null">
+                AND ep.academic_term = #{condition.academicTerm}
+            </if>
+            <if test="condition.keyword != null and condition.keyword != ''">
+                AND (
+                    ep.paper_name LIKE CONCAT('%', #{condition.keyword}, '%')
+                    OR s.subject_name LIKE CONCAT('%', #{condition.keyword}, '%')
+                    OR t.name LIKE CONCAT('%', #{condition.keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY ep.created_time DESC
+        LIMIT #{condition.offset}, #{condition.limit}
+    </select>
+
+    <!-- 添加题目到试卷 -->
+    <insert id="insertPaperQuestion">
+        INSERT INTO exam_paper_question (
+            paper_id, question_id, question_score, question_order
+        ) VALUES (
+            #{paperId}, #{questionId}, #{questionScore}, #{questionOrder}
+        )
     </insert>
 </mapper>
