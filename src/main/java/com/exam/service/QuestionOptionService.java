@@ -34,13 +34,13 @@ public interface QuestionOptionService {
      * @param optionId 选项ID
      * @return 选项实体
      */
-    QuestionOption selectById(Integer optionId);
+    QuestionOption getById(Integer optionId);
 
     /**
      * 查询所有选项
      * @return 选项列表
      */
-    List<QuestionOption> selectAll();
+    List<QuestionOption> getAll();
 
     /**
      * 根据题目ID查询选项列表

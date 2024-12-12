@@ -53,7 +53,7 @@ public class AdminServiceTest {
         assertNotNull(testAdmin.getAdminId());
 
         // 测试查询
-        Admin queryAdmin = adminService.selectById(testAdmin.getAdminId());
+        Admin queryAdmin = adminService.getById(testAdmin.getAdminId());
         assertNotNull(queryAdmin);
         assertEquals(testAdmin.getName(), queryAdmin.getName());
         assertEquals(testAdmin.getUserId(), queryAdmin.getUserId());
@@ -65,14 +65,14 @@ public class AdminServiceTest {
         result = adminService.updateById(testAdmin);
         assertEquals(1, result);
         
-        queryAdmin = adminService.selectById(testAdmin.getAdminId());
+        queryAdmin = adminService.getById(testAdmin.getAdminId());
         assertEquals(newName, queryAdmin.getName());
 
         // 测试删除
         result = adminService.deleteById(testAdmin.getAdminId());
         assertEquals(1, result);
         
-        queryAdmin = adminService.selectById(testAdmin.getAdminId());
+        queryAdmin = adminService.getById(testAdmin.getAdminId());
         assertNull(queryAdmin);
     }
 
@@ -82,19 +82,19 @@ public class AdminServiceTest {
         adminService.insert(testAdmin);
 
         // 测试查询所有
-        List<Admin> admins = adminService.selectAll();
+        List<Admin> admins = adminService.getAll();
         assertFalse(admins.isEmpty());
         assertTrue(admins.stream().anyMatch(a -> a.getAdminId().equals(testAdmin.getAdminId())));
 
         // 测试分页查询
-        List<Admin> pagedAdmins = adminService.selectPage(1, 10);
+        List<Admin> pagedAdmins = adminService.getPage(1, 10);
         assertNotNull(pagedAdmins);
         assertFalse(pagedAdmins.isEmpty());
 
         // 测试条件查询
         Map<String, Object> condition = new HashMap<>();
         condition.put("name", testAdmin.getName());
-        List<Admin> conditionAdmins = adminService.selectByCondition(condition);
+        List<Admin> conditionAdmins = adminService.getByCondition(condition);
         assertFalse(conditionAdmins.isEmpty());
         assertEquals(testAdmin.getName(), conditionAdmins.get(0).getName());
     }
@@ -119,7 +119,7 @@ public class AdminServiceTest {
         int result = adminService.updateOther(testAdmin.getAdminId(), newNote);
         assertEquals(1, result);
 
-        Admin updatedAdmin = adminService.selectById(testAdmin.getAdminId());
+        Admin updatedAdmin = adminService.getById(testAdmin.getAdminId());
         assertEquals(newNote, updatedAdmin.getOther());
 
         // 测试批量更新备注信息
@@ -128,7 +128,7 @@ public class AdminServiceTest {
         result = adminService.batchUpdateOther(adminIds, batchNote);
         assertEquals(1, result);
 
-        updatedAdmin = adminService.selectById(testAdmin.getAdminId());
+        updatedAdmin = adminService.getById(testAdmin.getAdminId());
         assertEquals(batchNote, updatedAdmin.getOther());
     }
 
@@ -183,5 +183,58 @@ public class AdminServiceTest {
 
         // 测试删除不存在的管理员
         assertEquals(0, adminService.deleteById(-1));
+    }
+
+    @Test
+    public void testImpersonateUser() {
+        // 插入测试数据
+        adminService.insert(testAdmin);
+
+        // 创建一个测试学生用户
+        User studentUser = new User();
+        studentUser.setUsername("testudent");
+        studentUser.setPassword("password");
+        studentUser.setRole(User.ROLE_STUDENT);
+        studentUser.setStatus(true);
+        studentUser.setEmail("student@test.com");
+        userService.insert(studentUser);
+
+        // 测试成功的模拟登录
+        User impersonatedUser = adminService.impersonateUser(
+            testAdmin.getAdminId(),
+            studentUser.getUserId(),
+            "127.0.0.1",
+            "Test Device"
+        );
+        assertNotNull(impersonatedUser);
+        assertEquals(studentUser.getUsername(), impersonatedUser.getUsername());
+
+        // 测试使用不存在的管理员ID
+        User failedImpersonation1 = adminService.impersonateUser(
+            -1,
+            studentUser.getUserId(),
+            "127.0.0.1",
+            "Test Device"
+        );
+        assertNull(failedImpersonation1);
+
+        // 测试使用不存在的目标用户ID
+        User failedImpersonation2 = adminService.impersonateUser(
+            testAdmin.getAdminId(),
+            -1,
+            "127.0.0.1",
+            "Test Device"
+        );
+        assertNull(failedImpersonation2);
+
+        // 测试目标用户被禁用的情况
+        userService.updateStatus(studentUser.getUserId(), false);
+        User failedImpersonation3 = adminService.impersonateUser(
+            testAdmin.getAdminId(),
+            studentUser.getUserId(),
+            "127.0.0.1",
+            "Test Device"
+        );
+        assertNull(failedImpersonation3);
     }
 } 

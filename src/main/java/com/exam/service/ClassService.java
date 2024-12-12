@@ -5,7 +5,6 @@ import com.exam.entity.Student;
 import com.exam.entity.Exam;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
 
 /**
  * 班级服务接口
@@ -30,37 +29,37 @@ public interface ClassService {
     /**
      * 根据ID查询
      */
-    Class selectById(Integer id);
+    Class getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<Class> selectAll();
+    List<Class> getAll();
 
     /**
      * 分页查询
      */
-    List<Class> selectPage(Integer pageNum, Integer pageSize);
+    List<Class> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<Class> selectByCondition(Map<String, Object> condition);
+    List<Class> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<Class> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<Class> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据教师ID查询班级列表

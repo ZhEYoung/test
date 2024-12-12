@@ -29,37 +29,37 @@ public interface StudentScoreService {
     /**
      * 根据ID查询
      */
-    StudentScore selectById(Integer id);
+    StudentScore getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<StudentScore> selectAll();
+    List<StudentScore> getAll();
 
     /**
      * 分页查询
      */
-    List<StudentScore> selectPage(Integer pageNum, Integer pageSize);
+    List<StudentScore> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<StudentScore> selectByCondition(Map<String, Object> condition);
+    List<StudentScore> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<StudentScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<StudentScore> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学生ID查询成绩列表

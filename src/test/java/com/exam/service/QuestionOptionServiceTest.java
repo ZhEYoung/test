@@ -87,7 +87,7 @@ public class QuestionOptionServiceTest {
         assertNotNull(testOption.getOptionId());
 
         // 测试查询
-        QuestionOption queryOption = questionOptionService.selectById(testOption.getOptionId());
+        QuestionOption queryOption = questionOptionService.getById(testOption.getOptionId());
         assertNotNull(queryOption);
         assertEquals(testOption.getQuestionId(), queryOption.getQuestionId());
         assertEquals(testOption.getContent(), queryOption.getContent());
@@ -100,7 +100,7 @@ public class QuestionOptionServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        queryOption = questionOptionService.selectById(testOption.getOptionId());
+        queryOption = questionOptionService.getById(testOption.getOptionId());
         assertEquals("Updated Option Content", queryOption.getContent());
         assertFalse(queryOption.getIsCorrect());
     }
@@ -117,7 +117,7 @@ public class QuestionOptionServiceTest {
             o.getContent().equals(testOption.getContent())));
 
         // 测试查询所有记录
-        List<QuestionOption> allOptions = questionOptionService.selectAll();
+        List<QuestionOption> allOptions = questionOptionService.getAll();
         assertFalse(allOptions.isEmpty());
         assertTrue(allOptions.stream().anyMatch(o -> 
             o.getContent().equals(testOption.getContent())));
@@ -133,7 +133,7 @@ public class QuestionOptionServiceTest {
         assertEquals(1, result);
 
         // 验证删除结果
-        QuestionOption deletedOption = questionOptionService.selectById(testOption.getOptionId());
+        QuestionOption deletedOption = questionOptionService.getById(testOption.getOptionId());
         assertNull(deletedOption);
     }
 
@@ -169,7 +169,7 @@ public class QuestionOptionServiceTest {
         questionService.deleteById(testQuestion.getQuestionId());
 
         // 验证相关选项是否被正确处理
-        QuestionOption queryOption = questionOptionService.selectById(testOption.getOptionId());
+        QuestionOption queryOption = questionOptionService.getById(testOption.getOptionId());
         assertNull(queryOption); // 选项应该被删除
     }
 
@@ -182,7 +182,7 @@ public class QuestionOptionServiceTest {
         questionBankService.deleteById(testQuestionBank.getQbId());
 
         // 验证相关选项是否被正确处理
-        QuestionOption queryOption = questionOptionService.selectById(testOption.getOptionId());
+        QuestionOption queryOption = questionOptionService.getById(testOption.getOptionId());
         assertNull(queryOption); // 选项应该被删除，因为题目也会被删除
     }
 
@@ -195,7 +195,7 @@ public class QuestionOptionServiceTest {
         subjectService.deleteById(testSubject.getSubjectId());
 
         // 验证相关选项是否被正确处理
-        QuestionOption queryOption = questionOptionService.selectById(testOption.getOptionId());
+        QuestionOption queryOption = questionOptionService.getById(testOption.getOptionId());
         assertNull(queryOption); // 选项应该被删除，因为题库和题目都会被删除
     }
 } 

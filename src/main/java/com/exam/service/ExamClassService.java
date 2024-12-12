@@ -30,37 +30,37 @@ public interface ExamClassService {
     /**
      * 根据ID查询
      */
-    ExamClass selectById(Integer id);
+    ExamClass getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<ExamClass> selectAll();
+    List<ExamClass> getAll();
 
     /**
      * 分页查询
      */
-    List<ExamClass> selectPage(Integer pageNum, Integer pageSize);
+    List<ExamClass> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<ExamClass> selectByCondition(Map<String, Object> condition);
+    List<ExamClass> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<ExamClass> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<ExamClass> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 批量插入考试-班级关联记录

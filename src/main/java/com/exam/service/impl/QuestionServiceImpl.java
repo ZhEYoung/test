@@ -47,14 +47,10 @@ public class QuestionServiceImpl implements QuestionService {
         // 验证难度值
         if (record.getDifficulty() == null || 
             record.getDifficulty().compareTo(BigDecimal.ZERO) < 0 || 
-            record.getDifficulty().compareTo(BigDecimal.ONE) > 0) {
+            record.getDifficulty().compareTo(BigDecimal.TEN) > 0) {
             return 0;
         }
 
-        // 验证分数
-        if (record.getScore() == null || record.getScore().compareTo(BigDecimal.ZERO) <= 0) {
-            return 0;
-        }
 
         int result = questionMapper.insert(record);
         if (result > 0 && record.getOptions() != null && !record.getOptions().isEmpty()) {
@@ -80,7 +76,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public Question selectById(Integer id) {
+    public Question getById(Integer id) {
         Question question = questionMapper.selectById(id);
         if (question != null) {
             // 加载题目选项
@@ -90,7 +86,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public List<Question> selectAll() {
+    public List<Question> getAll() {
         List<Question> questions = questionMapper.selectAll();
         // 加载所有题目的选项
         for (Question question : questions) {
@@ -258,7 +254,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public List<Question> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Question> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         List<Question> questions = questionMapper.selectPage(offset, pageSize);
         // 加载所有题目的选项
@@ -269,12 +265,12 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return questionMapper.selectCount();
     }
 
     @Override
-    public List<Question> selectByCondition(Map<String, Object> condition) {
+    public List<Question> getByCondition(Map<String, Object> condition) {
         List<Question> questions = questionMapper.selectByCondition(condition);
         // 加载所有题目的选项
         for (Question question : questions) {
@@ -284,12 +280,12 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return questionMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Question> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         List<Question> questions = questionMapper.selectPageByCondition(condition, offset, pageSize);
         // 加载所有题目的选项

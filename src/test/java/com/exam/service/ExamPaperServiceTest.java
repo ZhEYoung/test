@@ -105,7 +105,7 @@ public class ExamPaperServiceTest {
         assertNotNull(testPaper.getPaperId());
 
         // 测试查询
-        ExamPaper queried = examPaperService.selectById(testPaper.getPaperId());
+        ExamPaper queried = examPaperService.getById(testPaper.getPaperId());
         assertNotNull(queried);
         assertEquals(testPaper.getPaperName(), queried.getPaperName());
 
@@ -114,21 +114,21 @@ public class ExamPaperServiceTest {
         testPaper.setPaperName(newName);
         result = examPaperService.updateById(testPaper);
         assertTrue(result > 0);
-        queried = examPaperService.selectById(testPaper.getPaperId());
+        queried = examPaperService.getById(testPaper.getPaperId());
         assertEquals(newName, queried.getPaperName());
 
         // 测试查询所有
-        List<ExamPaper> papers = examPaperService.selectAll();
+        List<ExamPaper> papers = examPaperService.getAll();
         assertFalse(papers.isEmpty());
 
         // 测试分页查询
-        List<ExamPaper> pagedPapers = examPaperService.selectPage(1, 10);
+        List<ExamPaper> pagedPapers = examPaperService.getPage(1, 10);
         assertNotNull(pagedPapers);
 
         // 测试条件查询
         Map<String, Object> condition = new HashMap<>();
         condition.put("subjectId", testSubject.getSubjectId());
-        List<ExamPaper> conditionPapers = examPaperService.selectByCondition(condition);
+        List<ExamPaper> conditionPapers = examPaperService.getByCondition(condition);
         assertFalse(conditionPapers.isEmpty());
     }
 
@@ -142,7 +142,7 @@ public class ExamPaperServiceTest {
         assertTrue(result > 0);
 
         // 验证状态更新
-        ExamPaper updated = examPaperService.selectById(testPaper.getPaperId());
+        ExamPaper updated = examPaperService.getById(testPaper.getPaperId());
         assertEquals(1, updated.getPaperStatus());
 
         // 测试根据状态查询
@@ -400,7 +400,7 @@ public class ExamPaperServiceTest {
         System.out.println("科目ID：" + questionBank.getSubjectId());
         
         // 验证科目是否存在
-        Subject subject = subjectService.selectById(testSubject.getSubjectId());
+        Subject subject = subjectService.getById(testSubject.getSubjectId());
         System.out.println("科目信息：" + subject);
         
         int result = questionBankService.insert(questionBank);

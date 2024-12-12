@@ -199,6 +199,37 @@
     <!-- 删除考试班级关联 -->
     <delete id="deleteExamClass">
         DELETE FROM exam_class 
-        WHERE exam_id = #{examId} AND class_id = #{classId}
+        <where>
+            <if test="examId != null">
+                AND exam_id = #{examId}
+            </if>
+            <if test="classId != null">
+                AND class_id = #{classId}
+            </if>
+        </where>
     </delete>
+
+    <select id="selectTeacherPermission" resultType="java.lang.Integer">
+        SELECT permission
+        FROM teacher
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <select id="selectTeacherInfo" resultType="java.util.Map">
+        SELECT t.permission, t.college_id
+        FROM teacher t
+        WHERE t.teacher_id = #{teacherId}
+    </select>
+
+    <select id="selectSubjectCollegeId" resultType="java.lang.Integer">
+        SELECT college_id
+        FROM subject
+        WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 插入考试-班级关联 -->
+    <insert id="insertExamClass" parameterType="java.util.Map">
+        INSERT INTO exam_class (exam_id, class_id, create_time)
+        VALUES (#{examId}, #{classId}, NOW())
+    </insert>
 </mapper>

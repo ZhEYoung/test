@@ -1,5 +1,8 @@
 package com.exam.service.impl;
 
+import com.exam.entity.Exam;
+import com.exam.entity.ExamStudent;
+import com.exam.entity.StudentScore;
 import com.exam.service.ExamStudentService;
 import com.exam.mapper.ExamStudentMapper;
 import com.exam.mapper.ExamMapper;
@@ -8,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
+import java.math.BigDecimal;
 
 /**
  * 考试-学生服务实现类
@@ -27,11 +31,35 @@ public class ExamStudentServiceImpl implements ExamStudentService {
 
     @Override
     public int recordStartExam(Integer examId, Integer studentId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("examId", examId);
-        params.put("studentId", studentId);
-        params.put("startTime", new Date());
-        return examStudentMapper.updateStartTime(params);
+        // 先查询考试信息
+        Exam exam = examMapper.selectById(examId);
+        if (exam != null && exam.getExamType() == 1) { // 重考考试
+            // 检查学生是否需要重考
+            ExamStudent examStudent = examStudentMapper.selectByExamAndStudent(examId, studentId);
+            if (examStudent == null || !examStudent.getRetakeNeeded()) {
+                // 查询原始考试成绩
+                List<StudentScore> scores = studentScoreMapper.selectByStudentId(studentId);
+                boolean isEligible = false;
+                for (StudentScore score : scores) {
+                    if (score.getScore() != null && score.getScore().compareTo(new BigDecimal("60")) < 0) {
+                        // 找到不及格成绩，标记需要重考
+                        markRetakeNeeded(examId, studentId);
+                        isEligible = true;
+                        break;
+                    }
+                }
+                if (!isEligible) {
+                    throw new RuntimeException("Student is not eligible for retake exam");
+                }
+            }
+        }
+        
+        // 记录开始考试时间
+        ExamStudent record = new ExamStudent();
+        record.setExamId(examId);
+        record.setStudentId(studentId);
+        record.setStudentStartTime(new Date());
+        return examStudentMapper.insert(record);
     }
 
     @Override
@@ -131,5 +159,103 @@ public class ExamStudentServiceImpl implements ExamStudentService {
     @Override
     public int countAbsentStudents(Integer examId) {
         return examStudentMapper.countAbsentStudents(examId);
+    }
+
+    @Override
+    public int updateExamTime(Integer examId, Integer studentId, Date startTime, Date submitTime) {
+        return examStudentMapper.updateExamTime(examId, studentId, startTime, submitTime);
+    }
+
+    @Override
+    public List<ExamStudent> getNeedRetakeStudents(Integer examId) {
+        return examStudentMapper.selectNeedRetakeStudents(examId);
+    }
+
+    @Override
+    public List<ExamStudent> getStudentRetakeExams(Integer studentId) {
+        return examStudentMapper.selectStudentRetakeExams(studentId);
+    }
+
+    @Override
+    public List<Map<String, Object>> getRetakeStudentsBySubject(
+            Integer subjectId,
+            Integer teacherId,
+            String studentName,
+            Date examTimeStart,
+            Date examTimeEnd) {
+        // 查询教师权限和所属学院
+        Map<String, Object> teacherInfo = examMapper.selectTeacherInfo(teacherId);
+        if (teacherInfo == null) {
+            return Collections.emptyList();
+        }
+        
+        Integer teacherPermission = (Integer) teacherInfo.get("permission");
+        Integer collegeId = (Integer) teacherInfo.get("college_id");
+        
+        // 如果教师权限为0，可以查看本学院所有需要重考的学生
+        if (teacherPermission != null && teacherPermission == 0) {
+            // 检查科目是否属于教师所在学院
+            Integer subjectCollegeId = examMapper.selectSubjectCollegeId(subjectId);
+            if (!collegeId.equals(subjectCollegeId)) {
+                return Collections.emptyList();
+            }
+            
+            return examStudentMapper.selectRetakeStudentsBySubject(
+                subjectId,
+                null, // 不限制教师ID
+                collegeId, // 限制学院
+                studentName,
+                examTimeStart,
+                examTimeEnd
+            );
+        }
+        
+        // 其他权限的教师只能查看自己负责的考试的重考学生
+        return examStudentMapper.selectRetakeStudentsBySubject(
+            subjectId,
+            teacherId,
+            null, // 不限制学院
+            studentName,
+            examTimeStart,
+            examTimeEnd
+        );
+    }
+
+    @Override
+    public Map<String, Object> countRetakeBySubject(Integer subjectId, Integer teacherId) {
+        return examStudentMapper.countRetakeBySubject(subjectId, teacherId);
+    }
+
+    @Override
+    public int markRetakeNeeded(Integer examId, Integer studentId) {
+        // 先查询考试-学生关联记录
+        ExamStudent examStudent = examStudentMapper.selectByExamAndStudent(examId, studentId);
+        if (examStudent == null) {
+            // 如果不存在关联记录，需要先创建一个
+            examStudent = new ExamStudent();
+            examStudent.setExamId(examId);
+            examStudent.setStudentId(studentId);
+            examStudent.setRetakeNeeded(true);
+            return examStudentMapper.insert(examStudent);
+        }
+        
+        // 更新重考状态，保持其他状态不变
+        return examStudentMapper.updateStatus(
+            examStudent.getEsId(),      
+            examStudent.getAbsent(),    
+            true,                       // 设置需要重考
+            examStudent.getDisciplinary(),
+            examStudent.getTeacherComment()
+        );
+    }
+
+    @Override
+    public List<ExamStudent> getByExamId(Integer examId) {
+        return examStudentMapper.selectByExamId(examId);
+    }
+
+    @Override
+    public int deleteById(Integer esId) {
+        return examStudentMapper.deleteById(esId);
     }
 } 

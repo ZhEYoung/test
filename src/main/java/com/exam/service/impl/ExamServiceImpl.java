@@ -2,15 +2,22 @@ package com.exam.service.impl;
 
 import com.exam.entity.Exam;
 import com.exam.entity.StudentScore;
+import com.exam.entity.Teacher;
+import com.exam.entity.ExamPaper;
+import com.exam.entity.Class;
 import com.exam.mapper.ExamMapper;
 import com.exam.mapper.ExamStudentMapper;
 import com.exam.mapper.StudentScoreMapper;
 import com.exam.service.ExamService;
+import com.exam.service.TeacherService;
+import com.exam.service.ExamPaperService;
+import com.exam.service.ClassService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 /**
  * 考试服务实现类
@@ -27,6 +34,15 @@ public class ExamServiceImpl implements ExamService {
     
     @Autowired
     private StudentScoreMapper studentScoreMapper;
+    
+    @Autowired
+    private TeacherService teacherService;
+    
+    @Autowired
+    private ExamPaperService examPaperService;
+    
+    @Autowired
+    private ClassService classService;
 
     @Override
     public int insert(Exam record) {
@@ -44,28 +60,28 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public Exam selectById(Integer id) {
+    public Exam getById(Integer id) {
         return examMapper.selectById(id);
     }
 
     @Override
-    public List<Exam> selectAll() {
+    public List<Exam> getAll() {
         return examMapper.selectAll();
     }
 
     @Override
-    public List<Exam> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Exam> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return examMapper.selectByConditions(null, null, null, null, null, null, offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return examMapper.countByTimeRange(null, null);
     }
 
     @Override
-    public List<Exam> selectByCondition(Map<String, Object> condition) {
+    public List<Exam> getByCondition(Map<String, Object> condition) {
         Integer subjectId = (Integer) condition.get("subjectId");
         Integer teacherId = (Integer) condition.get("teacherId");
         Integer examType = (Integer) condition.get("examType");
@@ -80,17 +96,17 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         Date startTime = (Date) condition.get("startTime");
         Date endTime = (Date) condition.get("endTime");
         return examMapper.countByTimeRange(startTime, endTime);
     }
 
     @Override
-    public List<Exam> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Exam> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         condition.put("offset", (pageNum - 1) * pageSize);
         condition.put("limit", pageSize);
-        return selectByCondition(condition);
+        return getByCondition(condition);
     }
 
     @Override
@@ -322,5 +338,83 @@ public class ExamServiceImpl implements ExamService {
         progress.put("absentStudents", absentStudents);
         
         return progress;
+    }
+
+    @Override
+    @Transactional
+    public Exam publishFinalExam(Integer teacherId, Integer subjectId, Integer classId, Date academicTerm) {
+        // 1. 验证教师权限
+        Teacher teacher = teacherService.getById(teacherId);
+        if (teacher == null || teacher.getPermission() != 0) {
+            throw new RuntimeException("权限不足，只有管理员教师可以发布期末考试");
+        }
+
+        // 2. 查找符合条件的期末试卷（同学科同学期的期末试卷）
+        Map<String, Object> condition = new HashMap<>();
+        condition.put("subjectId", subjectId);
+        condition.put("examType", 0); // 期末试卷
+        condition.put("academicTerm", academicTerm);
+        condition.put("paperStatus", 0); // 未发布状态
+        List<ExamPaper> finalPapers = examPaperService.getByCondition(condition);
+
+        // 3. 验证试卷数量
+        if (finalPapers == null || finalPapers.size() < 2) {
+            throw new RuntimeException("期末试卷数量不足，需要至少2份同学科同学期的期末试卷");
+        }
+
+        // 4. 随机选择一份试卷
+        Random random = new Random();
+        ExamPaper selectedPaper = finalPapers.get(random.nextInt(finalPapers.size()));
+
+        // 5. 创建期末考试
+        Exam finalExam = new Exam();
+        finalExam.setExamName("期末考试-" + selectedPaper.getPaperName());
+        finalExam.setSubjectId(subjectId);
+        finalExam.setPaperId(selectedPaper.getPaperId());
+        finalExam.setTeacherId(teacherId);
+        finalExam.setExamStatus(0); // 未开始
+        finalExam.setExamType(0); // 正常考试
+        
+        // 设置考试时间（默认设置为7天后，考试时长120分钟）
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 7);
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
+        finalExam.setExamStartTime(calendar.getTime());
+        
+        calendar.add(Calendar.MINUTE, 120);
+        finalExam.setExamEndTime(calendar.getTime());
+        finalExam.setExamDuration(120);
+        finalExam.setCreatedTime(new Date());
+
+        // 6. 保存考试信息
+        if (examMapper.insert(finalExam) <= 0) {
+            throw new RuntimeException("创建期末考试失败");
+        }
+
+        // 7. 创建考试-班级关联
+        Map<String, Object> examClass = new HashMap<>();
+        examClass.put("examId", finalExam.getExamId());
+        examClass.put("classId", classId);
+        examMapper.insertExamClass(examClass);
+
+        // 8. 更新所有相关期末试卷状态为已发布
+        List<Integer> paperIds = finalPapers.stream()
+            .map(ExamPaper::getPaperId)
+            .collect(Collectors.toList());
+        examPaperService.batchUpdateStatus(paperIds, 1);
+
+        // 9. 更新班级期末考试状态
+        Class classInfo = new Class();
+        classInfo.setClassId(classId);
+        classInfo.setFinalExam(Boolean.TRUE);
+        classService.updateById(classInfo);
+
+        return finalExam;
+    }
+
+    @Override
+    @Transactional
+    public int deleteExamClassByClassId(Integer classId) {
+        return examMapper.deleteExamClass(null,classId);
     }
 } 

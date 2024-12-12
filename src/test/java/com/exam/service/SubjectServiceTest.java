@@ -48,7 +48,7 @@ public class SubjectServiceTest {
         assertNotNull(testSubject.getSubjectId());
 
         // 测试查询
-        Subject querySubject = subjectService.selectById(testSubject.getSubjectId());
+        Subject querySubject = subjectService.getById(testSubject.getSubjectId());
         assertNotNull(querySubject);
         assertEquals(testSubject.getSubjectName(), querySubject.getSubjectName());
         assertEquals(testSubject.getCollegeId(), querySubject.getCollegeId());
@@ -61,7 +61,7 @@ public class SubjectServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        querySubject = subjectService.selectById(testSubject.getSubjectId());
+        querySubject = subjectService.getById(testSubject.getSubjectId());
         assertEquals("Updated Subject", querySubject.getSubjectName());
         assertEquals("Updated Description", querySubject.getDescription());
     }
@@ -83,7 +83,7 @@ public class SubjectServiceTest {
             s.getSubjectName().equals(testSubject.getSubjectName())));
 
         // 测试查询所有记录
-        List<Subject> allSubjects = subjectService.selectAll();
+        List<Subject> allSubjects = subjectService.getAll();
         assertFalse(allSubjects.isEmpty());
         assertTrue(allSubjects.stream().anyMatch(s -> 
             s.getSubjectName().equals(testSubject.getSubjectName())));
@@ -99,7 +99,7 @@ public class SubjectServiceTest {
         assertEquals(1, result);
 
         // 验证删除结果
-        Subject deletedSubject = subjectService.selectById(testSubject.getSubjectId());
+        Subject deletedSubject = subjectService.getById(testSubject.getSubjectId());
         assertNull(deletedSubject);
     }
 
@@ -136,10 +136,10 @@ public class SubjectServiceTest {
         assertEquals(0, result);
 
         // 验证学院和学科都还存在
-        College queryCollege = collegeService.selectById(testCollege.getCollegeId());
+        College queryCollege = collegeService.getById(testCollege.getCollegeId());
         assertNotNull(queryCollege);
         
-        Subject querySubject = subjectService.selectById(testSubject.getSubjectId());
+        Subject querySubject = subjectService.getById(testSubject.getSubjectId());
         assertNotNull(querySubject);
         assertEquals(testCollege.getCollegeId(), querySubject.getCollegeId());
     }

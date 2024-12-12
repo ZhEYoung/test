@@ -39,38 +39,38 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public Class selectById(Integer id) {
+    public Class getById(Integer id) {
         return classMapper.selectById(id);
     }
 
     @Override
-    public List<Class> selectAll() {
+    public List<Class> getAll() {
         return classMapper.selectAll();
     }
 
     @Override
-    public List<Class> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Class> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return classMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return classMapper.selectCount();
     }
 
     @Override
-    public List<Class> selectByCondition(Map<String, Object> condition) {
+    public List<Class> getByCondition(Map<String, Object> condition) {
         return classMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return classMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<Class> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Class> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return classMapper.selectPageByCondition(condition, offset, pageSize);
     }

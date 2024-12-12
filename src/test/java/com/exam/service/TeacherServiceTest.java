@@ -69,7 +69,7 @@ public class TeacherServiceTest {
         assertNotNull(testTeacher.getTeacherId());
 
         // 测试查询
-        Teacher queryTeacher = teacherService.selectById(testTeacher.getTeacherId());
+        Teacher queryTeacher = teacherService.getById(testTeacher.getTeacherId());
         assertNotNull(queryTeacher);
         assertEquals(testTeacher.getName(), queryTeacher.getName());
         assertEquals(testTeacher.getUserId(), queryTeacher.getUserId());
@@ -83,7 +83,7 @@ public class TeacherServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        queryTeacher = teacherService.selectById(testTeacher.getTeacherId());
+        queryTeacher = teacherService.getById(testTeacher.getTeacherId());
         assertEquals("Updated Teacher", queryTeacher.getName());
         assertEquals(1, queryTeacher.getPermission());
     }
@@ -94,18 +94,18 @@ public class TeacherServiceTest {
         teacherService.insert(testTeacher);
 
         // 测试按用户ID查询
-        Teacher queryTeacher = teacherService.selectByUserId(testUser.getUserId());
+        Teacher queryTeacher = teacherService.getByUserId(testUser.getUserId());
         assertNotNull(queryTeacher);
         assertEquals(testTeacher.getName(), queryTeacher.getName());
 
         // 测试按学院ID查询
-        List<Teacher> collegeTeachers = teacherService.selectByCollegeId(testCollege.getCollegeId());
+        List<Teacher> collegeTeachers = teacherService.getByCollegeId(testCollege.getCollegeId());
         assertFalse(collegeTeachers.isEmpty());
         assertTrue(collegeTeachers.stream().anyMatch(t -> 
             t.getName().equals(testTeacher.getName())));
 
         // 测试查询所有记录
-        List<Teacher> allTeachers = teacherService.selectAll();
+        List<Teacher> allTeachers = teacherService.getAll();
         assertFalse(allTeachers.isEmpty());
         assertTrue(allTeachers.stream().anyMatch(t -> 
             t.getName().equals(testTeacher.getName())));
@@ -117,7 +117,7 @@ public class TeacherServiceTest {
         teacherService.insert(testTeacher);
 
         // 确保用户是启用状态
-        User activeUser = userService.selectById(testUser.getUserId());
+        User activeUser = userService.getById(testUser.getUserId());
         assertNotNull(activeUser);
         assertTrue(activeUser.getStatus());
 
@@ -126,12 +126,12 @@ public class TeacherServiceTest {
         assertEquals(1, result);
 
         // 验证用户被禁用
-        User queryUser = userService.selectById(testUser.getUserId());
+        User queryUser = userService.getById(testUser.getUserId());
         assertNotNull(queryUser);
         assertFalse(queryUser.getStatus());
 
         // 验证教师记录被保留
-        Teacher queryTeacher = teacherService.selectById(testTeacher.getTeacherId());
+        Teacher queryTeacher = teacherService.getById(testTeacher.getTeacherId());
         assertNotNull(queryTeacher);
 
         // 测试重复禁用
@@ -180,10 +180,10 @@ public class TeacherServiceTest {
         assertEquals(0, result);
 
         // 验证学院和教师都还存在
-        College queryCollege = collegeService.selectById(testCollege.getCollegeId());
+        College queryCollege = collegeService.getById(testCollege.getCollegeId());
         assertNotNull(queryCollege);
         
-        Teacher queryTeacher = teacherService.selectById(testTeacher.getTeacherId());
+        Teacher queryTeacher = teacherService.getById(testTeacher.getTeacherId());
         assertNotNull(queryTeacher);
         assertEquals(testCollege.getCollegeId(), queryTeacher.getCollegeId());
     }

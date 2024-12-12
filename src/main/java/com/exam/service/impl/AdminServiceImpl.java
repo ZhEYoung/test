@@ -1,11 +1,14 @@
 package com.exam.service.impl;
 
 import com.exam.entity.Admin;
+import com.exam.entity.Log;
+import com.exam.entity.User;
 import com.exam.mapper.AdminMapper;
 import com.exam.mapper.UserMapper;
 import com.exam.mapper.ExamMapper;
 import com.exam.mapper.QuestionMapper;
 import com.exam.mapper.SubjectMapper;
+import com.exam.mapper.LogMapper;
 import com.exam.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,6 +37,9 @@ public class AdminServiceImpl implements AdminService {
 
     @Autowired
     private SubjectMapper subjectMapper;
+
+    @Autowired
+    private LogMapper logMapper;
 
     // 基础CRUD方法
     @Override
@@ -74,38 +80,38 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public Admin selectById(Integer id) {
+    public Admin getById(Integer id) {
         return adminMapper.selectById(id);
     }
 
     @Override
-    public List<Admin> selectAll() {
+    public List<Admin> getAll() {
         return adminMapper.selectAll();
     }
 
     @Override
-    public List<Admin> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Admin> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return adminMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return adminMapper.selectCount();
     }
 
     @Override
-    public List<Admin> selectByCondition(Map<String, Object> condition) {
+    public List<Admin> getByCondition(Map<String, Object> condition) {
         return adminMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return adminMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<Admin> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Admin> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return adminMapper.selectPageByCondition(condition, offset, pageSize);
     }
@@ -145,10 +151,11 @@ public class AdminServiceImpl implements AdminService {
         userStats.put("studentCount", (long) userMapper.selectByRole(2).size());
         
         // 计算总用户数和活跃用户数
-        Long totalUsers = userStats.values().stream().mapToLong(Long::longValue).sum();
-        userStats.put("totalUsers", totalUsers);
+        userStats.put("totalUsers", userStats.get("adminCount") + 
+                                  userStats.get("teacherCount") + 
+                                  userStats.get("studentCount"));
         
-        // 统计活跃用户数
+        // 使用条件查询获取活跃用户数
         Map<String, Object> activeCondition = new HashMap<>();
         activeCondition.put("status", true);
         userStats.put("activeUsers", userMapper.selectCountByCondition(activeCondition));
@@ -159,16 +166,52 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Map<String, Object> getSystemResourceStats() {
         Map<String, Object> stats = new HashMap<>();
-        
-        // 统计考试总数
         stats.put("totalExams", examMapper.selectAll().size());
-        
-        // 统计题目总数
         stats.put("totalQuestions", questionMapper.selectCount());
-        
-        // 统计科目总数
         stats.put("totalSubjects", subjectMapper.selectCount());
-        
         return stats;
+    }
+
+    @Override
+    @Transactional
+    public User impersonateUser(Integer adminId, Integer targetUserId, String ipAddress, String deviceInfo) {
+        // 1. 验证管理员身份
+        Admin admin = adminMapper.selectById(adminId);
+        if (admin == null) {
+            System.out.println("管理员不存在");
+            return null;
+        }
+
+        // 2. 验证目标用户
+        User targetUser = userMapper.selectById(targetUserId);
+        if (targetUser == null) {
+            System.out.println("目标用户不存在");
+            return null;
+        }
+
+        // 3. 检查目标用户状态
+        if (!targetUser.getStatus()) {
+            System.out.println("目标用户已被禁用");
+            return null;
+        }
+
+        // 4. 记录模拟登录日志
+        Log log = new Log();
+        log.setUserId(admin.getUserId());
+        log.setActionType(6); // 假设6代表模拟登录操作
+        log.setActionDescription("管理员[" + admin.getName() + "]模拟登录用户: " + targetUser.getUsername());
+        log.setObjectType("USER");
+        log.setIpAddress(ipAddress);
+        log.setDeviceInfo(deviceInfo);
+        log.setStatus("SUCCESS");
+        log.setCreatedTime(new Date());
+        
+        try {
+            logMapper.insert(log);
+            return targetUser;
+        } catch (Exception e) {
+            System.out.println("记录模拟登录日志失败");
+            return null;
+        }
     }
 } 

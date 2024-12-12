@@ -4,7 +4,6 @@ import com.exam.entity.StudentQuestionScore;
 import java.util.List;
 import java.util.Map;
 import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * 学生题目得分服务接口
@@ -29,37 +28,37 @@ public interface StudentQuestionScoreService {
     /**
      * 根据ID查询
      */
-    StudentQuestionScore selectById(Integer id);
+    StudentQuestionScore getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<StudentQuestionScore> selectAll();
+    List<StudentQuestionScore> getAll();
 
     /**
      * 分页查询
      */
-    List<StudentQuestionScore> selectPage(Integer pageNum, Integer pageSize);
+    List<StudentQuestionScore> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<StudentQuestionScore> selectByCondition(Map<String, Object> condition);
+    List<StudentQuestionScore> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<StudentQuestionScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<StudentQuestionScore> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 插入单条学生题目得分记录
@@ -132,7 +131,6 @@ public interface StudentQuestionScoreService {
      * 分析学生答题模式
      */
     List<Map<String, Object>> analyzeAnswerPattern(Integer studentId, Integer examId);
-    
 
     
     /**
@@ -144,7 +142,6 @@ public interface StudentQuestionScoreService {
      * 批量更新批改状态
      */
     int batchUpdateGradingStatus(List<Integer> recordIds, String status, Integer graderId);
-    
 
     
     /**
@@ -161,4 +158,13 @@ public interface StudentQuestionScoreService {
      * @return 导入结果
      */
     int importQuestionScores(List<StudentQuestionScore> scores);
+
+    /**
+     * 获取学生主观题答案
+     * @param examId 考试ID
+     * @param questionId 题目ID
+     * @param studentId 学生ID
+     * @return 学生答案信息
+     */
+    Map<String, Object> getSubjectiveAnswer(Integer examId, Integer questionId, Integer studentId);
 } 

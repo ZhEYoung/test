@@ -59,12 +59,12 @@ public class StudentClassServiceImpl implements StudentClassService {
     }
 
     @Override
-    public StudentClass selectById(Integer scId) {
+    public StudentClass getById(Integer scId) {
         return studentClassMapper.selectById(scId);
     }
 
     @Override
-    public List<StudentClass> selectAll() {
+    public List<StudentClass> getAll() {
         return studentClassMapper.selectAll();
     }
 
@@ -194,7 +194,7 @@ public class StudentClassServiceImpl implements StudentClassService {
             return false;
         }
         // 如果设置了ID，确保记录存在
-        if (studentClass.getScId() != null && selectById(studentClass.getScId()) == null) {
+        if (studentClass.getScId() != null && getById(studentClass.getScId()) == null) {
             return false;
         }
         // 验证学生和班级是否存在

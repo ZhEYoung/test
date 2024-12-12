@@ -101,17 +101,17 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
-    public QuestionBank selectById(Integer qbId) {
+    public QuestionBank getById(Integer qbId) {
         return questionBankMapper.selectById(qbId);
     }
 
     @Override
-    public List<QuestionBank> selectAll() {
+    public List<QuestionBank> getAll() {
         return questionBankMapper.selectAll();
     }
     
     @Override
-    public List<QuestionBank> selectPage(Integer pageNum, Integer pageSize) {
+    public List<QuestionBank> getPage(Integer pageNum, Integer pageSize) {
         if (pageNum == null || pageSize == null || pageNum < 1 || pageSize < 1) {
             return new ArrayList<>();
         }
@@ -122,7 +122,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
     
     @Override
-    public List<QuestionBank> selectByCondition(Map<String, Object> condition) {
+    public List<QuestionBank> getByCondition(Map<String, Object> condition) {
         if (condition == null) {
             return new ArrayList<>();
         }
@@ -130,7 +130,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
     
     @Override
-    public List<QuestionBank> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<QuestionBank> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         if (condition == null || pageNum == null || pageSize == null || pageNum < 1 || pageSize < 1) {
             return new ArrayList<>();
         }
@@ -140,12 +140,12 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
     
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return questionBankMapper.selectCount();
     }
     
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         if (condition == null) {
             return 0L;
         }

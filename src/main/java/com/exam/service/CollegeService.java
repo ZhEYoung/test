@@ -2,8 +2,7 @@ package com.exam.service;
 
 import com.exam.entity.College;
 import com.exam.entity.Subject;
-import com.exam.entity.Teacher;
-import com.exam.entity.Student;
+
 import java.util.List;
 import java.util.Map;
 
@@ -30,37 +29,37 @@ public interface CollegeService {
     /**
      * 根据ID查询
      */
-    College selectById(Integer id);
+    College getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<College> selectAll();
+    List<College> getAll();
 
     /**
      * 分页查询
      */
-    List<College> selectPage(Integer pageNum, Integer pageSize);
+    List<College> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<College> selectByCondition(Map<String, Object> condition);
+    List<College> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<College> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<College> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学院名称查询

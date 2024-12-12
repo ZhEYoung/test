@@ -59,7 +59,7 @@ public class QuestionBankServiceTest {
         assertNotNull(testQuestionBank.getQbId());
 
         // 测试查询
-        QuestionBank queryBank = questionBankService.selectById(testQuestionBank.getQbId());
+        QuestionBank queryBank = questionBankService.getById(testQuestionBank.getQbId());
         assertNotNull(queryBank);
         assertEquals(testQuestionBank.getQbName(), queryBank.getQbName());
         assertEquals(testQuestionBank.getSubjectId(), queryBank.getSubjectId());
@@ -70,7 +70,7 @@ public class QuestionBankServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        queryBank = questionBankService.selectById(testQuestionBank.getQbId());
+        queryBank = questionBankService.getById(testQuestionBank.getQbId());
         assertEquals("Updated QB", queryBank.getQbName());
     }
 
@@ -91,7 +91,7 @@ public class QuestionBankServiceTest {
             b.getQbName().equals(testQuestionBank.getQbName())));
 
         // 测试查询所有记录
-        List<QuestionBank> allBanks = questionBankService.selectAll();
+        List<QuestionBank> allBanks = questionBankService.getAll();
         assertFalse(allBanks.isEmpty());
         assertTrue(allBanks.stream().anyMatch(b -> 
             b.getQbName().equals(testQuestionBank.getQbName())));
@@ -107,7 +107,7 @@ public class QuestionBankServiceTest {
         assertEquals(1, result);
 
         // 验证删除结果
-        QuestionBank deletedBank = questionBankService.selectById(testQuestionBank.getQbId());
+        QuestionBank deletedBank = questionBankService.getById(testQuestionBank.getQbId());
         assertNull(deletedBank);
     }
 
@@ -142,7 +142,7 @@ public class QuestionBankServiceTest {
         subjectService.deleteById(testSubject.getSubjectId());
 
         // 验证相关题库是否被正确处理
-        QuestionBank queryBank = questionBankService.selectById(testQuestionBank.getQbId());
+        QuestionBank queryBank = questionBankService.getById(testQuestionBank.getQbId());
         // 根据业务需求，可能是删除题库或将题库的subjectId设为null
         if (queryBank != null) {
             assertNull(queryBank.getSubjectId());

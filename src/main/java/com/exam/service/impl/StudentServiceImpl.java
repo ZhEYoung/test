@@ -88,28 +88,28 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public Student selectById(Integer id) {
+    public Student getById(Integer id) {
         return studentMapper.selectById(id);
     }
 
     @Override
-    public List<Student> selectAll() {
+    public List<Student> getAll() {
         return studentMapper.selectAll();
     }
 
     @Override
-    public List<Student> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Student> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return studentMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return studentMapper.selectCount();
     }
 
     @Override
-    public List<Student> selectByCondition(Map<String, Object> condition) {
+    public List<Student> getByCondition(Map<String, Object> condition) {
         return studentMapper.selectByCondition(new Student() {{
             if (condition.get("userId") != null) setUserId((Integer) condition.get("userId"));
             if (condition.get("name") != null) setName((String) condition.get("name"));
@@ -119,12 +119,12 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return studentMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<Student> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Student> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return studentMapper.selectPageByCondition(condition, offset, pageSize);
     }

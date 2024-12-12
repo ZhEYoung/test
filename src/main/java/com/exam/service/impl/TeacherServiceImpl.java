@@ -101,48 +101,48 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public Teacher selectById(Integer teacherId) {
+    public Teacher getById(Integer teacherId) {
         return teacherMapper.selectById(teacherId);
     }
 
     @Override
-    public List<Teacher> selectAll() {
+    public List<Teacher> getAll() {
         return teacherMapper.selectAll();
     }
 
     @Override
-    public List<Teacher> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Teacher> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return teacherMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public int selectCount() {
+    public int getCount() {
         return teacherMapper.selectCount();
     }
 
     @Override
-    public List<Teacher> selectByCondition(Teacher teacher) {
+    public List<Teacher> getByCondition(Teacher teacher) {
         return teacherMapper.selectByCondition(teacher);
     }
 
     @Override
-    public Teacher selectByUserId(Integer userId) {
+    public Teacher getByUserId(Integer userId) {
         return teacherMapper.selectByUserId(userId);
     }
 
     @Override
-    public List<Teacher> selectByCollegeId(Integer collegeId) {
+    public List<Teacher> getByCollegeId(Integer collegeId) {
         return teacherMapper.selectByCollegeId(collegeId);
     }
 
     @Override
-    public List<Teacher> selectByName(String name) {
+    public List<Teacher> getByName(String name) {
         return teacherMapper.selectByName(name);
     }
 
     @Override
-    public List<Teacher> selectByPermission(Integer permission) {
+    public List<Teacher> getByPermission(Integer permission) {
         return teacherMapper.selectByPermission(permission);
     }
 
@@ -172,12 +172,12 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
-    public Map<String, Object> selectExamStats(Integer teacherId) {
+    public Map<String, Object> getExamStats(Integer teacherId) {
         return teacherMapper.selectExamStats(teacherId);
     }
 
     @Override
-    public List<Map<String, Object>> selectTeacherExams(Integer teacherId) {
+    public List<Map<String, Object>> getTeacherExams(Integer teacherId) {
         return teacherMapper.selectTeacherExams(teacherId);
     }
 } 

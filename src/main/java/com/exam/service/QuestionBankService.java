@@ -29,12 +29,12 @@ public interface QuestionBankService {
     /**
      * 根据ID查询题库
      */
-    QuestionBank selectById(Integer qbId);
+    QuestionBank getById(Integer qbId);
 
     /**
      * 查询所有题库
      */
-    List<QuestionBank> selectAll();
+    List<QuestionBank> getAll();
     
     /**
      * 分页查询题库
@@ -42,14 +42,14 @@ public interface QuestionBankService {
      * @param pageSize 每页大小
      * @return 题库列表
      */
-    List<QuestionBank> selectPage(Integer pageNum, Integer pageSize);
+    List<QuestionBank> getPage(Integer pageNum, Integer pageSize);
     
     /**
      * 条件查询题库
      * @param condition 查询条件
      * @return 题库列表
      */
-    List<QuestionBank> selectByCondition(Map<String, Object> condition);
+    List<QuestionBank> getByCondition(Map<String, Object> condition);
     
     /**
      * 条件分页查询题库
@@ -58,20 +58,20 @@ public interface QuestionBankService {
      * @param pageSize 每页大小
      * @return 题库列表
      */
-    List<QuestionBank> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<QuestionBank> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 查询题库总数
      * @return 总记录数
      */
-    Long selectCount();
+    Long getCount();
     
     /**
      * 条件查询题库总数
      * @param condition 查询条件
      * @return 记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
     
     /**
      * 根据学科ID查询题库列表

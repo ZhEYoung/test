@@ -81,32 +81,32 @@ public class UserServiceImpl implements UserService {
         return userMapper.updateById(record);
     }
 
-    public User selectById(Integer id) {
+    public User getById(Integer id) {
         return userMapper.selectById(id);
     }
 
-    public List<User> selectAll() {
+    public List<User> getAll() {
         return userMapper.selectAll();
     }
 
-    public List<User> selectPage(Integer pageNum, Integer pageSize) {
+    public List<User> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return userMapper.selectPage(offset, pageSize);
     }
 
-    public Long selectCount() {
+    public Long getCount() {
         return userMapper.selectCount();
     }
 
-    public List<User> selectByCondition(Map<String, Object> condition) {
+    public List<User> getByCondition(Map<String, Object> condition) {
         return userMapper.selectByCondition(condition);
     }
 
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return userMapper.selectCountByCondition(condition);
     }
 
-    public List<User> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<User> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return userMapper.selectPageByCondition(condition, offset, pageSize);
     }

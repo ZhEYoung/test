@@ -28,37 +28,37 @@ public interface UserService {
     /**
      * 根据ID查询
      */
-    User selectById(Integer id);
+    User getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<User> selectAll();
+    List<User> getAll();
 
     /**
      * 分页查询
      */
-    List<User> selectPage(Integer pageNum, Integer pageSize);
+    List<User> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<User> selectByCondition(Map<String, Object> condition);
+    List<User> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<User> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<User> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 用户登录

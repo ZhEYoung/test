@@ -35,12 +35,12 @@ public class ExamPaperQuestionServiceImpl implements ExamPaperQuestionService {
     }
 
     @Override
-    public ExamPaperQuestion selectById(Integer epqId) {
+    public ExamPaperQuestion getById(Integer epqId) {
         return examPaperQuestionMapper.selectById(epqId);
     }
 
     @Override
-    public List<ExamPaperQuestion> selectAll() {
+    public List<ExamPaperQuestion> getAll() {
         return examPaperQuestionMapper.selectAll();
     }
 
@@ -143,5 +143,19 @@ public class ExamPaperQuestionServiceImpl implements ExamPaperQuestionService {
             return 0;
         }
         return examPaperQuestionMapper.batchUpdateGroup(groups);
+    }
+
+    /**
+     * 根据考试ID和题目ID查询试卷题目关联
+     * @param examId 考试ID
+     * @param questionId 题目ID
+     * @return 试卷题目关联信息
+     */
+    @Override
+    public ExamPaperQuestion getByExamAndQuestionId(Integer examId, Integer questionId) {
+        if (examId == null || questionId == null) {
+            throw new IllegalArgumentException("考试ID和题目ID不能为空");
+        }
+        return examPaperQuestionMapper.selectByExamAndQuestionId(examId, questionId);
     }
 } 

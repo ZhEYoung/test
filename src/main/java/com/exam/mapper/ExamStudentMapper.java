@@ -125,17 +125,17 @@ public interface ExamStudentMapper {
      * 按学科查询需要重考的学生列表
      * @param subjectId 学科ID
      * @param teacherId 教师ID
+     * @param collegeId 学院ID
      * @param studentName 学生姓名
-     * @param studentNo 学号
      * @param examTimeStart 考试开始时间
      * @param examTimeEnd 考试结束时间
-     * @return 需要重考的学生信息��表
+     * @return 需要重考的学生信息列表
      */
     List<Map<String, Object>> selectRetakeStudentsBySubject(
         @Param("subjectId") Integer subjectId,
         @Param("teacherId") Integer teacherId,
+        @Param("collegeId") Integer collegeId,
         @Param("studentName") String studentName,
-        @Param("studentNo") String studentNo,
         @Param("examTimeStart") Date examTimeStart,
         @Param("examTimeEnd") Date examTimeEnd
     );
@@ -173,7 +173,7 @@ public interface ExamStudentMapper {
 
     /**
      * 查询考试时间异常的学生
-     * @param examId ��试ID
+     * @param examId 考试ID
      * @param timeThreshold 时间阈值（分钟）
      * @return 时间异常的学生信息列表
      */

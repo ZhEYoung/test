@@ -42,47 +42,47 @@ public interface TeacherService {
     /**
      * 根据ID查询教师
      */
-    Teacher selectById(Integer teacherId);
+    Teacher getById(Integer teacherId);
 
     /**
      * 查询所有教师
      */
-    List<Teacher> selectAll();
+    List<Teacher> getAll();
 
     /**
      * 分页查询教师列表
      */
-    List<Teacher> selectPage(Integer pageNum, Integer pageSize);
+    List<Teacher> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询教师总数
      */
-    int selectCount();
+    int getCount();
 
     /**
      * 根据条件查询教师
      */
-    List<Teacher> selectByCondition(Teacher teacher);
+    List<Teacher> getByCondition(Teacher teacher);
 
     /**
      * 根据用户ID查询教师信息
      */
-    Teacher selectByUserId(Integer userId);
+    Teacher getByUserId(Integer userId);
 
     /**
      * 根据学院ID查询教师列表
      */
-    List<Teacher> selectByCollegeId(Integer collegeId);
+    List<Teacher> getByCollegeId(Integer collegeId);
 
     /**
      * 根据教师姓名查询
      */
-    List<Teacher> selectByName(String name);
+    List<Teacher> getByName(String name);
 
     /**
      * 根据权限等级查询教师列表
      */
-    List<Teacher> selectByPermission(Integer permission);
+    List<Teacher> getByPermission(Integer permission);
 
     /**
      * 更新教师备注信息
@@ -112,10 +112,10 @@ public interface TeacherService {
     /**
      * 查询教师考试统计信息
      */
-    Map<String, Object> selectExamStats(Integer teacherId);
+    Map<String, Object> getExamStats(Integer teacherId);
 
     /**
      * 查询教师发布的考试列表
      */
-    List<Map<String, Object>> selectTeacherExams(Integer teacherId);
+    List<Map<String, Object>> getTeacherExams(Integer teacherId);
 } 

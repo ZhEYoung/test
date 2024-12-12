@@ -29,37 +29,37 @@ public interface ExamPaperService {
     /**
      * 根据ID查询
      */
-    ExamPaper selectById(Integer id);
+    ExamPaper getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<ExamPaper> selectAll();
+    List<ExamPaper> getAll();
 
     /**
      * 分页查询
      */
-    List<ExamPaper> selectPage(Integer pageNum, Integer pageSize);
+    List<ExamPaper> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<ExamPaper> selectByCondition(Map<String, Object> condition);
+    List<ExamPaper> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<ExamPaper> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<ExamPaper> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学科ID查询试卷列表

@@ -259,4 +259,19 @@
             AND question_id = #{group.questionId}
         </foreach>
     </update>
+
+    <!-- 根据考试ID和题目ID查询试卷题目关联 -->
+    <select id="selectByExamAndQuestionId" resultMap="BaseResultMap">
+        SELECT 
+            epq.epq_id,
+            epq.paper_id,
+            epq.question_id,
+            epq.question_order,
+            epq.question_score
+        FROM exam_paper_question epq
+        INNER JOIN exam e ON epq.paper_id = e.paper_id
+        WHERE e.exam_id = #{examId}
+        AND epq.question_id = #{questionId}
+        LIMIT 1
+    </select>
 </mapper>

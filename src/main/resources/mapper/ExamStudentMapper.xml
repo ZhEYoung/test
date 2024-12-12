@@ -134,7 +134,16 @@
 
     <!-- 查询学生的重考记录 -->
     <select id="selectStudentRetakeExams" resultMap="BaseResultMap">
-        SELECT es.<include refid="Base_Column_List"/>
+        SELECT 
+            es.es_id,
+            es.exam_id,
+            es.student_id,
+            es.student_start_time,
+            es.student_submit_time,
+            es.absent,
+            es.retake_needed,
+            es.disciplinary,
+            es.teacher_comment
         FROM exam_student es
         INNER JOIN exam e ON es.exam_id = e.exam_id
         WHERE es.student_id = #{studentId}
@@ -147,32 +156,21 @@
         SELECT 
             s.student_id,
             s.name as student_name,
-            s.student_no,
-            es.exam_id,
             e.exam_name,
             e.exam_start_time,
+            es.student_start_time,
             es.student_submit_time,
-            es.teacher_comment,
-            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as duration
+            es.retake_needed,
+            s.college_id
         FROM exam_student es
-        INNER JOIN student s ON es.student_id = s.student_id
-        INNER JOIN exam e ON es.exam_id = e.exam_id
+        JOIN exam e ON es.exam_id = e.exam_id
+        JOIN student s ON es.student_id = s.student_id
         WHERE e.subject_id = #{subjectId}
-        AND e.teacher_id = #{teacherId}
-        AND es.retake_needed = 1
-        <if test="studentName != null and studentName != ''">
-            AND s.name LIKE CONCAT('%', #{studentName}, '%')
+        AND es.retake_needed = true
+        <if test="collegeId != null">
+            AND s.college_id = #{collegeId}
         </if>
-        <if test="studentNo != null and studentNo != ''">
-            AND s.student_no = #{studentNo}
-        </if>
-        <if test="examTimeStart != null">
-            AND e.exam_start_time >= #{examTimeStart}
-        </if>
-        <if test="examTimeEnd != null">
-            AND e.exam_start_time &lt;= #{examTimeEnd}
-        </if>
-        ORDER BY e.exam_start_time DESC, s.student_no
+        ORDER BY e.exam_start_time DESC
     </select>
 
     <!-- 统计某学科的重考情况 -->

@@ -149,5 +149,14 @@ public interface StudentQuestionScoreMapper {
         @Param("teacherId") Integer teacherId
     );
     
+    /**
+     * 根据考试ID、题目ID和学生ID查询答题记录
+     */
+    StudentQuestionScore selectByExamQuestionAndStudent(
+        @Param("examId") Integer examId,
+        @Param("questionId") Integer questionId,
+        @Param("studentId") Integer studentId
+    );
+    
 
 } 

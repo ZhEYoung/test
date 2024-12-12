@@ -28,12 +28,12 @@ public interface ExamPaperQuestionService {
     /**
      * 根据ID查询试卷题目关联
      */
-    ExamPaperQuestion selectById(Integer epqId);
+    ExamPaperQuestion getById(Integer epqId);
 
     /**
      * 查询所有试卷题目关联
      */
-    List<ExamPaperQuestion> selectAll();
+    List<ExamPaperQuestion> getAll();
     
     /**
      * 根据试卷ID查询题目关联列表
@@ -114,4 +114,12 @@ public interface ExamPaperQuestionService {
      * 批量更新题目分组
      */
     int batchUpdateGroup(List<Map<String, Object>> groups);
+
+    /**
+     * 根据考试ID和题目ID查询试卷题目关联
+     * @param examId 考试ID
+     * @param questionId 题目ID
+     * @return 试卷题目关联信息
+     */
+    ExamPaperQuestion getByExamAndQuestionId(Integer examId, Integer questionId);
 } 

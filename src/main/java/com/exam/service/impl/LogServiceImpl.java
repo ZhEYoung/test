@@ -34,28 +34,28 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public Log selectById(Integer id) {
+    public Log getById(Integer id) {
         return logMapper.selectById(id);
     }
 
     @Override
-    public List<Log> selectAll() {
+    public List<Log> getAll() {
         return logMapper.selectAll();
     }
 
     @Override
-    public List<Log> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Log> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return logMapper.selectByConditions(null, null, null, null, null, null, offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return (long) logMapper.selectAll().size();
     }
 
     @Override
-    public List<Log> selectByCondition(Map<String, Object> condition) {
+    public List<Log> getByCondition(Map<String, Object> condition) {
         Integer userId = (Integer) condition.get("userId");
         Integer actionType = (Integer) condition.get("actionType");
         String objectType = (String) condition.get("objectType");
@@ -66,13 +66,13 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
-        List<Log> logs = selectByCondition(condition);
+    public Long getCountByCondition(Map<String, Object> condition) {
+        List<Log> logs = getByCondition(condition);
         return (long) logs.size();
     }
 
     @Override
-    public List<Log> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Log> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         Integer userId = (Integer) condition.get("userId");
         Integer actionType = (Integer) condition.get("actionType");

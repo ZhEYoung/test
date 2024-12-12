@@ -80,7 +80,7 @@ public class LogServiceTest {
         assertNotNull(testLog.getLogId());
         
         // 验证插入后的日志记录
-        Log savedLog = logService.selectById(testLog.getLogId());
+        Log savedLog = logService.getById(testLog.getLogId());
         assertNotNull(savedLog);
         assertEquals(testUser.getUserId(), savedLog.getUserId());
     }
@@ -88,7 +88,7 @@ public class LogServiceTest {
     @Test
     void testSelectById() {
         logService.insert(testLog);
-        Log found = logService.selectById(testLog.getLogId());
+        Log found = logService.getById(testLog.getLogId());
         assertNotNull(found);
         assertEquals(testLog.getUserId(), found.getUserId());
         assertEquals(testLog.getActionType(), found.getActionType());
@@ -100,7 +100,7 @@ public class LogServiceTest {
         testLog.setActionDescription("更新的测试描述");
         int result = logService.updateById(testLog);
         assertEquals(1, result);
-        Log updated = logService.selectById(testLog.getLogId());
+        Log updated = logService.getById(testLog.getLogId());
         assertEquals("更新的测试描述", updated.getActionDescription());
     }
 
@@ -109,7 +109,7 @@ public class LogServiceTest {
         logService.insert(testLog);
         int result = logService.deleteById(testLog.getLogId());
         assertEquals(1, result);
-        Log deleted = logService.selectById(testLog.getLogId());
+        Log deleted = logService.getById(testLog.getLogId());
         assertNull(deleted);
     }
 
@@ -129,10 +129,10 @@ public class LogServiceTest {
             logService.insert(log);
         }
 
-        List<Log> page1 = logService.selectPage(1, 10);
+        List<Log> page1 = logService.getPage(1, 10);
         assertEquals(10, page1.size());
 
-        List<Log> page2 = logService.selectPage(2, 10);
+        List<Log> page2 = logService.getPage(2, 10);
         assertEquals(5, page2.size());
     }
 
@@ -149,7 +149,7 @@ public class LogServiceTest {
         condition.put("status", testLog.getStatus());
         
         // 测试条件查询
-        List<Log> logs = logService.selectByCondition(condition);
+        List<Log> logs = logService.getByCondition(condition);
         assertFalse(logs.isEmpty());
         Log foundLog = logs.get(0);
         assertEquals(testUser.getUserId(), foundLog.getUserId());

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -37,7 +36,7 @@ public class CollegeServiceTest {
         assertNotNull(testCollege.getCollegeId());
 
         // 测试查询
-        College queryCollege = collegeService.selectById(testCollege.getCollegeId());
+        College queryCollege = collegeService.getById(testCollege.getCollegeId());
         assertNotNull(queryCollege);
         assertEquals(testCollege.getCollegeName(), queryCollege.getCollegeName());
         assertEquals(testCollege.getDescription(), queryCollege.getDescription());
@@ -49,7 +48,7 @@ public class CollegeServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        queryCollege = collegeService.selectById(testCollege.getCollegeId());
+        queryCollege = collegeService.getById(testCollege.getCollegeId());
         assertEquals("Updated College", queryCollege.getCollegeName());
         assertEquals("Updated Description", queryCollege.getDescription());
     }
@@ -65,7 +64,7 @@ public class CollegeServiceTest {
         assertEquals(testCollege.getCollegeName(), queryCollege.getCollegeName());
 
         // 测试查询所有记录
-        List<College> allColleges = collegeService.selectAll();
+        List<College> allColleges = collegeService.getAll();
         assertFalse(allColleges.isEmpty());
         assertTrue(allColleges.stream().anyMatch(c -> 
             c.getCollegeName().equals(testCollege.getCollegeName())));
@@ -81,7 +80,7 @@ public class CollegeServiceTest {
         assertEquals(0, result);
 
         // 验证学院仍然存在
-        College queryCollege = collegeService.selectById(testCollege.getCollegeId());
+        College queryCollege = collegeService.getById(testCollege.getCollegeId());
         assertNotNull(queryCollege);
         assertEquals(testCollege.getCollegeName(), queryCollege.getCollegeName());
     }

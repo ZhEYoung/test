@@ -107,28 +107,28 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     @Override
-    public Subject selectById(Integer id) {
+    public Subject getById(Integer id) {
         return subjectMapper.selectById(id);
     }
 
     @Override
-    public List<Subject> selectAll() {
+    public List<Subject> getAll() {
         return subjectMapper.selectAll();
     }
 
     @Override
-    public List<Subject> selectPage(Integer pageNum, Integer pageSize) {
+    public List<Subject> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return subjectMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return Long.valueOf(subjectMapper.selectCount());
     }
 
     @Override
-    public List<Subject> selectByCondition(Map<String, Object> condition) {
+    public List<Subject> getByCondition(Map<String, Object> condition) {
         Subject subject = new Subject();
         if (condition.containsKey("subjectName")) {
             subject.setSubjectName((String) condition.get("subjectName"));
@@ -143,7 +143,7 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         Subject subject = new Subject();
         if (condition.containsKey("subjectName")) {
             subject.setSubjectName((String) condition.get("subjectName"));
@@ -158,7 +158,7 @@ public class SubjectServiceImpl implements SubjectService {
     }
 
     @Override
-    public List<Subject> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<Subject> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         Subject subject = new Subject();
         if (condition.containsKey("subjectName")) {
             subject.setSubjectName((String) condition.get("subjectName"));

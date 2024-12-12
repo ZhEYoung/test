@@ -115,8 +115,9 @@ public class ExamServiceTest {
         
         // 设置考试时间
         Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.MINUTE, -30);  // 设置开始时间为30分钟前
         testExam.setExamStartTime(calendar.getTime());
-        calendar.add(Calendar.HOUR, 2);
+        calendar.add(Calendar.HOUR, 2);      // 设置结束时间为1.5小时后
         testExam.setExamEndTime(calendar.getTime());
         testExam.setCreatedTime(new Date());
     }
@@ -129,7 +130,7 @@ public class ExamServiceTest {
         assertNotNull(testExam.getExamId());
 
         // 测试查询
-        Exam queried = examService.selectById(testExam.getExamId());
+        Exam queried = examService.getById(testExam.getExamId());
         assertNotNull(queried);
         assertEquals(testExam.getExamName(), queried.getExamName());
 
@@ -138,21 +139,21 @@ public class ExamServiceTest {
         testExam.setExamName(newName);
         result = examService.updateById(testExam);
         assertTrue(result > 0);
-        queried = examService.selectById(testExam.getExamId());
+        queried = examService.getById(testExam.getExamId());
         assertEquals(newName, queried.getExamName());
 
         // 测试查询所有
-        List<Exam> exams = examService.selectAll();
+        List<Exam> exams = examService.getAll();
         assertFalse(exams.isEmpty());
 
         // 测试分页查询
-        List<Exam> pagedExams = examService.selectPage(1, 10);
+        List<Exam> pagedExams = examService.getPage(1, 10);
         assertNotNull(pagedExams);
 
         // 测试条件查询
         Map<String, Object> condition = new HashMap<>();
         condition.put("subjectId", testSubject.getSubjectId());
-        List<Exam> conditionExams = examService.selectByCondition(condition);
+        List<Exam> conditionExams = examService.getByCondition(condition);
         assertFalse(conditionExams.isEmpty());
     }
 
@@ -164,7 +165,7 @@ public class ExamServiceTest {
         assertNotNull(testExam.getExamId(), "Exam ID should not be null after insert");
 
         // 验证初始状态
-        Exam initialExam = examService.selectById(testExam.getExamId());
+        Exam initialExam = examService.getById(testExam.getExamId());
         assertNotNull(initialExam, "Should be able to find the exam");
         assertEquals(0, initialExam.getExamStatus(), "Initial exam status should be 0 (not started)");
 
@@ -173,7 +174,7 @@ public class ExamServiceTest {
         assertTrue(updateResult > 0, "Status update should be successful");
 
         // 验证状态更新
-        Exam updated = examService.selectById(testExam.getExamId());
+        Exam updated = examService.getById(testExam.getExamId());
         assertNotNull(updated, "Should be able to find the exam after update");
         assertEquals(1, updated.getExamStatus(), "Exam status should be updated to 1 (in progress)");
 
@@ -222,7 +223,7 @@ public class ExamServiceTest {
         assertTrue(result > 0);
 
         // 验证时长更新
-        Exam updated = examService.selectById(testExam.getExamId());
+        Exam updated = examService.getById(testExam.getExamId());
         assertEquals(newDuration, updated.getExamDuration());
 
         // 测试时间范围查询

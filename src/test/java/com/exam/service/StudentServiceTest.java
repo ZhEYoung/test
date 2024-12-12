@@ -62,7 +62,7 @@ public class StudentServiceTest {
         assertNotNull(testStudent.getStudentId());
 
         // 测试查询
-        Student queryStudent = studentService.selectById(testStudent.getStudentId());
+        Student queryStudent = studentService.getById(testStudent.getStudentId());
         assertNotNull(queryStudent);
         assertEquals(testStudent.getName(), queryStudent.getName());
         assertEquals(testStudent.getUserId(), queryStudent.getUserId());
@@ -76,7 +76,7 @@ public class StudentServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        queryStudent = studentService.selectById(testStudent.getStudentId());
+        queryStudent = studentService.getById(testStudent.getStudentId());
         assertEquals("Updated Student", queryStudent.getName());
         assertEquals("2025", queryStudent.getGrade());
     }
@@ -104,7 +104,7 @@ public class StudentServiceTest {
             s.getName().equals(testStudent.getName())));
 
         // 测试查询所有记录
-        List<Student> allStudents = studentService.selectAll();
+        List<Student> allStudents = studentService.getAll();
         assertFalse(allStudents.isEmpty());
         assertTrue(allStudents.stream().anyMatch(s -> 
             s.getName().equals(testStudent.getName())));
@@ -120,12 +120,12 @@ public class StudentServiceTest {
         assertEquals(1, result);
 
         // 验证用户被禁用
-        User queryUser = userService.selectById(testUser.getUserId());
+        User queryUser = userService.getById(testUser.getUserId());
         assertNotNull(queryUser);
         assertFalse(queryUser.getStatus());
 
         // 验证学生记录被保留
-        Student queryStudent = studentService.selectById(testStudent.getStudentId());
+        Student queryStudent = studentService.getById(testStudent.getStudentId());
         assertNotNull(queryStudent);
     }
 
@@ -169,12 +169,12 @@ public class StudentServiceTest {
         userService.deleteById(testUser.getUserId());
 
         // 验证用户是否被禁用
-        User queryUser = userService.selectById(testUser.getUserId());
+        User queryUser = userService.getById(testUser.getUserId());
         assertNotNull(queryUser);
         assertFalse(queryUser.getStatus());
 
         // 验证学生记录是否保留
-        Student queryStudent = studentService.selectById(testStudent.getStudentId());
+        Student queryStudent = studentService.getById(testStudent.getStudentId());
         assertNotNull(queryStudent); // 学生记录应该被保留
     }
 
@@ -188,10 +188,10 @@ public class StudentServiceTest {
         assertEquals(0, result);
 
         // 验证学院和学生都还存在
-        College queryCollege = collegeService.selectById(testCollege.getCollegeId());
+        College queryCollege = collegeService.getById(testCollege.getCollegeId());
         assertNotNull(queryCollege);
         
-        Student queryStudent = studentService.selectById(testStudent.getStudentId());
+        Student queryStudent = studentService.getById(testStudent.getStudentId());
         assertNotNull(queryStudent);
         assertEquals(testCollege.getCollegeId(), queryStudent.getCollegeId());
     }

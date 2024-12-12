@@ -35,13 +35,13 @@ public interface SubjectService {
      * @param id 学科ID
      * @return 学科信息
      */
-    Subject selectById(Integer id);
+    Subject getById(Integer id);
 
     /**
      * 查询所有记录
      * @return 所有学科列表
      */
-    List<Subject> selectAll();
+    List<Subject> getAll();
 
     /**
      * 分页查询
@@ -49,27 +49,27 @@ public interface SubjectService {
      * @param pageSize 每页大小
      * @return 学科列表
      */
-    List<Subject> selectPage(Integer pageNum, Integer pageSize);
+    List<Subject> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      * @return 总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      * @param condition 查询条件
      * @return 学科列表
      */
-    List<Subject> selectByCondition(Map<String, Object> condition);
+    List<Subject> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      * @param condition 查询条件
      * @return 记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
@@ -78,7 +78,7 @@ public interface SubjectService {
      * @param pageSize 每页大小
      * @return 学科列表
      */
-    List<Subject> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<Subject> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学院ID查询学科列表

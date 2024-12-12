@@ -1,5 +1,7 @@
 package com.exam.service;
 
+import com.exam.entity.ExamStudent;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
@@ -8,6 +10,20 @@ import java.util.Date;
  * 考试-学生服务接口
  */
 public interface ExamStudentService {
+    
+    /**
+     * 根据考试ID查询所有考试-学生记录
+     * @param examId 考试ID
+     * @return 考试-学生记录列表
+     */
+    List<ExamStudent> getByExamId(Integer examId);
+    
+    /**
+     * 根据主键删除考试-学生记录
+     * @param esId 考试-学生记录ID
+     * @return 影响行数
+     */
+    int deleteById(Integer esId);
     
     /**
      * 记录学生开始考试
@@ -117,4 +133,61 @@ public interface ExamStudentService {
      * @return 缺考人数
      */
     int countAbsentStudents(Integer examId);
+    
+    /**
+     * 更新学生考试开始和提交时间
+     * @param examId 考试ID
+     * @param studentId 学生ID
+     * @param startTime 开始时间
+     * @param submitTime 提交时间
+     * @return 影响行数
+     */
+    int updateExamTime(Integer examId, Integer studentId, Date startTime, Date submitTime);
+    
+    /**
+     * 查询需要重考的学生列表
+     * @param examId 考试ID
+     * @return 需要重考的学生列表
+     */
+    List<ExamStudent> getNeedRetakeStudents(Integer examId);
+    
+    /**
+     * 查询学生的重考记录
+     * @param studentId 学生ID
+     * @return 重考记录列表
+     */
+    List<ExamStudent> getStudentRetakeExams(Integer studentId);
+    
+    /**
+     * 按学科查询需要重考的学生列表
+     * @param subjectId 学科ID
+     * @param teacherId 教师ID
+     * @param studentName 学生姓名
+     * @param examTimeStart 考试开始时间
+     * @param examTimeEnd 考试结束时间
+     * @return 需要重考的学生信息列表
+     */
+    List<Map<String, Object>> getRetakeStudentsBySubject(
+        Integer subjectId,
+        Integer teacherId,
+        String studentName,
+        Date examTimeStart,
+        Date examTimeEnd
+    );
+    
+    /**
+     * 统计某学科的重考情况
+     * @param subjectId 学科ID
+     * @param teacherId 教师ID
+     * @return 重考统计信息
+     */
+    Map<String, Object> countRetakeBySubject(Integer subjectId, Integer teacherId);
+
+    /**
+     * 标记学生需要重考
+     * @param examId 考试ID
+     * @param studentId 学生ID
+     * @return 操作结果
+     */
+    int markRetakeNeeded(Integer examId, Integer studentId);
 } 

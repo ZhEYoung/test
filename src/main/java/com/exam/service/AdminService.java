@@ -1,6 +1,8 @@
 package com.exam.service;
 
 import com.exam.entity.Admin;
+import com.exam.entity.User;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
@@ -28,37 +30,37 @@ public interface AdminService {
     /**
      * 根据ID查询
      */
-    Admin selectById(Integer id);
+    Admin getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<Admin> selectAll();
+    List<Admin> getAll();
 
     /**
      * 分页查询
      */
-    List<Admin> selectPage(Integer pageNum, Integer pageSize);
+    List<Admin> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<Admin> selectByCondition(Map<String, Object> condition);
+    List<Admin> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<Admin> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<Admin> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据用户ID查询管理员信息
@@ -90,6 +92,16 @@ public interface AdminService {
      * @return 用户统计信息
      */
     Map<String, Long> countSystemUsers();
+    
+    /**
+     * 管理员模拟登录其他用户
+     * @param adminId 管理员ID
+     * @param targetUserId 目标用户ID
+     * @param ipAddress IP地址
+     * @param deviceInfo 设备信息
+     * @return 模拟登录的用户信息，如果失败返回null
+     */
+    User impersonateUser(Integer adminId, Integer targetUserId, String ipAddress, String deviceInfo);
     
     /**
      * 统计系统资源使用情况

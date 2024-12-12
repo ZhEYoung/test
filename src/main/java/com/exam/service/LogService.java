@@ -28,37 +28,37 @@ public interface LogService {
     /**
      * 根据ID查询
      */
-    Log selectById(Integer id);
+    Log getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<Log> selectAll();
+    List<Log> getAll();
 
     /**
      * 分页查询
      */
-    List<Log> selectPage(Integer pageNum, Integer pageSize);
+    List<Log> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询
      */
-    List<Log> selectByCondition(Map<String, Object> condition);
+    List<Log> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询
      */
-    List<Log> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<Log> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据用户ID查询日志

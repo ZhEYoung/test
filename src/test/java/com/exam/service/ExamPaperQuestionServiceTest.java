@@ -139,7 +139,7 @@ public class ExamPaperQuestionServiceTest {
         assertNotNull(testExamPaperQuestion.getEpqId());
 
         // 测试查询
-        ExamPaperQuestion queried = examPaperQuestionService.selectById(testExamPaperQuestion.getEpqId());
+        ExamPaperQuestion queried = examPaperQuestionService.getById(testExamPaperQuestion.getEpqId());
         assertNotNull(queried);
         assertEquals(0, testExamPaperQuestion.getQuestionScore().compareTo(queried.getQuestionScore()), "Question scores should be equal regardless of scale");
 
@@ -148,11 +148,11 @@ public class ExamPaperQuestionServiceTest {
         testExamPaperQuestion.setQuestionScore(newScore);
         result = examPaperQuestionService.update(testExamPaperQuestion);
         assertTrue(result > 0);
-        queried = examPaperQuestionService.selectById(testExamPaperQuestion.getEpqId());
+        queried = examPaperQuestionService.getById(testExamPaperQuestion.getEpqId());
         assertEquals(0, newScore.compareTo(queried.getQuestionScore()), "Updated question scores should be equal regardless of scale");
 
         // 测试查询所有
-        List<ExamPaperQuestion> all = examPaperQuestionService.selectAll();
+        List<ExamPaperQuestion> all = examPaperQuestionService.getAll();
         assertFalse(all.isEmpty());
     }
 

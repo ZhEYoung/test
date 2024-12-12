@@ -47,12 +47,12 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
     }
 
     @Override
-    public QuestionOption selectById(Integer optionId) {
+    public QuestionOption getById(Integer optionId) {
         return optionMapper.selectById(optionId);
     }
 
     @Override
-    public List<QuestionOption> selectAll() {
+    public List<QuestionOption> getAll() {
         return optionMapper.selectAll();
     }
 
@@ -126,7 +126,7 @@ public class QuestionOptionServiceImpl implements QuestionOptionService {
             return false;
         }
         // 验证题目ID是否存在
-        if (questionService.selectById(option.getQuestionId()) == null) {
+        if (questionService.getById(option.getQuestionId()) == null) {
             return false;
         }
         // 如果设置了选项ID，确保它存在

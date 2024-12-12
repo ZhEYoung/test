@@ -30,6 +30,19 @@ public class StudentScoreServiceImpl implements StudentScoreService {
 
     @Override
     public int insert(StudentScore record) {
+        // 验证必要字段
+        if (record.getStudentId() == null || record.getExamId() == null || record.getScore() == null) {
+            throw new IllegalArgumentException("学生ID、考试ID和成绩不能为空");
+        }
+        
+        // 验证学生和考试是否存在
+        if (studentMapper.selectById(record.getStudentId()) == null) {
+            throw new IllegalArgumentException("学生ID不存在: " + record.getStudentId());
+        }
+        if (examMapper.selectById(record.getExamId()) == null) {
+            throw new IllegalArgumentException("考试ID不存在: " + record.getExamId());
+        }
+        
         return studentScoreMapper.insert(record);
     }
 
@@ -44,38 +57,38 @@ public class StudentScoreServiceImpl implements StudentScoreService {
     }
 
     @Override
-    public StudentScore selectById(Integer id) {
+    public StudentScore getById(Integer id) {
         return studentScoreMapper.selectById(id);
     }
 
     @Override
-    public List<StudentScore> selectAll() {
+    public List<StudentScore> getAll() {
         return studentScoreMapper.selectAll();
     }
 
     @Override
-    public List<StudentScore> selectPage(Integer pageNum, Integer pageSize) {
+    public List<StudentScore> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return studentScoreMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return studentScoreMapper.selectCount();
     }
 
     @Override
-    public List<StudentScore> selectByCondition(Map<String, Object> condition) {
+    public List<StudentScore> getByCondition(Map<String, Object> condition) {
         return studentScoreMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return studentScoreMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<StudentScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<StudentScore> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return studentScoreMapper.selectPageByCondition(condition, offset, pageSize);
     }
@@ -194,7 +207,7 @@ public class StudentScoreServiceImpl implements StudentScoreService {
 
     @Override
     public int importScores(List<StudentScore> scores) {
-        // 批量导���前进行数据验证
+        // 批量导入前进行数据验证
         for (StudentScore score : scores) {
             if (score.getExamId() == null || score.getStudentId() == null || score.getScore() == null) {
                 return 0;

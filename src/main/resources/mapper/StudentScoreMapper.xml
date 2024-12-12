@@ -16,7 +16,7 @@
     </sql>
 
     <!-- 插入成绩记录 -->
-    <insert id="insert" parameterType="com.exam.entity.StudentScore">
+    <insert id="insert" parameterType="com.exam.entity.StudentScore" useGeneratedKeys="true" keyProperty="scoreId">
         INSERT INTO student_score (
             student_id, exam_id, score, upload_time
         ) VALUES (

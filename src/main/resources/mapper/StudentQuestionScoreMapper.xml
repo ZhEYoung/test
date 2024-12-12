@@ -44,15 +44,14 @@
     <!-- 更新得分记录 -->
     <update id="update" parameterType="com.exam.entity.StudentQuestionScore">
         UPDATE student_question_score
-        <set>
-            <if test="examId != null">exam_id = #{examId},</if>
-            <if test="studentId != null">student_id = #{studentId},</if>
-            <if test="questionId != null">question_id = #{questionId},</if>
-            <if test="scoreId != null">score_id = #{scoreId},</if>
-            <if test="answer != null">answer = #{answer},</if>
-            <if test="score != null">score = #{score},</if>
-            <if test="status != null">status = #{status},</if>
-        </set>
+        SET 
+            exam_id = #{examId},
+            student_id = #{studentId},
+            question_id = #{questionId},
+            score_id = #{scoreId},
+            answer = #{answer},
+            score = #{score},
+            status = #{status}
         WHERE record_id = #{recordId}
     </update>
 
@@ -441,4 +440,17 @@
         GROUP BY q.type
         ORDER BY mistake_count DESC
     </select>
+
+    <select id="selectByExamQuestionAndStudent" resultMap="BaseResultMap">
+        SELECT 
+            *
+        FROM 
+            student_question_score
+        WHERE 
+            exam_id = #{examId}
+            AND question_id = #{questionId}
+            AND student_id = #{studentId}
+        LIMIT 1
+    </select>
+
 </mapper>

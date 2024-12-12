@@ -168,4 +168,12 @@ public interface ExamPaperQuestionMapper {
      * @return 影响行数
      */
     int batchUpdateGroup(@Param("groups") List<Map<String, Object>> groups);
+
+    /**
+     * 根据考试ID和题目ID查询试卷题目关联
+     * @param examId 考试ID
+     * @param questionId 题目ID
+     * @return 试卷题目关联信息
+     */
+    ExamPaperQuestion selectByExamAndQuestionId(Integer examId, Integer questionId);
 } 

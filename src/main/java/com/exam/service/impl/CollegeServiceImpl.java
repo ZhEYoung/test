@@ -64,38 +64,38 @@ public class CollegeServiceImpl implements CollegeService {
     }
 
     @Override
-    public College selectById(Integer id) {
+    public College getById(Integer id) {
         return collegeMapper.selectById(id);
     }
 
     @Override
-    public List<College> selectAll() {
+    public List<College> getAll() {
         return collegeMapper.selectAll();
     }
 
     @Override
-    public List<College> selectPage(Integer pageNum, Integer pageSize) {
+    public List<College> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return collegeMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return collegeMapper.selectCount();
     }
 
     @Override
-    public List<College> selectByCondition(Map<String, Object> condition) {
+    public List<College> getByCondition(Map<String, Object> condition) {
         return collegeMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return collegeMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<College> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<College> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return collegeMapper.selectPageByCondition(condition, offset, pageSize);
     }

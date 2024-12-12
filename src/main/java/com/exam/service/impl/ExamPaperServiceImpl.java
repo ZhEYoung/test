@@ -45,17 +45,17 @@ public class ExamPaperServiceImpl implements ExamPaperService {
     }
 
     @Override
-    public ExamPaper selectById(Integer id) {
+    public ExamPaper getById(Integer id) {
         return examPaperMapper.selectById(id);
     }
 
     @Override
-    public List<ExamPaper> selectAll() {
+    public List<ExamPaper> getAll() {
         return examPaperMapper.selectAll();
     }
 
     @Override
-    public List<ExamPaper> selectPage(Integer pageNum, Integer pageSize) {
+    public List<ExamPaper> getPage(Integer pageNum, Integer pageSize) {
         Map<String, Object> condition = new HashMap<>();
         condition.put("offset", (pageNum - 1) * pageSize);
         condition.put("limit", pageSize);
@@ -63,22 +63,22 @@ public class ExamPaperServiceImpl implements ExamPaperService {
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return examPaperMapper.selectCount();
     }
 
     @Override
-    public List<ExamPaper> selectByCondition(Map<String, Object> condition) {
+    public List<ExamPaper> getByCondition(Map<String, Object> condition) {
         return examPaperMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return examPaperMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<ExamPaper> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<ExamPaper> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         condition.put("offset", (pageNum - 1) * pageSize);
         condition.put("limit", pageSize);
         return examPaperMapper.selectPageByCondition(condition);

@@ -29,12 +29,12 @@ public interface QuestionService {
     /**
      * 根据ID查询
      */
-    Question selectById(Integer id);
+    Question getById(Integer id);
 
     /**
      * 查询所有记录
      */
-    List<Question> selectAll();
+    List<Question> getAll();
     
     /**
      * 根据题库ID查询题目列表
@@ -149,27 +149,27 @@ public interface QuestionService {
      * @param pageSize 每页大小
      * @return 题目列表
      */
-    List<Question> selectPage(Integer pageNum, Integer pageSize);
+    List<Question> getPage(Integer pageNum, Integer pageSize);
 
     /**
      * 查询题目总数
      * @return 总记录数
      */
-    Long selectCount();
+    Long getCount();
 
     /**
      * 条件查询题目
      * @param condition 查询条件
      * @return 题目列表
      */
-    List<Question> selectByCondition(Map<String, Object> condition);
+    List<Question> getByCondition(Map<String, Object> condition);
 
     /**
      * 条件查询题目总数
      * @param condition 查询条件
      * @return 记录数
      */
-    Long selectCountByCondition(Map<String, Object> condition);
+    Long getCountByCondition(Map<String, Object> condition);
 
     /**
      * 条件分页查询题目
@@ -178,5 +178,5 @@ public interface QuestionService {
      * @param pageSize 每页大小
      * @return 题目列表
      */
-    List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    List<Question> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
 } 

@@ -1,8 +1,12 @@
 package com.exam.service.impl;
 
+import com.exam.entity.ExamPaperQuestion;
+import com.exam.entity.Question;
 import com.exam.entity.StudentQuestionScore;
 import com.exam.mapper.StudentQuestionScoreMapper;
+import com.exam.service.ExamPaperQuestionService;
 import com.exam.service.StudentQuestionScoreService;
+import com.exam.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.math.BigDecimal;
+import java.util.HashMap;
 
 /**
  * 学生题目得分服务实现类
@@ -19,6 +24,13 @@ public class StudentQuestionScoreServiceImpl implements StudentQuestionScoreServ
 
     @Autowired
     private StudentQuestionScoreMapper studentQuestionScoreMapper;
+
+    @Autowired
+    private QuestionService questionService;
+
+    @Autowired
+    private ExamPaperQuestionService examPaperQuestionService;
+
 
     @Override
     @Transactional
@@ -39,38 +51,38 @@ public class StudentQuestionScoreServiceImpl implements StudentQuestionScoreServ
     }
 
     @Override
-    public StudentQuestionScore selectById(Integer id) {
+    public StudentQuestionScore getById(Integer id) {
         return studentQuestionScoreMapper.selectById(id);
     }
 
     @Override
-    public List<StudentQuestionScore> selectAll() {
+    public List<StudentQuestionScore> getAll() {
         return studentQuestionScoreMapper.selectAll();
     }
 
     @Override
-    public List<StudentQuestionScore> selectPage(Integer pageNum, Integer pageSize) {
+    public List<StudentQuestionScore> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return studentQuestionScoreMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return studentQuestionScoreMapper.countTotal().longValue();
     }
 
     @Override
-    public List<StudentQuestionScore> selectByCondition(Map<String, Object> condition) {
+    public List<StudentQuestionScore> getByCondition(Map<String, Object> condition) {
         return studentQuestionScoreMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return studentQuestionScoreMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<StudentQuestionScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<StudentQuestionScore> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return studentQuestionScoreMapper.selectPageByCondition(condition, offset, pageSize);
     }
@@ -176,5 +188,49 @@ public class StudentQuestionScoreServiceImpl implements StudentQuestionScoreServ
     @Transactional
     public int importQuestionScores(List<StudentQuestionScore> scores) {
         return studentQuestionScoreMapper.batchInsert(scores);
+    }
+
+    @Override
+    public Map<String, Object> getSubjectiveAnswer(Integer examId, Integer questionId, Integer studentId) {
+        // 获取学生答案记录
+        StudentQuestionScore questionScore = studentQuestionScoreMapper.selectByExamQuestionAndStudent(
+            examId, questionId, studentId);
+        
+        if (questionScore == null) {
+            return null;
+        }
+
+        // 获取题目信息
+        Question question = questionService.getById(questionId);
+        if (question == null) {
+            return null;
+        }
+
+        // 检查是否是主观题（填空题或简答题）
+        if (question.getType() != 3 && question.getType() != 4) {
+            return null;
+        }
+
+        // 获取题目在试卷中的分数
+        ExamPaperQuestion examPaperQuestion = examPaperQuestionService.getByExamAndQuestionId(
+            examId, questionId);
+        if (examPaperQuestion == null) {
+            return null;
+        }
+
+        // 构建返回结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("questionId", questionId);
+        result.put("studentId", studentId);
+        result.put("examId", examId);
+        result.put("questionContent", question.getContent());
+        result.put("questionType", question.getType());
+        result.put("studentAnswer", questionScore.getAnswer());
+        result.put("standardAnswer", question.getAnswer());
+        result.put("score", questionScore.getScore());
+        result.put("fullScore", examPaperQuestion.getQuestionScore());
+        result.put("status", questionScore.getStatus());
+
+        return result;
     }
 } 

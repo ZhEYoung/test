@@ -36,38 +36,38 @@ public class ExamClassServiceImpl implements ExamClassService {
     }
 
     @Override
-    public ExamClass selectById(Integer id) {
+    public ExamClass getById(Integer id) {
         return examClassMapper.selectById(id);
     }
 
     @Override
-    public List<ExamClass> selectAll() {
+    public List<ExamClass> getAll() {
         return examClassMapper.selectAll();
     }
 
     @Override
-    public List<ExamClass> selectPage(Integer pageNum, Integer pageSize) {
+    public List<ExamClass> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return examClassMapper.selectPage(offset, pageSize);
     }
 
     @Override
-    public Long selectCount() {
+    public Long getCount() {
         return examClassMapper.selectCount();
     }
 
     @Override
-    public List<ExamClass> selectByCondition(Map<String, Object> condition) {
+    public List<ExamClass> getByCondition(Map<String, Object> condition) {
         return examClassMapper.selectByCondition(condition);
     }
 
     @Override
-    public Long selectCountByCondition(Map<String, Object> condition) {
+    public Long getCountByCondition(Map<String, Object> condition) {
         return examClassMapper.selectCountByCondition(condition);
     }
 
     @Override
-    public List<ExamClass> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+    public List<ExamClass> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return examClassMapper.selectPageByCondition(condition, offset, pageSize);
     }

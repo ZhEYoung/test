@@ -38,13 +38,13 @@ public interface StudentClassService {
      * @param scId 关联ID
      * @return 关联实体
      */
-    StudentClass selectById(Integer scId);
+    StudentClass getById(Integer scId);
 
     /**
      * 查询所有关联记录
      * @return 关联列表
      */
-    List<StudentClass> selectAll();
+    List<StudentClass> getAll();
 
     /**
      * 根据学生ID查询关联记录

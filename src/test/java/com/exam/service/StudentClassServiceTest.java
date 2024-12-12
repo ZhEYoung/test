@@ -121,7 +121,7 @@ public class StudentClassServiceTest {
         assertNotNull(testStudentClass.getScId());
 
         // 测试查询关联记录
-        StudentClass queryStudentClass = studentClassService.selectById(testStudentClass.getScId());
+        StudentClass queryStudentClass = studentClassService.getById(testStudentClass.getScId());
         assertNotNull(queryStudentClass);
         assertEquals(testStudentClass.getStudentId(), queryStudentClass.getStudentId());
         assertEquals(testStudentClass.getClassId(), queryStudentClass.getClassId());
@@ -132,7 +132,7 @@ public class StudentClassServiceTest {
         assertEquals(1, result);
 
         // 验证更新结果
-        queryStudentClass = studentClassService.selectById(testStudentClass.getScId());
+        queryStudentClass = studentClassService.getById(testStudentClass.getScId());
         assertFalse(queryStudentClass.getStatus());
     }
 
@@ -152,7 +152,7 @@ public class StudentClassServiceTest {
         assertTrue(classStudents.stream().anyMatch(sc -> sc.getClassId().equals(testClass.getClassId())));
 
         // 测试查询所有记录
-        List<StudentClass> allRecords = studentClassService.selectAll();
+        List<StudentClass> allRecords = studentClassService.getAll();
         assertFalse(allRecords.isEmpty());
         assertTrue(allRecords.stream().anyMatch(sc -> 
             sc.getStudentId().equals(testStudent.getStudentId()) && 
@@ -169,7 +169,7 @@ public class StudentClassServiceTest {
         assertEquals(1, result);
 
         // 验证删除结果
-        StudentClass deletedRecord = studentClassService.selectById(testStudentClass.getScId());
+        StudentClass deletedRecord = studentClassService.getById(testStudentClass.getScId());
         assertNull(deletedRecord);
     }
 
