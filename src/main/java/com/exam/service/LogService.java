@@ -8,7 +8,57 @@ import java.util.Date;
 /**
  * 日志服务接口
  */
-public interface LogService extends BaseService<Log> {
+public interface LogService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Log record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Log record);
+
+    /**
+     * 根据ID查询
+     */
+    Log getById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Log> getAll();
+
+    /**
+     * 分页查询
+     */
+    List<Log> getPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long getCount();
+
+    /**
+     * 条件查询
+     */
+    List<Log> getByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long getCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Log> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据用户ID查询日志

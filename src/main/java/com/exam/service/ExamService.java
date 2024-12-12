@@ -8,7 +8,57 @@ import java.util.Date;
 /**
  * 考试服务接口
  */
-public interface ExamService extends BaseService<Exam> {
+public interface ExamService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Exam record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Exam record);
+
+    /**
+     * 根据ID查询
+     */
+    Exam getById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Exam> getAll();
+
+    /**
+     * 分页查询
+     */
+    List<Exam> getPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long getCount();
+
+    /**
+     * 条件查询
+     */
+    List<Exam> getByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long getCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Exam> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学科ID查询考试列表
@@ -119,4 +169,22 @@ public interface ExamService extends BaseService<Exam> {
      * @return 进行状态
      */
     Map<String, Object> getExamProgress(Integer examId);
+
+    /**
+     * 发布期末考试
+     * @param teacherId 教师ID
+     * @param subjectId 学科ID
+     * @param classId 班级ID
+     * @param academicTerm 学年学期
+     * @return 创建的期末考试
+     * @throws RuntimeException 当权限不足或试卷数量不足时
+     */
+    Exam publishFinalExam(Integer teacherId, Integer subjectId, Integer classId, Date academicTerm);
+
+    /**
+     * 删除指定班级的所有考试-班级关联
+     * @param classId 班级ID
+     * @return 删除的记录数
+     */
+    int deleteExamClassByClassId(Integer classId);
 } 

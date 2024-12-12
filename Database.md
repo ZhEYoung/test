@@ -322,15 +322,15 @@
 
 - **表结构**
 
-  | 字段                         | 数据类型          | 约束 | 索引 | 说明                                                                 |
-  |----------------------------|---------------| ---- | ---- |--------------------------------------------------------------------|
-  | 日志ID (`log_id`)            | `INT`         | 主键 | 索引 | 唯一标识每条日志                                                           |
-  | 用户ID (`user_id`)           | `INT`         | 外键 | 索引 | 关联 `user` 的 `user_id`                                              |
-  | 操作类型(`action_type`)        | `INT`         |      |      | 0: `INSERT`、1: `UPDATE`、2: `DELETE`、3: `LOGIN`、4: `SUBMIT_TEST`、5：`EXCEPTION` |
-  | 操作描述(`action_description`) | `TEXT`        |      |      | 操作的详细描述                                                            |
-  | 操作时间(`created_time`)       | `TIMESTAMP`   |      |      | 操作发生的时间                                                            |
-  | 操作对象(`object_type`)        | `TEXT`        |      |      | 操作对象的类型                                                            |
-  | IP地址(`ip_address`)         | `VARCHAR(50)` |      |      | 操作对象的IP地址                                                          |
-  | 设备信息(`device_info`)        | `TEXT`        |      |      | 操作对象的设备信息                                                          |
-  | 操作状态(`status`)             | `VARCHAR(20)` |      |      | 操作对象的状态                                                            |
+  | 字段                           | 数据类型      | 约束 | 索引 | 说明                                                         |
+  | ------------------------------ | ------------- | ---- | ---- | ------------------------------------------------------------ |
+  | 日志ID (`log_id`)              | `INT`         | 主键 | 索引 | 唯一标识每条日志                                             |
+  | 用户ID (`user_id`)             | `INT`         | 外键 | 索引 | 关联 `user` 的 `user_id`                                     |
+  | 操作类型(`action_type`)        | `INT`         |      |      | 0: `INSERT`、1: `UPDATE`、2: `DELETE`、3: `LOGIN`、4: `SUBMIT_TEST`、5：`EXCEPTION`、6：`SIMULATE_LOGIN` |
+  | 操作描述(`action_description`) | `TEXT`        |      |      | 操作的详细描述                                               |
+  | 操作时间(`created_time`)       | `TIMESTAMP`   |      |      | 操作发生的时间                                               |
+  | 操作对象(`object_type`)        | `TEXT`        |      |      | 操作对象的类型                                               |
+  | IP地址(`ip_address`)           | `VARCHAR(50)` |      |      | 操作对象的IP地址                                             |
+  | 设备信息(`device_info`)        | `TEXT`        |      |      | 操作对象的设备信息                                           |
+  | 操作状态(`status`)             | `VARCHAR(20)` |      |      | 操作对象的状态                                               |
 

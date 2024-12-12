@@ -10,22 +10,71 @@
         <result column="question_score" property="questionScore"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        epq_id, paper_id, question_id, question_order, question_score
+    </sql>
+
+    <!-- 插入试卷题目关联记录 -->
+    <insert id="insert" parameterType="com.exam.entity.ExamPaperQuestion" useGeneratedKeys="true" keyProperty="epqId">
+        INSERT INTO exam_paper_question (
+            paper_id, question_id, question_order, question_score
+        ) VALUES (
+            #{paperId}, #{questionId}, #{questionOrder}, #{questionScore}
+        )
+    </insert>
+
+    <!-- 根据ID删除试卷题目关联 -->
+    <delete id="deleteById">
+        DELETE FROM exam_paper_question WHERE epq_id = #{epqId}
+    </delete>
+
+    <!-- 更新试卷题目关联信息 -->
+    <update id="update" parameterType="com.exam.entity.ExamPaperQuestion">
+        UPDATE exam_paper_question
+        <set>
+            <if test="paperId != null">paper_id = #{paperId},</if>
+            <if test="questionId != null">question_id = #{questionId},</if>
+            <if test="questionOrder != null">question_order = #{questionOrder},</if>
+            <if test="questionScore != null">question_score = #{questionScore}</if>
+        </set>
+        WHERE epq_id = #{epqId}
+    </update>
+
+    <!-- 根据ID查询试卷题目关联 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper_question 
+        WHERE epq_id = #{epqId}
+    </select>
+
+    <!-- 查询所有试卷题目关联 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper_question
+        ORDER BY paper_id, question_order
+    </select>
+
     <!-- 根据试卷ID查询题目关联列表 -->
     <select id="selectByPaperId" resultMap="BaseResultMap">
-        SELECT * FROM exam_paper_question 
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper_question 
         WHERE paper_id = #{paperId}
         ORDER BY question_order
     </select>
 
     <!-- 根据题目ID查询试卷关联列表 -->
     <select id="selectByQuestionId" resultMap="BaseResultMap">
-        SELECT * FROM exam_paper_question 
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_paper_question 
         WHERE question_id = #{questionId}
+        ORDER BY paper_id, question_order
     </select>
 
     <!-- 根据试卷ID删除所有题目关联 -->
     <delete id="deleteByPaperId">
-        DELETE FROM exam_paper_question WHERE paper_id = #{paperId}
+        DELETE FROM exam_paper_question 
+        WHERE paper_id = #{paperId}
     </delete>
 
     <!-- 批量插入试卷题目关联 -->
@@ -74,7 +123,7 @@
 
     <!-- 统计试卷总分 -->
     <select id="calculateTotalScore" resultType="java.math.BigDecimal">
-        SELECT SUM(question_score)
+        SELECT COALESCE(SUM(question_score), 0)
         FROM exam_paper_question
         WHERE paper_id = #{paperId}
     </select>
@@ -84,12 +133,15 @@
         SELECT 
             q.type,
             COUNT(*) as question_count,
-            SUM(epq.question_score) as total_score,
-            AVG(epq.question_score) as avg_score
+            COALESCE(SUM(epq.question_score), 0) as total_score,
+            COALESCE(AVG(epq.question_score), 0) as avg_score,
+            MIN(epq.question_score) as min_score,
+            MAX(epq.question_score) as max_score
         FROM exam_paper_question epq
         INNER JOIN question q ON epq.question_id = q.question_id
         WHERE epq.paper_id = #{paperId}
         GROUP BY q.type
+        ORDER BY q.type
     </select>
 
     <!-- 统计题目难度分布 -->
@@ -103,52 +155,77 @@
                 ELSE '简单'
             END as difficulty_level,
             COUNT(*) as question_count,
-            SUM(epq.question_score) as total_score
+            COALESCE(SUM(epq.question_score), 0) as total_score,
+            COALESCE(AVG(epq.question_score), 0) as avg_score,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 2) as percentage
         FROM exam_paper_question epq
         INNER JOIN question q ON epq.question_id = q.question_id
         WHERE epq.paper_id = #{paperId}
-        GROUP BY difficulty_level
-        ORDER BY MIN(q.difficulty)
+        GROUP BY 
+            CASE 
+                WHEN q.difficulty >= 4.5 THEN '很难'
+                WHEN q.difficulty >= 3.5 THEN '较难'
+                WHEN q.difficulty >= 2.5 THEN '中等'
+                WHEN q.difficulty >= 1.5 THEN '较易'
+                ELSE '简单'
+            END
+        ORDER BY MIN(q.difficulty) DESC
     </select>
 
     <!-- 查询试卷题目覆盖的知识点 -->
     <select id="selectCoveredKnowledgePoints" resultType="java.util.Map">
         SELECT 
             q.type,
-            GROUP_CONCAT(DISTINCT q.content) as content_list,
-            COUNT(*) as question_count
+            GROUP_CONCAT(DISTINCT q.content ORDER BY q.content) as content_list,
+            COUNT(*) as question_count,
+            COALESCE(SUM(epq.question_score), 0) as total_score
         FROM exam_paper_question epq
         INNER JOIN question q ON epq.question_id = q.question_id
         WHERE epq.paper_id = #{paperId}
         GROUP BY q.type
+        ORDER BY q.type
     </select>
 
     <!-- 检查试卷题目重复 -->
     <select id="checkDuplicateQuestions" resultType="java.util.Map">
+        WITH duplicate_questions AS (
+            SELECT 
+                q.question_id,
+                COUNT(*) as usage_count
+            FROM exam_paper_question epq
+            INNER JOIN question q ON epq.question_id = q.question_id
+            GROUP BY q.question_id
+            HAVING COUNT(*) > 1
+        )
         SELECT 
             q.question_id,
             q.content,
-            COUNT(*) as usage_count,
-            GROUP_CONCAT(ep.paper_name) as paper_list
-        FROM exam_paper_question epq
-        INNER JOIN question q ON epq.question_id = q.question_id
+            dq.usage_count,
+            GROUP_CONCAT(DISTINCT ep.paper_name ORDER BY ep.paper_name) as paper_list
+        FROM duplicate_questions dq
+        INNER JOIN question q ON dq.question_id = q.question_id
+        INNER JOIN exam_paper_question epq ON q.question_id = epq.question_id
         INNER JOIN exam_paper ep ON epq.paper_id = ep.paper_id
         WHERE q.question_id IN (
             SELECT question_id
             FROM exam_paper_question
             WHERE paper_id = #{paperId}
         )
-        GROUP BY q.question_id, q.content
-        HAVING COUNT(*) > 1
+        GROUP BY q.question_id, q.content, dq.usage_count
+        ORDER BY dq.usage_count DESC
     </select>
 
     <!-- 查询试卷题目完整性 -->
     <select id="checkPaperCompleteness" resultType="java.util.Map">
         SELECT 
             COUNT(*) as total_questions,
-            SUM(CASE WHEN q.content IS NULL THEN 1 ELSE 0 END) as missing_content,
-            SUM(CASE WHEN q.answer IS NULL THEN 1 ELSE 0 END) as missing_answer,
-            SUM(CASE WHEN epq.question_score IS NULL THEN 1 ELSE 0 END) as missing_score
+            SUM(CASE WHEN q.content IS NULL OR q.content = '' THEN 1 ELSE 0 END) as missing_content,
+            SUM(CASE WHEN q.answer IS NULL OR q.answer = '' THEN 1 ELSE 0 END) as missing_answer,
+            SUM(CASE WHEN epq.question_score IS NULL OR epq.question_score = 0 THEN 1 ELSE 0 END) as missing_score,
+            SUM(CASE WHEN epq.question_order IS NULL THEN 1 ELSE 0 END) as missing_order,
+            COALESCE(SUM(epq.question_score), 0) as total_score,
+            MIN(epq.question_order) as min_order,
+            MAX(epq.question_order) as max_order
         FROM exam_paper_question epq
         LEFT JOIN question q ON epq.question_id = q.question_id
         WHERE epq.paper_id = #{paperId}
@@ -159,17 +236,19 @@
         SELECT 
             q.question_id,
             q.content,
+            q.type,
             COUNT(DISTINCT epq.paper_id) as paper_count,
-            COUNT(DISTINCT e.exam_id) as exam_count
+            COUNT(DISTINCT e.exam_id) as exam_count,
+            MIN(e.exam_start_time) as first_used_time,
+            MAX(e.exam_start_time) as last_used_time,
+            COALESCE(AVG(epq.question_score), 0) as avg_score
         FROM exam_paper_question epq
         INNER JOIN question q ON epq.question_id = q.question_id
         LEFT JOIN exam e ON epq.paper_id = e.paper_id
         WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
-        GROUP BY q.question_id, q.content
+        GROUP BY q.question_id, q.content, q.type
         ORDER BY paper_count DESC, exam_count DESC
     </select>
-
-
 
     <!-- 批量更新题目分组 -->
     <update id="batchUpdateGroup">
@@ -180,4 +259,19 @@
             AND question_id = #{group.questionId}
         </foreach>
     </update>
+
+    <!-- 根据考试ID和题目ID查询试卷题目关联 -->
+    <select id="selectByExamAndQuestionId" resultMap="BaseResultMap">
+        SELECT 
+            epq.epq_id,
+            epq.paper_id,
+            epq.question_id,
+            epq.question_order,
+            epq.question_score
+        FROM exam_paper_question epq
+        INNER JOIN exam e ON epq.paper_id = e.paper_id
+        WHERE e.exam_id = #{examId}
+        AND epq.question_id = #{questionId}
+        LIMIT 1
+    </select>
 </mapper>

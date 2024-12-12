@@ -8,48 +8,111 @@
         <result column="subject_id" property="subjectId"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        qb_id, qb_name, subject_id
+    </sql>
+
+    <!-- 插入题库记录 -->
+    <insert id="insert" parameterType="com.exam.entity.QuestionBank" useGeneratedKeys="true" keyProperty="qbId">
+        INSERT INTO question_bank (qb_name, subject_id)
+        VALUES (#{qbName}, #{subjectId})
+    </insert>
+
+    <!-- 根据ID删除题库 -->
+    <delete id="deleteById">
+        DELETE FROM question_bank WHERE qb_id = #{qbId}
+    </delete>
+
+    <!-- 更新题库信息 -->
+    <update id="update" parameterType="com.exam.entity.QuestionBank">
+        UPDATE question_bank
+        SET
+        <if test="qbName != null">
+            qb_name = #{qbName}
+            <if test="subjectId != null">,</if>
+        </if>
+        <if test="subjectId != null">
+            subject_id = #{subjectId}
+        </if>
+        WHERE qb_id = #{qbId}
+    </update>
+
+    <!-- 根据ID查询题库 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        WHERE qb_id = #{qbId}
+    </select>
+
+    <!-- 查询所有题库 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        ORDER BY qb_id DESC
+    </select>
+
     <!-- 根据学科ID查询题库列表 -->
     <select id="selectBySubjectId" resultMap="BaseResultMap">
-        SELECT * FROM question_bank WHERE subject_id = #{subjectId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank 
+        WHERE subject_id = #{subjectId}
+        ORDER BY qb_id DESC
     </select>
 
     <!-- 根据题库名称查询 -->
     <select id="selectByName" resultMap="BaseResultMap">
-        SELECT * FROM question_bank WHERE qb_name = #{qbName}
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank 
+        WHERE qb_name = #{qbName}
+        LIMIT 1
     </select>
 
     <!-- 统计题库中的题目数量 -->
     <select id="countQuestions" resultType="Integer">
-        SELECT COUNT(*) FROM question WHERE qb_id = #{qbId}
+        SELECT COUNT(1) 
+        FROM question 
+        WHERE qb_id = #{qbId}
     </select>
 
     <!-- 根据学科ID统计题库数量 -->
     <select id="countBySubjectId" resultType="Integer">
-        SELECT COUNT(*) FROM question_bank WHERE subject_id = #{subjectId}
+        SELECT COUNT(1) 
+        FROM question_bank 
+        WHERE subject_id = #{subjectId}
     </select>
 
     <!-- 添加题目到题库 -->
     <update id="addQuestion">
-        UPDATE question SET qb_id = #{qbId} WHERE question_id = #{questionId}
+        UPDATE question 
+        SET qb_id = #{qbId} 
+        WHERE question_id = #{questionId}
+        AND (qb_id IS NULL OR qb_id != #{qbId})
     </update>
 
     <!-- 批量添加题目到题库 -->
     <update id="batchAddQuestions">
-        UPDATE question SET qb_id = #{qbId}
+        UPDATE question 
+        SET qb_id = #{qbId}
         WHERE question_id IN
         <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
             #{questionId}
         </foreach>
+        AND (qb_id IS NULL OR qb_id != #{qbId})
     </update>
 
     <!-- 从题库移除题目 -->
     <update id="removeQuestion">
-        UPDATE question SET qb_id = NULL WHERE qb_id = #{qbId} AND question_id = #{questionId}
+        UPDATE question 
+        SET qb_id = NULL 
+        WHERE qb_id = #{qbId} 
+        AND question_id = #{questionId}
     </update>
 
     <!-- 批量移除题目 -->
     <update id="batchRemoveQuestions">
-        UPDATE question SET qb_id = NULL 
+        UPDATE question 
+        SET qb_id = NULL 
         WHERE qb_id = #{qbId} 
         AND question_id IN
         <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
@@ -59,54 +122,70 @@
 
     <!-- 查询题库中的所有题目 -->
     <select id="selectQuestions" resultType="com.exam.entity.Question">
-        SELECT * FROM question WHERE qb_id = #{qbId}
+        SELECT q.* 
+        FROM question q
+        WHERE q.qb_id = #{qbId}
+        ORDER BY q.question_id DESC
     </select>
 
     <!-- 按条件查询题库中的题目 -->
     <select id="selectQuestionsByCondition" resultType="com.exam.entity.Question">
-        SELECT * FROM question 
-        WHERE qb_id = #{qbId}
+        SELECT q.* 
+        FROM question q
+        WHERE q.qb_id = #{qbId}
         <if test="type != null">
-            AND type = #{type}
+            AND q.type = #{type}
         </if>
         <if test="minDifficulty != null and maxDifficulty != null">
-            AND difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+            AND q.difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
         </if>
+        ORDER BY q.question_id DESC
     </select>
 
     <!-- 统计题库中各类型题目数量 -->
     <select id="countQuestionsByType" resultType="java.util.Map">
-        SELECT type, COUNT(*) as count
-        FROM question
-        WHERE qb_id = #{qbId}
-        GROUP BY type
+        SELECT q.type, COUNT(1) as count
+        FROM question q
+        WHERE q.qb_id = #{qbId}
+        GROUP BY q.type
+        ORDER BY q.type
     </select>
 
     <!-- 统计题库中各难度题目数量 -->
     <select id="countQuestionsByDifficulty" resultType="java.util.Map">
         SELECT 
             CASE 
-                WHEN difficulty >= 4.5 THEN '很难'
-                WHEN difficulty >= 3.5 THEN '较难'
-                WHEN difficulty >= 2.5 THEN '中等'
-                WHEN difficulty >= 1.5 THEN '较易'
+                WHEN q.difficulty >= 4.5 THEN '很难'
+                WHEN q.difficulty >= 3.5 THEN '较难'
+                WHEN q.difficulty >= 2.5 THEN '中等'
+                WHEN q.difficulty >= 1.5 THEN '较易'
                 ELSE '简单'
             END as difficulty_level,
-            COUNT(*) as count
-        FROM question
-        WHERE qb_id = #{qbId}
-        GROUP BY difficulty_level
-        ORDER BY MIN(difficulty)
+            COUNT(1) as count
+        FROM question q
+        WHERE q.qb_id = #{qbId}
+        GROUP BY 
+            CASE 
+                WHEN q.difficulty >= 4.5 THEN '很难'
+                WHEN q.difficulty >= 3.5 THEN '较难'
+                WHEN q.difficulty >= 2.5 THEN '中等'
+                WHEN q.difficulty >= 1.5 THEN '较易'
+                ELSE '简单'
+            END
+        ORDER BY MIN(q.difficulty)
     </select>
 
     <!-- 统计题库使用情况 -->
     <select id="countBankUsage" resultType="java.util.Map">
         SELECT 
             COUNT(DISTINCT epq.paper_id) as paper_count,
-            COUNT(DISTINCT e.exam_id) as exam_count
+            COUNT(DISTINCT e.exam_id) as exam_count,
+            COUNT(DISTINCT es.student_id) as student_count
         FROM question q
         LEFT JOIN exam_paper_question epq ON q.question_id = epq.question_id
-        LEFT JOIN exam e ON epq.paper_id = e.paper_id
+        LEFT JOIN exam_paper ep ON epq.paper_id = ep.paper_id
+        LEFT JOIN exam e ON ep.paper_id = e.paper_id
+        LEFT JOIN exam_student es ON e.exam_id = es.exam_id
         WHERE q.qb_id = #{qbId}
     </select>
 
@@ -131,6 +210,11 @@
         <foreach collection="sourceQbIds" item="sourceQbId" open="(" separator="," close=")">
             #{sourceQbId}
         </foreach>
+        AND question_id NOT IN (
+            SELECT question_id 
+            FROM question 
+            WHERE qb_id = #{targetQbId}
+        )
     </update>
 
     <!-- 查询最近使用的题库 -->
@@ -150,8 +234,73 @@
         FROM question_bank qb
         INNER JOIN question q ON qb.qb_id = q.qb_id
         INNER JOIN exam_paper_question epq ON q.question_id = epq.question_id
-        GROUP BY qb.qb_id
+        GROUP BY qb.qb_id, qb.qb_name, qb.subject_id
         ORDER BY usage_count DESC
         LIMIT #{limit}
     </select>
+
+    <!-- 分页查询题库 -->
+    <select id="selectPage" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        ORDER BY qb_id DESC
+        LIMIT #{params.offset}, #{params.limit}
+    </select>
+
+    <!-- 条件查询题库 -->
+    <select id="selectByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        <where>
+            <if test="condition.qbName != null and condition.qbName != ''">
+                AND qb_name LIKE CONCAT('%', #{condition.qbName}, '%')
+            </if>
+            <if test="condition.subjectId != null">
+                AND subject_id = #{condition.subjectId}
+            </if>
+        </where>
+        ORDER BY qb_id DESC
+    </select>
+
+    <!-- 条件分页查询题库 -->
+    <select id="selectPageByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question_bank
+        <where>
+            <if test="condition.qbName != null and condition.qbName != ''">
+                AND qb_name LIKE CONCAT('%', #{condition.qbName}, '%')
+            </if>
+            <if test="condition.subjectId != null">
+                AND subject_id = #{condition.subjectId}
+            </if>
+        </where>
+        ORDER BY qb_id DESC
+        LIMIT #{condition.offset}, #{condition.limit}
+    </select>
+
+    <!-- 查询题库总数 -->
+    <select id="selectCount" resultType="Long">
+        SELECT COUNT(1)
+        FROM question_bank
+    </select>
+
+    <!-- 条件查询题库总数 -->
+    <select id="selectCountByCondition" parameterType="java.util.Map" resultType="Long">
+        SELECT COUNT(1)
+        FROM question_bank
+        <where>
+            <if test="condition.qbName != null and condition.qbName != ''">
+                AND qb_name LIKE CONCAT('%', #{condition.qbName}, '%')
+            </if>
+            <if test="condition.subjectId != null">
+                AND subject_id = #{condition.subjectId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 根据学科ID删除题库 -->
+    <delete id="deleteBySubjectId">
+        DELETE FROM question_bank
+        WHERE subject_id = #{subjectId}
+    </delete>
 </mapper>

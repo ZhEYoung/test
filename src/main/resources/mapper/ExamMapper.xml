@@ -16,60 +16,137 @@
         <result column="exam_type" property="examType"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        exam_id, exam_name, subject_id, paper_id, exam_start_time, exam_end_time, 
+        exam_duration, created_time, teacher_id, exam_status, exam_type
+    </sql>
+
+    <!-- 插入考试记录 -->
+    <insert id="insert" parameterType="com.exam.entity.Exam" useGeneratedKeys="true" keyProperty="examId">
+        INSERT INTO exam (
+            exam_name, subject_id, paper_id, exam_start_time, exam_end_time,
+            exam_duration, teacher_id, exam_status, exam_type
+        )
+        VALUES (
+            #{examName}, #{subjectId}, #{paperId}, #{examStartTime}, #{examEndTime},
+            #{examDuration}, #{teacherId}, #{examStatus}, #{examType}
+        )
+    </insert>
+
+    <!-- 根据ID删除考试记录 -->
+    <delete id="deleteById">
+        DELETE FROM exam WHERE exam_id = #{examId}
+    </delete>
+
+    <!-- 更新考试记录 -->
+    <update id="update" parameterType="com.exam.entity.Exam">
+        UPDATE exam
+        <set>
+            <if test="examName != null">exam_name = #{examName},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="paperId != null">paper_id = #{paperId},</if>
+            <if test="examStartTime != null">exam_start_time = #{examStartTime},</if>
+            <if test="examEndTime != null">exam_end_time = #{examEndTime},</if>
+            <if test="examDuration != null">exam_duration = #{examDuration},</if>
+            <if test="teacherId != null">teacher_id = #{teacherId},</if>
+            <if test="examStatus != null">exam_status = #{examStatus},</if>
+            <if test="examType != null">exam_type = #{examType}</if>
+        </set>
+        WHERE exam_id = #{examId}
+    </update>
+
+    <!-- 根据ID查询考试 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
+        WHERE exam_id = #{examId}
+    </select>
+
+    <!-- 查询所有考试 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam
+        ORDER BY created_time DESC
+    </select>
+
     <!-- 根据学科ID查询考试列表 -->
     <select id="selectBySubjectId" resultMap="BaseResultMap">
-        SELECT * FROM exam WHERE subject_id = #{subjectId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
+        WHERE subject_id = #{subjectId}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据试卷ID查询考试列表 -->
     <select id="selectByPaperId" resultMap="BaseResultMap">
-        SELECT * FROM exam WHERE paper_id = #{paperId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
+        WHERE paper_id = #{paperId}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据教师ID查询考试列表 -->
     <select id="selectByTeacherId" resultMap="BaseResultMap">
-        SELECT * FROM exam WHERE teacher_id = #{teacherId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
+        WHERE teacher_id = #{teacherId}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据考试状态查询 -->
     <select id="selectByStatus" resultMap="BaseResultMap">
-        SELECT * FROM exam WHERE exam_status = #{examStatus}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
+        WHERE exam_status = #{examStatus}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 根据考试类型查询 -->
     <select id="selectByType" resultMap="BaseResultMap">
-        SELECT * FROM exam WHERE exam_type = #{examType}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
+        WHERE exam_type = #{examType}
+        ORDER BY created_time DESC
     </select>
 
     <!-- 更新考试状态 -->
     <update id="updateStatus">
-        UPDATE exam SET exam_status = #{status} WHERE exam_id = #{examId}
+        UPDATE exam 
+        SET exam_status = #{status} 
+        WHERE exam_id = #{examId}
     </update>
 
     <!-- 查询学生参加的考试列表 -->
     <select id="selectByStudentId" resultMap="BaseResultMap">
-        SELECT e.* FROM exam e
+        SELECT e.<include refid="Base_Column_List"/>
+        FROM exam e
         INNER JOIN exam_student es ON e.exam_id = es.exam_id
         WHERE es.student_id = #{studentId}
+        ORDER BY e.created_time DESC
     </select>
 
     <!-- 查询班级的考试列表 -->
     <select id="selectByClassId" resultMap="BaseResultMap">
-        SELECT e.* FROM exam e
+        SELECT e.<include refid="Base_Column_List"/>
+        FROM exam e
         INNER JOIN exam_class ec ON e.exam_id = ec.exam_id
         WHERE ec.class_id = #{classId}
+        ORDER BY e.created_time DESC
     </select>
 
     <!-- 根据时间范围查询考试 -->
     <select id="selectByTimeRange" resultMap="BaseResultMap">
-        SELECT * FROM exam 
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam 
         WHERE exam_start_time BETWEEN #{startTime} AND #{endTime}
         ORDER BY exam_start_time
     </select>
 
     <!-- 高级查询（支持多条件组合） -->
     <select id="selectByConditions" resultMap="BaseResultMap">
-        SELECT * FROM exam
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam
         <where>
             <if test="subjectId != null">
                 AND subject_id = #{subjectId}
@@ -98,13 +175,16 @@
 
     <!-- 统计某个时间段内的考试数量 -->
     <select id="countByTimeRange" resultType="Long">
-        SELECT COUNT(*) FROM exam
+        SELECT COUNT(*)
+        FROM exam
         WHERE exam_start_time BETWEEN #{startTime} AND #{endTime}
     </select>
 
     <!-- 更新考试时长 -->
     <update id="updateDuration">
-        UPDATE exam SET exam_duration = #{duration} WHERE exam_id = #{examId}
+        UPDATE exam 
+        SET exam_duration = #{duration} 
+        WHERE exam_id = #{examId}
     </update>
 
     <!-- 批量插入考试班级关联 -->
@@ -119,6 +199,37 @@
     <!-- 删除考试班级关联 -->
     <delete id="deleteExamClass">
         DELETE FROM exam_class 
-        WHERE exam_id = #{examId} AND class_id = #{classId}
+        <where>
+            <if test="examId != null">
+                AND exam_id = #{examId}
+            </if>
+            <if test="classId != null">
+                AND class_id = #{classId}
+            </if>
+        </where>
     </delete>
+
+    <select id="selectTeacherPermission" resultType="java.lang.Integer">
+        SELECT permission
+        FROM teacher
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <select id="selectTeacherInfo" resultType="java.util.Map">
+        SELECT t.permission, t.college_id
+        FROM teacher t
+        WHERE t.teacher_id = #{teacherId}
+    </select>
+
+    <select id="selectSubjectCollegeId" resultType="java.lang.Integer">
+        SELECT college_id
+        FROM subject
+        WHERE subject_id = #{subjectId}
+    </select>
+
+    <!-- 插入考试-班级关联 -->
+    <insert id="insertExamClass" parameterType="java.util.Map">
+        INSERT INTO exam_class (exam_id, class_id, create_time)
+        VALUES (#{examId}, #{classId}, NOW())
+    </insert>
 </mapper>
