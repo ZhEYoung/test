@@ -70,6 +70,11 @@ public interface TeacherService {
     Teacher getByUserId(Integer userId);
 
     /**
+     * 根据用户ID查询教师ID
+     */
+    Integer getTeacherIdByUserId(Integer userId);
+
+    /**
      * 根据学院ID查询教师列表
      */
     List<Teacher> getByCollegeId(Integer collegeId);

@@ -45,6 +45,7 @@ public class FinalExamServiceTest {
     private Subject testSubject;
     private College testCollege;
     private Class testClass;
+    private Class testClass2;
     private ExamPaper finalPaper1;
     private ExamPaper finalPaper2;
     private ExamPaper normalPaper;
@@ -93,13 +94,21 @@ public class FinalExamServiceTest {
         testSubject.setCollegeId(testCollege.getCollegeId());
         subjectService.insert(testSubject);
 
-        // 创建测试班级
+        // 创建测试班级1
         testClass = new Class();
-        testClass.setClassName("Test Class");
+        testClass.setClassName("Test Class 1");
         testClass.setSubjectId(testSubject.getSubjectId());
         testClass.setTeacherId(adminTeacher.getTeacherId());
         testClass.setFinalExam(Boolean.FALSE); // 初始未发布期末考试
         classService.insert(testClass);
+
+        // 创建测试班级2
+        testClass2 = new Class();
+        testClass2.setClassName("Test Class 2");
+        testClass2.setSubjectId(testSubject.getSubjectId());
+        testClass2.setTeacherId(adminTeacher.getTeacherId());
+        testClass2.setFinalExam(Boolean.FALSE);
+        classService.insert(testClass2);
 
         // 设置学年学期
         Calendar cal = Calendar.getInstance();
@@ -130,13 +139,24 @@ public class FinalExamServiceTest {
     @Test
     @DisplayName("测试权限验证 - 只有管理员教师可以发布期末考试")
     public void testPermissionValidation() {
+        List<Integer> classIds = Arrays.asList(testClass.getClassId());
+        
+        // 设置考试时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1); // 设置为明天
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
+        Date examStartTime = calendar.getTime();
+        Integer examDuration = 120; // 120分钟
+
         // 使用普通教师尝试发布期末考试
         Exception exception = Assertions.assertThrows(RuntimeException.class, () -> {
             examService.publishFinalExam(
                 normalTeacher.getTeacherId(),
                 testSubject.getSubjectId(),
-                testClass.getClassId(),
-                academicTerm
+                classIds,
+                academicTerm,
+                examStartTime,
+                examDuration
             );
         });
         Assertions.assertTrue(exception.getMessage().contains("权限不足"));
@@ -148,38 +168,70 @@ public class FinalExamServiceTest {
         // 先删除一份期末试卷
         examPaperService.deleteById(finalPaper2.getPaperId());
 
+        List<Integer> classIds = Arrays.asList(testClass.getClassId());
+        
+        // 设置考试时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1); // 设置为明天
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
+        Date examStartTime = calendar.getTime();
+        Integer examDuration = 120; // 120分钟
+
         // 尝试发布期末考试
         Exception exception = Assertions.assertThrows(RuntimeException.class, () -> {
             examService.publishFinalExam(
                 adminTeacher.getTeacherId(),
                 testSubject.getSubjectId(),
-                testClass.getClassId(),
-                academicTerm
+                classIds,
+                academicTerm,
+                examStartTime,
+                examDuration
             );
         });
         Assertions.assertTrue(exception.getMessage().contains("期末试卷数量不足"));
     }
 
     @Test
-    @DisplayName("测试成功发布期末考试")
-    public void testSuccessfulPublishFinalExam() {
+    @DisplayName("测试成功发布期末考试 - 单个班级")
+    public void testSuccessfulPublishFinalExamSingleClass() {
         // 确保有两份未发布的期末试卷
         finalPaper1.setPaperStatus(0);
         finalPaper2.setPaperStatus(0);
         examPaperService.updateById(finalPaper1);
         examPaperService.updateById(finalPaper2);
 
+        List<Integer> classIds = Arrays.asList(testClass.getClassId());
+        
+        // 设置考试时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1); // 设置为明天
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
+        Date examStartTime = calendar.getTime();
+        Integer examDuration = 120; // 120分钟
+
         // 发布期末考试
         Exam finalExam = examService.publishFinalExam(
             adminTeacher.getTeacherId(),
             testSubject.getSubjectId(),
-            testClass.getClassId(),
-            academicTerm
+            classIds,
+            academicTerm,
+            examStartTime,
+            examDuration
         );
 
         // 验证考试创建成功
         Assertions.assertNotNull(finalExam);
         Assertions.assertNotNull(finalExam.getExamId());
+        
+        // 验证考试时间设置正确
+        Assertions.assertEquals(examStartTime, finalExam.getExamStartTime());
+        Assertions.assertEquals(examDuration, finalExam.getExamDuration());
+        
+        // 验证考试结束时间正确计算
+        Calendar endCalendar = Calendar.getInstance();
+        endCalendar.setTime(examStartTime);
+        endCalendar.add(Calendar.MINUTE, examDuration);
+        Assertions.assertEquals(endCalendar.getTime(), finalExam.getExamEndTime());
         
         // 验证选中的试卷必须是期末试卷
         ExamPaper selectedPaper = examPaperService.getById(finalExam.getPaperId());
@@ -198,6 +250,75 @@ public class FinalExamServiceTest {
         // 验证班级的期末考试状态已更新
         Class updatedClass = classService.getById(testClass.getClassId());
         Assertions.assertTrue(updatedClass.getFinalExam());
+    }
+
+    @Test
+    @DisplayName("测试成功发布期末考试 - 多个班级")
+    public void testSuccessfulPublishFinalExamMultipleClasses() {
+        // 确保有两份未发布的期末试卷
+        finalPaper1.setPaperStatus(0);
+        finalPaper2.setPaperStatus(0);
+        examPaperService.updateById(finalPaper1);
+        examPaperService.updateById(finalPaper2);
+
+        List<Integer> classIds = Arrays.asList(testClass.getClassId(), testClass2.getClassId());
+        
+        // 设置考试时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1); // 设置为明天
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
+        Date examStartTime = calendar.getTime();
+        Integer examDuration = 120; // 120分钟
+
+        // 发布期末考试
+        Exam finalExam = examService.publishFinalExam(
+            adminTeacher.getTeacherId(),
+            testSubject.getSubjectId(),
+            classIds,
+            academicTerm,
+            examStartTime,
+            examDuration
+        );
+
+        // 验证考试创建成功
+        Assertions.assertNotNull(finalExam);
+        Assertions.assertNotNull(finalExam.getExamId());
+        
+        // 验证考试时间设置正确
+        Assertions.assertEquals(examStartTime, finalExam.getExamStartTime());
+        Assertions.assertEquals(examDuration, finalExam.getExamDuration());
+        
+        // 验证考试结束时间正确计算
+        Calendar endCalendar = Calendar.getInstance();
+        endCalendar.setTime(examStartTime);
+        endCalendar.add(Calendar.MINUTE, examDuration);
+        Assertions.assertEquals(endCalendar.getTime(), finalExam.getExamEndTime());
+        
+        // 验证选中的试卷必须是期末试卷
+        ExamPaper selectedPaper = examPaperService.getById(finalExam.getPaperId());
+        Assertions.assertEquals(0, selectedPaper.getExamType());
+        
+        // 验证所有相关期末试卷都被标记为已发布
+        ExamPaper paper1 = examPaperService.getById(finalPaper1.getPaperId());
+        ExamPaper paper2 = examPaperService.getById(finalPaper2.getPaperId());
+        Assertions.assertEquals(1, paper1.getPaperStatus());
+        Assertions.assertEquals(1, paper2.getPaperStatus());
+        
+        // 验证普通试卷状态未改变
+        ExamPaper normal = examPaperService.getById(normalPaper.getPaperId());
+        Assertions.assertEquals(0, normal.getPaperStatus());
+        
+        // 验证所有班级的期末考试状态已更新
+        Class updatedClass1 = classService.getById(testClass.getClassId());
+        Class updatedClass2 = classService.getById(testClass2.getClassId());
+        Assertions.assertTrue(updatedClass1.getFinalExam());
+        Assertions.assertTrue(updatedClass2.getFinalExam());
+
+        // 验证考试-班级关联创建成功
+        List<Exam> examsForClass1 = examService.getByClassId(testClass.getClassId());
+        List<Exam> examsForClass2 = examService.getByClassId(testClass2.getClassId());
+        Assertions.assertTrue(examsForClass1.stream().anyMatch(e -> e.getExamId().equals(finalExam.getExamId())));
+        Assertions.assertTrue(examsForClass2.stream().anyMatch(e -> e.getExamId().equals(finalExam.getExamId())));
     }
 
     @Test
@@ -224,17 +345,38 @@ public class FinalExamServiceTest {
         examPaperService.updateById(samePaper1);
         examPaperService.updateById(samePaper2);
 
+        List<Integer> classIds = Arrays.asList(testClass.getClassId(), testClass2.getClassId());
+        
+        // 设置考试时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.DAY_OF_MONTH, 1); // 设置为明天
+        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
+        Date examStartTime = calendar.getTime();
+        Integer examDuration = 120; // 120分钟
+
         // 尝试发布期末考试
         Exam finalExam = examService.publishFinalExam(
             adminTeacher.getTeacherId(),
             testSubject.getSubjectId(),
-            testClass.getClassId(),
-            academicTerm
+            classIds,
+            academicTerm,
+            examStartTime,
+            examDuration
         );
 
         // 验证选中的试卷是正确学期的试卷
         ExamPaper selectedPaper = examPaperService.getById(finalExam.getPaperId());
         Assertions.assertEquals(academicTerm, selectedPaper.getAcademicTerm());
+        
+        // 验证考试时间设置正确
+        Assertions.assertEquals(examStartTime, finalExam.getExamStartTime());
+        Assertions.assertEquals(examDuration, finalExam.getExamDuration());
+        
+        // 验证考试结束时间正确计算
+        Calendar endCalendar = Calendar.getInstance();
+        endCalendar.setTime(examStartTime);
+        endCalendar.add(Calendar.MINUTE, examDuration);
+        Assertions.assertEquals(endCalendar.getTime(), finalExam.getExamEndTime());
         
         // 保存需要清理的试卷ID以便在tearDown中删除
         paperIdsToDelete = Arrays.asList(

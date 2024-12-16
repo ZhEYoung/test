@@ -276,10 +276,10 @@
     <select id="countByDifficulty" resultType="java.util.Map">
         SELECT 
             CASE 
-                WHEN difficulty >= 4.5 THEN '很难'
-                WHEN difficulty >= 3.5 THEN '较难'
-                WHEN difficulty >= 2.5 THEN '中等'
-                WHEN difficulty >= 1.5 THEN '较易'
+                WHEN difficulty >= 0.9 THEN '很难'
+                WHEN difficulty >= 0.7 THEN '较难'
+                WHEN difficulty >= 0.5 THEN '中等'
+                WHEN difficulty >= 0.3 THEN '较易'
                 ELSE '简单'
             END as difficulty_level,
             COUNT(1) as count,
@@ -290,10 +290,10 @@
         FROM question
         GROUP BY 
             CASE 
-                WHEN difficulty >= 4.5 THEN '很难'
-                WHEN difficulty >= 3.5 THEN '较难'
-                WHEN difficulty >= 2.5 THEN '中等'
-                WHEN difficulty >= 1.5 THEN '较易'
+                WHEN difficulty >= 0.9 THEN '很难'
+                WHEN difficulty >= 0.7 THEN '较难'
+                WHEN difficulty >= 0.5 THEN '中等'
+                WHEN difficulty >= 0.3 THEN '较易'
                 ELSE '简单'
             END
         ORDER BY min_difficulty

@@ -26,11 +26,11 @@
     <insert id="insert" parameterType="com.exam.entity.Exam" useGeneratedKeys="true" keyProperty="examId">
         INSERT INTO exam (
             exam_name, subject_id, paper_id, exam_start_time, exam_end_time,
-            exam_duration, teacher_id, exam_status, exam_type
+            exam_duration, teacher_id, exam_status, exam_type, created_time
         )
         VALUES (
             #{examName}, #{subjectId}, #{paperId}, #{examStartTime}, #{examEndTime},
-            #{examDuration}, #{teacherId}, #{examStatus}, #{examType}
+            #{examDuration}, #{teacherId}, #{examStatus}, #{examType}, #{createdTime}
         )
     </insert>
 

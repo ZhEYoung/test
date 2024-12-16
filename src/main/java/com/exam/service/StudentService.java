@@ -118,7 +118,7 @@ public interface StudentService {
     int insertScore(Integer studentId, Integer examId, Double score);
     
     /**
-     * 更新学生成���
+     * 更新学生成绩
      */
     int updateScore(Integer studentId, Integer examId, Double score);
     

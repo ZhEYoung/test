@@ -254,6 +254,26 @@ public class AutomaticGradingServiceTest {
             throw new RuntimeException("Failed to insert question");
         }
         assertNotNull(question.getQuestionId(), "Question ID should not be null");
+
+        // 创建判断题选项
+        List<QuestionOption> options = new ArrayList<>();
+        // 创建"正确"选项
+        QuestionOption trueOption = new QuestionOption();
+        trueOption.setQuestionId(question.getQuestionId());
+        trueOption.setContent("正确");
+        trueOption.setIsCorrect(true);
+        options.add(trueOption);
+
+        // 创建"错误"选项
+        QuestionOption falseOption = new QuestionOption();
+        falseOption.setQuestionId(question.getQuestionId());
+        falseOption.setContent("错误");
+        falseOption.setIsCorrect(false);
+        options.add(falseOption);
+
+        // 批量添加选项
+        questionService.batchAddOptions(question.getQuestionId(), options);
+
         return question;
     }
 
@@ -282,15 +302,19 @@ public class AutomaticGradingServiceTest {
         assertEquals(1, result, "Question score record should be inserted successfully");
         assertNotNull(questionScore.getRecordId(), "Record ID should not be null after insertion");
 
+        // 获取选项ID
+        Integer correctOptionId = singleChoiceOptions.get(0).getOptionId(); // 正确答案
+        Integer wrongOptionId = singleChoiceOptions.get(1).getOptionId(); // 错误答案
+
         // 测试正确答案
-        questionScore.setAnswer("A"); // 设置正确答案
+        questionScore.setAnswer(correctOptionId.toString()); // 设置正确答案
         automaticGradingService.gradeQuestion(questionScore);
         StudentQuestionScore gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("10.00"), gradedScore.getScore(), "Should get full score for correct answer");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
 
         // 测试错误答案
-        questionScore.setAnswer("B"); // 设置错误答案
+        questionScore.setAnswer(wrongOptionId.toString()); // 设置错误答案
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for wrong answer");
@@ -301,6 +325,13 @@ public class AutomaticGradingServiceTest {
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for null answer");
+        assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
+
+        // 测试格式错误的答案
+        questionScore.setAnswer("invalid_id");
+        automaticGradingService.gradeQuestion(questionScore);
+        gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
+        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for invalid answer format");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
     }
 
@@ -328,33 +359,53 @@ public class AutomaticGradingServiceTest {
         int result = studentQuestionScoreService.insert(questionScore);
         assertEquals(1, result, "Question score record should be inserted successfully");
         assertNotNull(questionScore.getRecordId(), "Record ID should not be null after insertion");
+
+        // 获取选项ID
+        Integer option1Id = multiChoiceOptions.get(0).getOptionId(); // 正确答案1 (A)
+        Integer option2Id = multiChoiceOptions.get(1).getOptionId(); // 错误答案1 (B)
+        Integer option3Id = multiChoiceOptions.get(2).getOptionId(); // 正确答案2 (C)
+        Integer option4Id = multiChoiceOptions.get(3).getOptionId(); // 错误答案2 (D)
         
         // 测试完全正确答案
-        questionScore.setAnswer("A,C"); // 设置完全正确答案
+        questionScore.setAnswer(option1Id + "," + option3Id); // 选择两个正确答案 A,C
         automaticGradingService.gradeQuestion(questionScore);
         StudentQuestionScore gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
-        assertEquals(new BigDecimal("15.00"), gradedScore.getScore(), "Should get full score for correct answer");
+        assertEquals(new BigDecimal("15.00"), gradedScore.getScore(), "Should get full score for all correct answers");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
 
-        // 测试部分正确答案
-        questionScore.setAnswer("A"); // 设置部分正确答案
+        // 测试部分正确答案（只选择了部分正确答案，没有选错误答案）
+        questionScore.setAnswer(option1Id.toString()); // 只选择一个正确答案 A
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
-        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for partially correct answer");
+        assertEquals(new BigDecimal("7.50"), gradedScore.getScore(), "Should get half score for partially correct answer without wrong choices");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
 
-        // 测试错误答案
-        questionScore.setAnswer("B,D"); // 设置错误答案
+        // 测试部分正确但选择了错误答案
+        questionScore.setAnswer(option1Id + "," + option2Id); // 选择一个正确答案和一个错误答案 A,B
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
-        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for wrong answer");
+        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score when including wrong answers");
+        assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
+
+        // 测试全部错误答案
+        questionScore.setAnswer(option2Id + "," + option4Id); // 选择两个错误答案 B,D
+        automaticGradingService.gradeQuestion(questionScore);
+        gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
+        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for all wrong answers");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
 
         // 测试空答案
-        questionScore.setAnswer(null); // 设置空答案
+        questionScore.setAnswer(null);
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for null answer");
+        assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
+
+        // 测试格式错误的答案
+        questionScore.setAnswer("invalid,answer");
+        automaticGradingService.gradeQuestion(questionScore);
+        gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
+        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for invalid answer format");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
     }
 
@@ -382,16 +433,29 @@ public class AutomaticGradingServiceTest {
         int result = studentQuestionScoreService.insert(questionScore);
         assertEquals(1, result, "Question score record should be inserted successfully");
         assertNotNull(questionScore.getRecordId(), "Record ID should not be null after insertion");
+
+        // 获取判断题选项
+        List<QuestionOption> options = questionService.getOptions(testTrueFalseQuestion.getQuestionId());
+        Integer trueOptionId = options.stream()
+            .filter(QuestionOption::getIsCorrect)
+            .findFirst()
+            .map(QuestionOption::getOptionId)
+            .orElseThrow(() -> new RuntimeException("True option not found"));
+        Integer falseOptionId = options.stream()
+            .filter(opt -> !opt.getIsCorrect())
+            .findFirst()
+            .map(QuestionOption::getOptionId)
+            .orElseThrow(() -> new RuntimeException("False option not found"));
         
         // 测试正确答案
-        questionScore.setAnswer("1"); // 设置正确答案
+        questionScore.setAnswer(trueOptionId.toString()); // 设置正确答案
         automaticGradingService.gradeQuestion(questionScore);
         StudentQuestionScore gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("5.00"), gradedScore.getScore(), "Should get full score for correct answer");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
 
         // 测试错误答案
-        questionScore.setAnswer("0"); // 设置错误答案
+        questionScore.setAnswer(falseOptionId.toString()); // 设置错误答案
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for wrong answer");
@@ -402,6 +466,13 @@ public class AutomaticGradingServiceTest {
         automaticGradingService.gradeQuestion(questionScore);
         gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
         assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for null answer");
+        assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
+
+        // 测试格式错误的答案
+        questionScore.setAnswer("invalid_id");
+        automaticGradingService.gradeQuestion(questionScore);
+        gradedScore = studentQuestionScoreService.getById(questionScore.getRecordId());
+        assertEquals(new BigDecimal("0.00"), gradedScore.getScore(), "Should get zero score for invalid answer format");
         assertEquals(1, gradedScore.getStatus(), "Question should be marked as graded");
     }
 } 

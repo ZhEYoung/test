@@ -34,6 +34,9 @@ public class TeacherDTO {
     @ApiModelProperty("权限")
     private Integer permission;
 
+    @ApiModelProperty("学院名称")
+    private String collegeName;
+
     @ApiModelProperty("学院ID")
     private Integer collegeId;
 

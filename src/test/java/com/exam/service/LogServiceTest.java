@@ -115,10 +115,13 @@ public class LogServiceTest {
 
     @Test
     void testSelectPage() {
+        // 清理历史日志记录
+        logService.cleanExpiredLogs(0); // 清理所有日志
+        
         // 插入多条测试数据
         for (int i = 0; i < 15; i++) {
             Log log = new Log();
-            log.setUserId(testUser.getUserId());  // 使用测试用户ID
+            log.setUserId(testUser.getUserId());
             log.setActionType(3);
             log.setActionDescription("测试数据" + i);
             log.setCreatedTime(new Date());

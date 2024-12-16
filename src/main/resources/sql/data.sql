@@ -76,8 +76,8 @@ INSERT INTO question_bank (qb_name, subject_id) VALUES
 
 -- 插入示例题目
 INSERT INTO question (qb_id, content, answer, type, difficulty) VALUES
-                                                                    (1, 'Java的基本数据类型有哪些？', '基本数据类型包括byte、short、int、long、float、double、boolean和char', 4, 1.00),
-                                                                    (1, 'Java是否支持多重继承？', '不支持，Java只支持单继承多实现', 2, 2.00);
+                                                                    (1, 'Java的基本数据类型有哪些？', '基本数据类型包括byte、short、int、long、float、double、boolean和char', 4, 0.80),
+                                                                    (1, 'Java是否支持多重继承？', '不支持，Java只支持单继承多实现', 2, 0.50);
 
 -- 插入示例题目选项
 INSERT INTO question_option (question_id, content, is_correct) VALUES

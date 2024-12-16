@@ -189,9 +189,10 @@ public class ExamPaperServiceImpl implements ExamPaperService {
 
     @Override
     @Transactional
-    public ExamPaper generatePaper(Integer subjectId, String paperName, 
+    public ExamPaper generatePaper(Integer subjectId, String paperName,
                                  BigDecimal difficulty, Map<Integer, Integer> questionTypeCount,
-                                 Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId) {
+                                 Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId,
+                                 Date academicTerm, Integer examType) {
         // 验证题型数量和分数比例
         Map<Integer, BigDecimal> finalScoreRatio = new HashMap<>();
         BigDecimal totalRatio = BigDecimal.ZERO;
@@ -278,6 +279,8 @@ public class ExamPaperServiceImpl implements ExamPaperService {
         paper.setPaperStatus(0); // 未发布
         paper.setCreatedTime(new Date());
         paper.setPaperDifficulty(difficulty); // 设置目标难度系数
+        paper.setAcademicTerm(academicTerm); // 设置学年学期
+        paper.setExamType(examType); // 普通考试
         
         // 插入试卷记录
         if (examPaperMapper.insert(paper) <= 0) {
@@ -307,7 +310,7 @@ public class ExamPaperServiceImpl implements ExamPaperService {
             Map<String, Object> params = new HashMap<>();
             params.put("subjectId", subjectId);
             params.put("type", type);
-            params.put("limit", count * 2); // 多查一些题目以便随机选择
+            params.put("limit", count * 1); // 多查一些题目以便随机选择
             
             System.out.println("开始查询题型" + type + "的题目");
             System.out.println("查询参数：" + params);
@@ -400,6 +403,71 @@ public class ExamPaperServiceImpl implements ExamPaperService {
             BigDecimal actualDifficulty = totalDifficulty.divide(new BigDecimal(totalSelectedQuestions), 2, BigDecimal.ROUND_HALF_UP);
             paper.setPaperDifficulty(actualDifficulty);
             examPaperMapper.update(paper);
+        }
+        
+        return paper;
+    }
+
+    @Override
+    @Transactional
+    public ExamPaper generatePaperManually(Integer subjectId, String paperName,
+                                         Map<Integer, BigDecimal> questionScores,
+                                         BigDecimal difficulty, Integer examType,
+                                         Date academicTerm, Integer teacherId) {
+        // 创建新试卷
+        ExamPaper paper = new ExamPaper();
+        paper.setPaperName(paperName);
+        paper.setSubjectId(subjectId);
+        paper.setTeacherId(teacherId);
+        paper.setPaperStatus(0); // 未发布
+        paper.setCreatedTime(new Date());
+        paper.setPaperDifficulty(difficulty);
+        paper.setExamType(examType);
+        paper.setAcademicTerm(academicTerm);
+        
+        // 插入试卷记录
+        if (examPaperMapper.insert(paper) <= 0) {
+            throw new RuntimeException("创建试卷失败");
+        }
+        
+        // 验证总分是否为100分
+        BigDecimal totalScore = questionScores.values().stream()
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (totalScore.compareTo(new BigDecimal("100")) != 0) {
+            throw new RuntimeException("试题总分必须为100分，当前总分为: " + totalScore);
+        }
+        
+        // 获取所有题目信息并验证
+        List<Integer> questionIds = new ArrayList<>(questionScores.keySet());
+        List<Question> questions = questionMapper.selectByIds(questionIds);
+        
+        if (questions.size() != questionIds.size()) {
+            throw new RuntimeException("部分题目不存在");
+        }
+
+        
+        // 计算实际难度系数（所有题目难度的平均值）
+        BigDecimal totalDifficulty = questions.stream()
+            .map(Question::getDifficulty)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal actualDifficulty = totalDifficulty.divide(new BigDecimal(questions.size()), 2, RoundingMode.HALF_UP);
+        
+        // 更新试卷实际难度系数
+        paper.setPaperDifficulty(actualDifficulty);
+        examPaperMapper.update(paper);
+        
+        // 添加试题到试卷
+        int currentOrder = 1;
+        for (Question question : questions) {
+            Map<String, Object> paperQuestion = new HashMap<>();
+            paperQuestion.put("paperId", paper.getPaperId());
+            paperQuestion.put("questionId", question.getQuestionId());
+            paperQuestion.put("questionScore", questionScores.get(question.getQuestionId()));
+            paperQuestion.put("questionOrder", currentOrder++);
+            
+            if (examPaperMapper.insertPaperQuestion(paperQuestion) <= 0) {
+                throw new RuntimeException("添加试题失败");
+            }
         }
         
         return paper;

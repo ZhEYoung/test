@@ -1,20 +1,15 @@
 package com.exam.service.impl;
 
-import com.exam.entity.Exam;
-import com.exam.entity.StudentScore;
-import com.exam.entity.Teacher;
-import com.exam.entity.ExamPaper;
+import com.exam.entity.*;
 import com.exam.entity.Class;
 import com.exam.mapper.ExamMapper;
 import com.exam.mapper.ExamStudentMapper;
 import com.exam.mapper.StudentScoreMapper;
-import com.exam.service.ExamService;
-import com.exam.service.TeacherService;
-import com.exam.service.ExamPaperService;
-import com.exam.service.ClassService;
+import com.exam.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Scheduled;
 import java.util.*;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
@@ -37,12 +32,19 @@ public class ExamServiceImpl implements ExamService {
     
     @Autowired
     private TeacherService teacherService;
+
+    @Autowired
+    private StudentService studentService;
+
     
     @Autowired
     private ExamPaperService examPaperService;
     
     @Autowired
     private ClassService classService;
+
+    @Autowired
+    private ExamStudentService examStudentService;
 
     @Override
     public int insert(Exam record) {
@@ -56,7 +58,33 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public int updateById(Exam record) {
-        return examMapper.update(record);
+        if (record == null || record.getExamId() == null) {
+            return 0;
+        }
+        
+        try {
+            // 如果修改了考试时间或时长，重新计算结束时间
+            if (record.getExamStartTime() != null && record.getExamDuration() != null) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(record.getExamStartTime());
+                calendar.add(Calendar.MINUTE, record.getExamDuration());
+                record.setExamEndTime(calendar.getTime());
+            }
+            
+            // 验证时间的合法性
+            Date now = new Date();
+            if (record.getExamStartTime() != null && record.getExamStartTime().before(now)) {
+                throw new RuntimeException("考试开始时间不能早于当前时间");
+            }
+            
+            if (record.getExamDuration() != null && (record.getExamDuration() <= 0 || record.getExamDuration() > 180)) {
+                throw new RuntimeException("考试时长必须在1-180分钟之间");
+            }
+            
+            return examMapper.update(record);
+        } catch (Exception e) {
+            throw new RuntimeException("更新考试信息失败: " + e.getMessage());
+        }
     }
 
     @Override
@@ -342,7 +370,8 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     @Transactional
-    public Exam publishFinalExam(Integer teacherId, Integer subjectId, Integer classId, Date academicTerm) {
+    public Exam publishFinalExam(Integer teacherId, Integer subjectId, List<Integer> classIds, Date academicTerm,
+                                Date examStartTime, Integer examDuration) {
         // 1. 验证教师权限
         Teacher teacher = teacherService.getById(teacherId);
         if (teacher == null || teacher.getPermission() != 0) {
@@ -362,52 +391,86 @@ public class ExamServiceImpl implements ExamService {
             throw new RuntimeException("期末试卷数量不足，需要至少2份同学科同学期的期末试卷");
         }
 
-        // 4. 随机选择一份试卷
+        // 4. 验证考试时间
+        Date now = new Date();
+        if (examStartTime.before(now)) {
+            throw new RuntimeException("考试开始时间不能早于当前时间");
+        }
+        if (examDuration <= 0 || examDuration > 180) {
+            throw new RuntimeException("考试时长必须在1-180分钟之间");
+        }
+
+        // 5. 随机选择一份试卷
         Random random = new Random();
         ExamPaper selectedPaper = finalPapers.get(random.nextInt(finalPapers.size()));
 
-        // 5. 创建期末考试
+        // 6. 创建期末考试
         Exam finalExam = new Exam();
         finalExam.setExamName("期末考试-" + selectedPaper.getPaperName());
         finalExam.setSubjectId(subjectId);
         finalExam.setPaperId(selectedPaper.getPaperId());
         finalExam.setTeacherId(teacherId);
         finalExam.setExamStatus(0); // 未开始
-        finalExam.setExamType(0); // 正常考试
+        finalExam.setExamType(0); // 期末考试
         
-        // 设置考试时间（默认设置为7天后，考试时长120分钟）
+        // 设置考试时间
+        finalExam.setExamStartTime(examStartTime);
+        finalExam.setExamDuration(examDuration);
+        
+        // 计算考试结束时间
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_MONTH, 7);
-        calendar.set(Calendar.HOUR_OF_DAY, 9); // 上午9点开始
-        finalExam.setExamStartTime(calendar.getTime());
-        
-        calendar.add(Calendar.MINUTE, 120);
+        calendar.setTime(examStartTime);
+        calendar.add(Calendar.MINUTE, examDuration);
         finalExam.setExamEndTime(calendar.getTime());
-        finalExam.setExamDuration(120);
+        
         finalExam.setCreatedTime(new Date());
 
-        // 6. 保存考试信息
+        // 7. 保存考试信息
         if (examMapper.insert(finalExam) <= 0) {
             throw new RuntimeException("创建期末考试失败");
         }
 
-        // 7. 创建考试-班级关联
-        Map<String, Object> examClass = new HashMap<>();
-        examClass.put("examId", finalExam.getExamId());
-        examClass.put("classId", classId);
-        examMapper.insertExamClass(examClass);
+        // 8. 为每个班级创建考试-班级关联
+        examMapper.batchInsertExamClass(finalExam.getExamId(), classIds);
 
-        // 8. 更新所有相关期末试卷状态为已发布
+
+        // 9. 为参加考试班级的在班学生创建考试-学生关联
+        for (Integer classId : classIds) {
+            // 获取班级中的在班学生列表
+            List<Student> students = classService.getClassStudents(classId);
+            if (students != null && !students.isEmpty()) {
+                List<ExamStudent> examStudents = students.stream()
+                        .map(student -> {
+                            ExamStudent examStudent = new ExamStudent();
+                            examStudent.setExamId(finalExam.getExamId());
+                            examStudent.setStudentId(student.getStudentId());
+                            examStudent.setStudentStartTime(null); // 参加时间为空
+                            examStudent.setStudentSubmitTime(null); // 提交时间为空
+                            examStudent.setAbsent(false); // 未缺考
+                            examStudent.setRetakeNeeded(false); // 无需重考
+                            examStudent.setDisciplinary(false); // 无违纪
+                            examStudent.setTeacherComment(null); // 教师评语为空
+                            return examStudent;
+                        })
+                        .collect(Collectors.toList());
+                // 批量插入考试-学生关联记录
+                examStudentMapper.batchInsert(examStudents);
+            }
+        }
+
+        // 10. 更新所有相关期末试卷状态为已发布
         List<Integer> paperIds = finalPapers.stream()
             .map(ExamPaper::getPaperId)
             .collect(Collectors.toList());
         examPaperService.batchUpdateStatus(paperIds, 1);
 
-        // 9. 更新班级期末考试状态
-        Class classInfo = new Class();
-        classInfo.setClassId(classId);
-        classInfo.setFinalExam(Boolean.TRUE);
-        classService.updateById(classInfo);
+        // 11. 更新所有班级的期末考试状态
+        for (Integer classId : classIds) {
+            Class classInfo = new Class();
+            classInfo.setClassId(classId);
+            classInfo.setFinalExam(Boolean.TRUE);
+            classService.updateById(classInfo);
+        }
 
         return finalExam;
     }
@@ -416,5 +479,233 @@ public class ExamServiceImpl implements ExamService {
     @Transactional
     public int deleteExamClassByClassId(Integer classId) {
         return examMapper.deleteExamClass(null,classId);
+    }
+
+    // 每分钟检查一次考试状态
+    @Scheduled(cron = "0 * * * * ?")
+    public void checkExamStatus() {
+        Date now = new Date();
+        
+        // 检查需要开始的考试
+        List<Exam> toStartExams = examMapper.selectByStatus(0); // 未开始的考试
+        for (Exam exam : toStartExams) {
+            if (exam.getExamStartTime() != null && exam.getExamStartTime().before(now)) {
+                updateStatus(exam.getExamId(), 1); // 更新为进行中
+            }
+        }
+        
+        // 检查需要结束的考试
+        List<Exam> ongoingExams = examMapper.selectByStatus(1); // 进行中的考试
+        for (Exam exam : ongoingExams) {
+            if (exam.getExamEndTime() != null && exam.getExamEndTime().before(now)) {
+                updateStatus(exam.getExamId(), 2); // 更新为已结束
+            }
+        }
+    }
+
+    // 获取考试剩余时间（分钟）
+    @Override
+    public Map<String, Object> getRemainingTime(Integer examId) {
+        Exam exam = examMapper.selectById(examId);
+        Map<String, Object> result = new HashMap<>();
+        
+        if (exam == null) {
+            return result;
+        }
+
+        Date now = new Date();
+        
+        // 如果考试未开始，计算距离开始的时间
+        if (exam.getExamStatus() == 0 && exam.getExamStartTime() != null) {
+            long remainingToStart = (exam.getExamStartTime().getTime() - now.getTime()) / (1000 * 60);
+            result.put("status", "未开始");
+            result.put("remainingToStart", remainingToStart);
+        }
+        
+        // 如果考试进行中，计算距离结束的时间
+        else if (exam.getExamStatus() == 1 && exam.getExamEndTime() != null) {
+            long remainingToEnd = (exam.getExamEndTime().getTime() - now.getTime()) / (1000 * 60);
+            result.put("status", "进行中");
+            result.put("remainingToEnd", remainingToEnd);
+            
+            // 计算考试总时长和已用时间
+            long totalDuration = exam.getExamDuration();
+            long usedTime = totalDuration - remainingToEnd;
+            result.put("totalDuration", totalDuration);
+            result.put("usedTime", usedTime);
+            
+            // 计算进度百分比
+            double progress = (usedTime * 100.0) / totalDuration;
+            result.put("progress", Math.min(100, Math.max(0, progress)));
+        }
+        // 考试已结束
+        else if (exam.getExamStatus() == 2) {
+            result.put("status", "已结束");
+            result.put("endTime", exam.getExamEndTime());
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Exam publishNormalExam(Integer teacherId, Integer subjectId, List<Integer> classIds, Integer paperId, 
+                                Date examStartTime, Integer examDuration) {
+        // 1. 验证教师权限
+        Teacher teacher = teacherService.getById(teacherId);
+        if (teacher == null || (teacher.getPermission() != 0 && teacher.getPermission() != 1)) {
+            throw new RuntimeException("权限不足，只有管理员教师或普通教师可以发布普通考试");
+        }
+
+        // 2. 验证试卷是否存在
+        ExamPaper examPaper = examPaperService.getById(paperId);
+        if (examPaper == null) {
+            throw new RuntimeException("试卷不存在");
+        }
+
+        // 3. 验证考试时间
+        Date now = new Date();
+        if (examStartTime.before(now)) {
+            throw new RuntimeException("考试开始时间不能早于当前时间");
+        }
+        if (examDuration <= 0 || examDuration > 180) {
+            throw new RuntimeException("考试时长必须在1-180分钟之间");
+        }
+
+        // 4. 创建普通考试
+        Exam normalExam = new Exam();
+        normalExam.setExamName("普通考试-" + examPaper.getPaperName());
+        normalExam.setSubjectId(subjectId);
+        normalExam.setPaperId(paperId);
+        normalExam.setTeacherId(teacherId);
+        normalExam.setExamStatus(0); // 未开始
+        normalExam.setExamType(0); // 普通考试
+        
+        // 设置考试时间
+        normalExam.setExamStartTime(examStartTime);
+        normalExam.setExamDuration(examDuration);
+        
+        // 计算考试结束时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(examStartTime);
+        calendar.add(Calendar.MINUTE, examDuration);
+        normalExam.setExamEndTime(calendar.getTime());
+        
+        normalExam.setCreatedTime(new Date());
+
+        // 5. 保存考试信息
+        if (examMapper.insert(normalExam) <= 0) {
+            throw new RuntimeException("创建普通考试失败");
+        }
+
+        // 6. 为每个班级创建考试-班级关联
+        examMapper.batchInsertExamClass(normalExam.getExamId(), classIds);
+
+        // 7. 为参加考试班级的在班学生创建考试-学生关联
+        for (Integer classId : classIds) {
+            // 获取班级中的在班学生列表
+            List<Student> students = classService.getClassStudents(classId);
+            if (students != null && !students.isEmpty()) {
+                List<ExamStudent> examStudents = students.stream()
+                        .map(student -> {
+                            ExamStudent examStudent = new ExamStudent();
+                            examStudent.setExamId(normalExam.getExamId());
+                            examStudent.setStudentId(student.getStudentId());
+                            examStudent.setStudentStartTime(null); // 参加时间为空
+                            examStudent.setStudentSubmitTime(null); // 提交时间为空
+                            examStudent.setAbsent(false); // 未缺考
+                            examStudent.setRetakeNeeded(false); // 无需重考
+                            examStudent.setDisciplinary(false); // 无违纪
+                            examStudent.setTeacherComment(null); // 教师评语为空
+                            return examStudent;
+                        })
+                        .collect(Collectors.toList());
+                // 批量插入考试-学生关联记录
+                examStudentMapper.batchInsert(examStudents);
+            }
+        }
+
+        // 8. 将试卷状态更新为已发布
+        examPaperService.updateStatus(paperId, 1);
+
+        return normalExam;
+    }
+
+    @Override
+    @Transactional
+    public Exam publishRetakeExam(Integer teacherId, Integer subjectId, List<Integer> studentIds, Integer paperId,
+                                Date examStartTime, Integer examDuration) {
+        // 1. 验证教师权限
+        Teacher teacher = teacherService.getById(teacherId);
+        if (teacher == null || (teacher.getPermission() != 0 && teacher.getPermission() != 1)) {
+            throw new RuntimeException("权限不足，只有管理员教师或普通教师可以发布重考考试");
+        }
+
+        // 2. 验证试卷是否存在
+        ExamPaper examPaper = examPaperService.getById(paperId);
+        if (examPaper == null) {
+            throw new RuntimeException("试卷不存在");
+        }
+
+        // 3. 验证考试时间
+        Date now = new Date();
+        if (examStartTime.before(now)) {
+            throw new RuntimeException("考试开始时间不能早于当前时间");
+        }
+        if (examDuration <= 0 || examDuration > 180) {
+            throw new RuntimeException("考试时长必须在1-180分钟之间");
+        }
+
+        // 4. 创建重考考试
+        Exam retakeExam = new Exam();
+        retakeExam.setExamName("重考考试-" + examPaper.getPaperName());
+        retakeExam.setSubjectId(subjectId);
+        retakeExam.setPaperId(paperId);
+        retakeExam.setTeacherId(teacherId);
+        retakeExam.setExamStatus(0); // 未开始
+        retakeExam.setExamType(1); // 重考考试
+        
+        // 设置考试时间
+        retakeExam.setExamStartTime(examStartTime);
+        retakeExam.setExamDuration(examDuration);
+        
+        // 计算考试结束时间
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(examStartTime);
+        calendar.add(Calendar.MINUTE, examDuration);
+        retakeExam.setExamEndTime(calendar.getTime());
+        
+        retakeExam.setCreatedTime(new Date());
+
+        // 5. 保存考试信息
+        if (examMapper.insert(retakeExam) <= 0) {
+            throw new RuntimeException("创建重考考试失败");
+        }
+
+        // 6. 为重考学生创建考试-学生关联
+        List<ExamStudent> examStudents = studentIds.stream()
+                .map(studentId -> {
+                    ExamStudent examStudent = new ExamStudent();
+                    examStudent.setExamId(retakeExam.getExamId());
+                    examStudent.setStudentId(studentId);
+                    examStudent.setStudentStartTime(null); // 参加时间为空
+                    examStudent.setStudentSubmitTime(null); // 提交时间为空
+                    examStudent.setAbsent(false); // 未缺考
+                    examStudent.setRetakeNeeded(false); // 无需重考
+                    examStudent.setDisciplinary(false); // 无违纪
+                    examStudent.setTeacherComment(null); // 教师评语为空
+                    return examStudent;
+                })
+                .collect(Collectors.toList());
+
+        // 批量插入考试-学生关联记录
+        if (!examStudents.isEmpty()) {
+            examStudentMapper.batchInsert(examStudents);
+        }
+
+        // 7. 将试卷状态更新为已发布
+        examPaperService.updateStatus(paperId, 1);
+
+        return retakeExam;
     }
 } 

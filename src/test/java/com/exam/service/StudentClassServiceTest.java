@@ -61,27 +61,87 @@ public class StudentClassServiceTest {
         testCollege.setDescription("Test College Description");
         collegeService.insert(testCollege);
 
-        // 创建测试教师用户
+        // 创建测试教师用户 - 使用随机用户名避免冲突
         testTeacherUser = new User();
-        testTeacherUser.setUsername("teacher1");
+        String teacherUsername = "t" + System.currentTimeMillis() % 1000000;
+        testTeacherUser.setUsername(teacherUsername);
         testTeacherUser.setPassword("123456");
         testTeacherUser.setRole(1); // 教师角色
-        userService.insert(testTeacherUser);
+        testTeacherUser.setStatus(Boolean.TRUE); // 设置状态为有效
+        testTeacherUser.setSex(Boolean.TRUE); // 设置性别
+        testTeacherUser.setPhone("13900000001"); // 设置手机号
+        testTeacherUser.setEmail(teacherUsername + "@example.com"); // 设置邮箱
+        
+        // 打印用户信息用于调试
+        System.out.println("Creating teacher user with data:");
+        System.out.println("Username: " + testTeacherUser.getUsername());
+        System.out.println("Role: " + testTeacherUser.getRole());
+        System.out.println("Status: " + testTeacherUser.getStatus());
+        System.out.println("Sex: " + testTeacherUser.getSex());
+        System.out.println("Phone: " + testTeacherUser.getPhone());
+        System.out.println("Email: " + testTeacherUser.getEmail());
+        
+        // 打印SQL语句用于调试
+        System.out.println("\nAttempting to insert teacher user...");
+        
+        int result = userService.insert(testTeacherUser);
+        if (result != 1) {
+            throw new RuntimeException("Failed to create test teacher user: insert returned " + result);
+        }
+
+        // 确保教师用户创建成功
+        if (testTeacherUser.getUserId() == null) {
+            throw new RuntimeException("Failed to create test teacher user: userId is null");
+        }
 
         // 创建测试教师
         testTeacher = new Teacher();
         testTeacher.setUserId(testTeacherUser.getUserId());
         testTeacher.setName("Test Teacher");
-        testTeacher.setPermission(0); // 可以组卷与发布所有考试
+        testTeacher.setPermission(0);
         testTeacher.setCollegeId(testCollege.getCollegeId());
-        teacherService.insert(testTeacher);
+        result = teacherService.insert(testTeacher);
+        if (result != 1) {
+            throw new RuntimeException("Failed to create test teacher: insert returned " + result);
+        }
 
-        // 创建测试学生用户
+        // 确保教师创建成功
+        if (testTeacher.getTeacherId() == null) {
+            throw new RuntimeException("Failed to create test teacher: teacherId is null");
+        }
+
+        // 创建测试学生用户 - 使用随机用户名避免冲突
         testStudentUser = new User();
-        testStudentUser.setUsername("student1");
+        String studentUsername = "s" + System.currentTimeMillis() % 1000000;
+        testStudentUser.setUsername(studentUsername);
         testStudentUser.setPassword("123456");
         testStudentUser.setRole(2); // 学生角色
-        userService.insert(testStudentUser);
+        testStudentUser.setStatus(Boolean.TRUE); // 设置状态为有效
+        testStudentUser.setSex(Boolean.TRUE); // 设置性别
+        testStudentUser.setPhone("13900000002"); // 设置手机号
+        testStudentUser.setEmail(studentUsername + "@example.com"); // 设置邮箱
+        
+        // 打印用户信息用于调试
+        System.out.println("\nCreating student user with data:");
+        System.out.println("Username: " + testStudentUser.getUsername());
+        System.out.println("Role: " + testStudentUser.getRole());
+        System.out.println("Status: " + testStudentUser.getStatus());
+        System.out.println("Sex: " + testStudentUser.getSex());
+        System.out.println("Phone: " + testStudentUser.getPhone());
+        System.out.println("Email: " + testStudentUser.getEmail());
+        
+        // 打印SQL语句用于调试
+        System.out.println("\nAttempting to insert student user...");
+        
+        result = userService.insert(testStudentUser);
+        if (result != 1) {
+            throw new RuntimeException("Failed to create test student user: insert returned " + result);
+        }
+
+        // 确保学生用户创建成功
+        if (testStudentUser.getUserId() == null) {
+            throw new RuntimeException("Failed to create test student user: userId is null");
+        }
 
         // 创建测试学生
         testStudent = new Student();
@@ -177,9 +237,14 @@ public class StudentClassServiceTest {
     public void testBatchOperations() {
         // 创建第二个测试学生用户
         User secondStudentUser = new User();
-        secondStudentUser.setUsername("student2");
+        String secondStudentUsername = "s" + (System.currentTimeMillis() % 1000000 + 1);
+        secondStudentUser.setUsername(secondStudentUsername);
         secondStudentUser.setPassword("123456");
         secondStudentUser.setRole(2);
+        secondStudentUser.setStatus(Boolean.TRUE);
+        secondStudentUser.setSex(Boolean.TRUE);
+        secondStudentUser.setPhone("13900000003");
+        secondStudentUser.setEmail(secondStudentUsername + "@example.com");
         userService.insert(secondStudentUser);
 
         // 创建第二个测试学生

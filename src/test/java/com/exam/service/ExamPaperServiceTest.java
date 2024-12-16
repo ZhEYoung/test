@@ -245,9 +245,12 @@ public class ExamPaperServiceTest {
         // 调用试卷生成方法
         String paperName = "自动生成试卷测试-" + testTeacher.getTeacherId();
         BigDecimal targetDifficulty = new BigDecimal("0.7");
+        Date academicTerm = new Date(); // 设置当前学期
 
         // 确保教师ID不为空
         assertNotNull(testTeacher.getTeacherId(), "教师ID不能为空");
+
+        Integer examType = 1; // 普通考试
         
         ExamPaper generatedPaper = examPaperService.generatePaper(
             testSubject.getSubjectId(),
@@ -255,7 +258,9 @@ public class ExamPaperServiceTest {
             targetDifficulty,
             questionTypeCount,
             typeScoreRatio,
-            testTeacher.getTeacherId()
+            testTeacher.getTeacherId(),
+            academicTerm,
+                examType
         );
         
         // 验证生成的试卷
@@ -263,6 +268,7 @@ public class ExamPaperServiceTest {
         assertNotNull(generatedPaper.getPaperId());
         assertEquals(testSubject.getSubjectId(), generatedPaper.getSubjectId());
         assertEquals(paperName, generatedPaper.getPaperName());
+        assertNotNull(generatedPaper.getAcademicTerm(), "学年学期不能为空");
         
         // 获取试卷题目及分值
         List<Map<String, Object>> paperQuestions = examPaperService.getPaperQuestionsWithScore(generatedPaper.getPaperId());
@@ -283,32 +289,26 @@ public class ExamPaperServiceTest {
             actualTypeScores.merge(type, score, BigDecimal::add);
         }
         
-        // 验证各类型题目数量
+        // 验证各题型数量
         questionTypeCount.forEach((type, count) -> 
             assertEquals(count, actualTypeCount.get(type), 
-                       String.format("题型%d的数量不符合预期", type)));
+                "题型" + type + "的数量不匹配"));
         
         // 验证总分为100分
-        assertEquals(new BigDecimal("100.00"), totalScore.setScale(2, RoundingMode.HALF_UP));
+        assertEquals(0, totalScore.compareTo(new BigDecimal("100")), 
+            "试卷总分应为100分");
         
-        // 如果提供了预期的分值比例，则验证实际分值比例
+        // 验证各题型分值比例
         if (typeScoreRatio != null) {
             typeScoreRatio.forEach((type, ratio) -> {
-                BigDecimal actualRatio = actualTypeScores.get(type).divide(totalScore, 2, RoundingMode.HALF_UP);
-                BigDecimal expectedRatio = ratio.setScale(2, RoundingMode.HALF_UP);
-                assertEquals(0, expectedRatio.compareTo(actualRatio),
-                           String.format("题型%d的分值比例不符合预期", type));
+                BigDecimal expectedScore = new BigDecimal("100").multiply(ratio)
+                    .setScale(2, RoundingMode.HALF_UP);
+                BigDecimal actualScore = actualTypeScores.get(type)
+                    .setScale(2, RoundingMode.HALF_UP);
+                assertEquals(0, expectedScore.compareTo(actualScore), 
+                    "题型" + type + "的分值比例不匹配");
             });
         }
-        
-        // 验证试卷难度在合理范围内（目标难度±0.1）
-        BigDecimal actualDifficulty = generatedPaper.getPaperDifficulty();
-        BigDecimal minDifficulty = actualDifficulty.subtract(new BigDecimal("0.1"));
-        BigDecimal maxDifficulty = actualDifficulty.add(new BigDecimal("0.1"));
-        assertTrue(actualDifficulty.compareTo(minDifficulty) >= 0, 
-                 "试卷难度不应低于" + minDifficulty);
-        assertTrue(actualDifficulty.compareTo(maxDifficulty) <= 0,
-                 "试卷难度不应高于" + maxDifficulty);
     }
 
     @Test
@@ -364,9 +364,12 @@ public class ExamPaperServiceTest {
         // 调用试卷生成方法
         String paperName = "自定义分值比例试卷-" + testTeacher.getTeacherId();
         BigDecimal targetDifficulty = new BigDecimal("0.7");
+        Date academicTerm = new Date(); // 设置当前学期
 
         // 确保教师ID不为空
         assertNotNull(testTeacher.getTeacherId(), "教师ID不能为空");
+
+        Integer examType = 1; // 普通考试
         
         ExamPaper generatedPaper = examPaperService.generatePaper(
             testSubject.getSubjectId(),
@@ -374,7 +377,9 @@ public class ExamPaperServiceTest {
             targetDifficulty,
             questionTypeCount,
             typeScoreRatio,
-            testTeacher.getTeacherId()
+            testTeacher.getTeacherId(),
+            academicTerm,
+            examType
         );
         
         verifyGeneratedPaper(generatedPaper, paperName, questionTypeCount, typeScoreRatio);
@@ -448,6 +453,8 @@ public class ExamPaperServiceTest {
         // 调用试卷生成方法（不指定分值比例，由系统自动计算）
         String paperName = "自动分值比例试卷-" + testTeacher.getTeacherId();
         BigDecimal targetDifficulty = new BigDecimal("0.7");
+        Date academicTerm = new Date(); // 设置当前学期
+        Integer examType = 1; // 普通考试
 
         // 确保教师ID不为空
         assertNotNull(testTeacher.getTeacherId(), "教师ID不能为空");
@@ -458,7 +465,9 @@ public class ExamPaperServiceTest {
             targetDifficulty,
             questionTypeCount,
             null, // 让系统自动计算分值比例
-            testTeacher.getTeacherId()
+            testTeacher.getTeacherId(),
+            academicTerm,
+                examType
         );
         
         verifyGeneratedPaper(generatedPaper, paperName, questionTypeCount, null);
@@ -472,52 +481,48 @@ public class ExamPaperServiceTest {
         assertNotNull(generatedPaper.getPaperId());
         assertEquals(testSubject.getSubjectId(), generatedPaper.getSubjectId());
         assertEquals(paperName, generatedPaper.getPaperName());
+        assertNotNull(generatedPaper.getAcademicTerm(), "学年学期不能为空");
         
         // 获取试卷题目及分值
         List<Map<String, Object>> paperQuestions = examPaperService.getPaperQuestionsWithScore(generatedPaper.getPaperId());
         assertNotNull(paperQuestions);
         assertFalse(paperQuestions.isEmpty());
         
-        // 验证题目数量
+        // 验证题目数量和分值
         Map<Integer, Integer> actualTypeCount = new HashMap<>();
         Map<Integer, BigDecimal> actualTypeScores = new HashMap<>();
-        final BigDecimal totalScore = paperQuestions.stream()
-            .map(q -> (BigDecimal) q.get("question_score"))
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalScore = BigDecimal.ZERO;
         
         for (Map<String, Object> question : paperQuestions) {
             Integer type = (Integer) question.get("type");
             BigDecimal score = (BigDecimal) question.get("question_score");
             actualTypeCount.merge(type, 1, Integer::sum);
             actualTypeScores.merge(type, score, BigDecimal::add);
+            totalScore = totalScore.add(score);
         }
         
-        // 验证各类型题目数量
-        questionTypeCount.forEach((type, count) -> 
-            assertEquals(count, actualTypeCount.get(type), 
-                       String.format("题型%d的数量不符合预期", type)));
+        // 验证题目数量
+        questionTypeCount.forEach((type, expectedCount) -> {
+            Integer actualCount = actualTypeCount.get(type);
+            assertEquals(expectedCount, actualCount, 
+                "题型" + type + "的数量不匹配，期望：" + expectedCount + "，实际：" + actualCount);
+        });
         
         // 验证总分为100分
-        assertEquals(new BigDecimal("100.00"), totalScore.setScale(2, RoundingMode.HALF_UP));
+        assertEquals(0, totalScore.compareTo(new BigDecimal("100")), 
+            "试卷总分应为100分，实际为：" + totalScore);
         
-        // 如果提供了预期的分值比例，则验证实际分值比例
+        // 如果提供了预期的分值比例，则验证实际比例
         if (expectedTypeScoreRatio != null) {
-            expectedTypeScoreRatio.forEach((type, ratio) -> {
-                BigDecimal actualRatio = actualTypeScores.get(type).divide(totalScore, 2, RoundingMode.HALF_UP);
-                BigDecimal expectedRatio = ratio.setScale(2, RoundingMode.HALF_UP);
-                assertEquals(0, expectedRatio.compareTo(actualRatio),
-                           String.format("题型%d的分值比例不符合预期", type));
+            expectedTypeScoreRatio.forEach((type, expectedRatio) -> {
+                BigDecimal expectedScore = new BigDecimal("100").multiply(expectedRatio)
+                    .setScale(2, RoundingMode.HALF_UP);
+                BigDecimal actualScore = actualTypeScores.get(type)
+                    .setScale(2, RoundingMode.HALF_UP);
+                assertEquals(0, expectedScore.compareTo(actualScore), 
+                    "题型" + type + "的分值不匹配，期望：" + expectedScore + "，实际：" + actualScore);
             });
         }
-        
-        // 验证试卷难度在合理范围内（目标难度±0.1）
-        BigDecimal actualDifficulty = generatedPaper.getPaperDifficulty();
-        BigDecimal minDifficulty = actualDifficulty.subtract(new BigDecimal("0.1"));
-        BigDecimal maxDifficulty = actualDifficulty.add(new BigDecimal("0.1"));
-        assertTrue(actualDifficulty.compareTo(minDifficulty) >= 0, 
-                 "试卷难度不应低于" + minDifficulty);
-        assertTrue(actualDifficulty.compareTo(maxDifficulty) <= 0,
-                 "试卷难度不应高于" + maxDifficulty);
     }
 
     private Question createQuestion(Integer qbId, String content, Integer type, double difficulty) {

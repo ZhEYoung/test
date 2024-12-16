@@ -132,6 +132,12 @@ public class TeacherServiceImpl implements TeacherService {
     }
 
     @Override
+    public Integer getTeacherIdByUserId(Integer userId) {
+        Teacher teacher = teacherMapper.selectByUserId(userId);
+        return teacher == null ? null : teacher.getTeacherId();
+    }
+
+    @Override
     public List<Teacher> getByCollegeId(Integer collegeId) {
         return teacherMapper.selectByCollegeId(collegeId);
     }

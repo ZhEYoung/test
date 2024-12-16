@@ -5,6 +5,8 @@ import lombok.Setter;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 /**
  * 考试实体类
  */
@@ -23,15 +25,18 @@ public class Exam {
     private Integer paperId;
     @Setter
     @Getter
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date examStartTime;
     @Setter
     @Getter
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date examEndTime;
     @Setter
     @Getter
     private Integer examDuration;
     @Setter
     @Getter
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createdTime;
     @Setter
     @Getter

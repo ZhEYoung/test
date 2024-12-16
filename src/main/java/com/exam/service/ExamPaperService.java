@@ -2,6 +2,8 @@ package com.exam.service;
 
 import com.exam.entity.ExamPaper;
 import com.exam.entity.Question;
+
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.math.BigDecimal;
@@ -169,9 +171,28 @@ public interface ExamPaperService {
      * @param questionTypeCount 各题型数量
      * @param typeScoreRatio 各题型分数比例（可选，如果为null则根据题目数量自动计算）
      * @param teacherId 教师ID
+     * @param academicTerm 学年学期
+     * @param examType 0: 期末考试，1: 普通考试
      * @return 组卷结果
      */
-    ExamPaper generatePaper(Integer subjectId, String paperName, 
+    ExamPaper generatePaper(Integer subjectId, String paperName,
                           BigDecimal difficulty, Map<Integer, Integer> questionTypeCount,
-                          Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId);
+                          Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId,
+                          Date academicTerm, Integer examType);
+    
+    /**
+     * 手动组卷
+     * @param subjectId 学科ID
+     * @param paperName 试卷名称
+     * @param questionScores 题目ID和对应分值的映射
+     * @param difficulty 难度系数
+     * @param examType 试卷类型
+     * @param academicTerm 学年学期
+     * @param teacherId 教师ID
+     * @return 组卷结果
+     */
+    ExamPaper generatePaperManually(Integer subjectId, String paperName,
+                                    Map<Integer, BigDecimal> questionScores,
+                                    BigDecimal difficulty, Integer examType,
+                                    Date academicTerm, Integer teacherId);
 } 

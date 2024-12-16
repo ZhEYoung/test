@@ -174,12 +174,15 @@ public interface ExamService {
      * 发布期末考试
      * @param teacherId 教师ID
      * @param subjectId 学科ID
-     * @param classId 班级ID
+     * @param classIds 班级ID列表
      * @param academicTerm 学年学期
+     * @param examStartTime 考试开始时间
+     * @param examDuration 考试时长
      * @return 创建的期末考试
      * @throws RuntimeException 当权限不足或试卷数量不足时
      */
-    Exam publishFinalExam(Integer teacherId, Integer subjectId, Integer classId, Date academicTerm);
+    Exam publishFinalExam(Integer teacherId, Integer subjectId, List<Integer> classIds, Date academicTerm,
+                                 Date examStartTime, Integer examDuration) ;
 
     /**
      * 删除指定班级的所有考试-班级关联
@@ -187,4 +190,45 @@ public interface ExamService {
      * @return 删除的记录数
      */
     int deleteExamClassByClassId(Integer classId);
+
+    /**
+     * 获取考试剩余时间信息
+     * @param examId 考试ID
+     * @return 包含考试状态和剩余时间信息的Map：
+     *         - status: 考试状态（未开始/进行中/已结束）
+     *         - remainingToStart: 距离开始的剩余分钟数（未开始状态）
+     *         - remainingToEnd: 距离结束的剩余分钟数（进行中状态）
+     *         - totalDuration: 考试总时长（进行中状态）
+     *         - usedTime: 已用时间（进行中状态）
+     *         - progress: 考试进度百分比（进行中状态）
+     *         - endTime: 结束时间（已结束状态）
+     */
+    Map<String, Object> getRemainingTime(Integer examId);
+
+    /**
+     * 发布普通考试
+     * @param teacherId 教师ID
+     * @param subjectId 学科ID
+     * @param classIds 班级ID列表
+     * @param paperId 试卷ID
+     * @param examStartTime 考试开始时间
+     * @param examDuration 考试时长
+     * @return 创建的期末考试
+     * @throws RuntimeException 当权限不足或试卷数量不足时
+     */
+    public Exam publishNormalExam(Integer teacherId, Integer subjectId, List<Integer> classIds, Integer paperId,Date examStartTime, Integer examDuration);
+
+    /**
+     * 发布重考考试
+     * @param teacherId 教师ID
+     * @param subjectId 学科ID
+     * @param studentIds 重考学生ID列表
+     * @param paperId 试卷ID
+     * @param examStartTime 考试开始时间
+     * @param examDuration 考试时长
+     * @return 创建的重考考试
+     * @throws RuntimeException 当权限不足或试卷不存在时
+     */
+    public Exam publishRetakeExam(Integer teacherId, Integer subjectId, List<Integer> studentIds, Integer paperId,
+                                Date examStartTime, Integer examDuration);
 } 
