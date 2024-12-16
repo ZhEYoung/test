@@ -326,7 +326,7 @@
   | ------------------------------ | ------------- | ---- | ---- | ------------------------------------------------------------ |
   | 日志ID (`log_id`)              | `INT`         | 主键 | 索引 | 唯一标识每条日志                                             |
   | 用户ID (`user_id`)             | `INT`         | 外键 | 索引 | 关联 `user` 的 `user_id`                                     |
-  | 操作类型(`action_type`)        | `INT`         |      |      | 0: `INSERT`、1: `UPDATE`、2: `DELETE`、3: `LOGIN`、4: `SUBMIT_TEST`、5：`EXCEPTION`、6：`SIMULATE_LOGIN` |
+  | 操作类型(`action_type`)        | `INT`         |      |      | 0: `INSERT`、1: `UPDATE`、2: `DELETE`、3: `LOGIN`、4: `SUBMIT_TEST`、5：`EXCEPTION`、6：`SIMULATE_LOGIN` 7：`SELECT` |
   | 操作描述(`action_description`) | `TEXT`        |      |      | 操作的详细描述                                               |
   | 操作时间(`created_time`)       | `TIMESTAMP`   |      |      | 操作发生的时间                                               |
   | 操作对象(`object_type`)        | `TEXT`        |      |      | 操作对象的类型                                               |

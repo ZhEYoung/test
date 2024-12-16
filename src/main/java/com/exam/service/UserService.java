@@ -1,6 +1,9 @@
 package com.exam.service;
 
 import com.exam.entity.User;
+import com.exam.entity.dto.StaffRegisterDTO;
+import com.exam.entity.dto.StudentDTO;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
@@ -9,6 +12,7 @@ import java.util.Date;
  * 用户服务接口
  */
 public interface UserService {
+
     
     /**
      * 插入一条记录
@@ -127,4 +131,8 @@ public interface UserService {
      * 更新用户注册时间
      */
     int updateCreatedTime(Integer userId, Date createdTime);
+
+    public int registerStudent(User user, StudentDTO dto);
+
+    public int registerStaff(User user, StaffRegisterDTO dto);
 } 

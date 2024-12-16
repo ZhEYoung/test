@@ -58,7 +58,7 @@ public interface LogMapper {
      * @param actionType 操作类型
      * @return 日志列表
      */
-    List<Log> selectByActionType(@Param("actionType") String actionType);
+    List<Log> selectByActionType(@Param("actionType") Integer actionType);
 
     /**
      * 根据时间范围查询日志列表

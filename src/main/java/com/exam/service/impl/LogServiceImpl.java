@@ -89,8 +89,8 @@ public class LogServiceImpl implements LogService {
     }
 
     @Override
-    public List<Log> getByOperationType(String operationType) {
-        return logMapper.selectByActionType(operationType);
+    public List<Log> getByActionType(Integer actionType) {
+        return logMapper.selectByActionType(actionType);
     }
 
     @Override

@@ -68,7 +68,7 @@ public interface LogService {
     /**
      * 根据操作类型查询日志
      */
-    List<Log> getByOperationType(String operationType);
+    List<Log> getByActionType(Integer actionType);
     
     /**
      * 根据时间范围查询日志

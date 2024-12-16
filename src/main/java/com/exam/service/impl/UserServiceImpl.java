@@ -1,6 +1,13 @@
 package com.exam.service.impl;
 
+import cn.hutool.crypto.SecureUtil;
+import com.exam.entity.Admin;
+import com.exam.entity.Teacher;
 import com.exam.entity.User;
+import com.exam.entity.dto.StaffRegisterDTO;
+import com.exam.entity.dto.StudentDTO;
+import com.exam.mapper.AdminMapper;
+import com.exam.mapper.TeacherMapper;
 import com.exam.mapper.UserMapper;
 import com.exam.mapper.StudentMapper;
 import com.exam.service.UserService;
@@ -25,6 +32,27 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private StudentMapper studentMapper;
+
+    @Autowired
+    private AdminMapper adminMapper;
+
+    @Autowired
+    private TeacherMapper teacherMapper;
+
+    // 检查用户名是否已存在
+    private boolean checkUsernameExists(String username) {
+        return userMapper.selectByUsername(username) != null;
+    }
+
+    // 检查邮箱是否已存在
+    private boolean checkEmailExists(String email) {
+        return userMapper.selectByEmail(email) != null;
+    }
+
+    // 密码加密
+    private String encryptPassword(String password) {
+        return SecureUtil.sha256(password);
+    }
 
     // 基础CRUD方法
     public int insert(User record) {
@@ -52,7 +80,7 @@ public class UserServiceImpl implements UserService {
 
         // 密码加密
         if (record.getPassword() != null) {
-            record.setPassword(DigestUtils.md5DigestAsHex(record.getPassword().getBytes()));
+            record.setPassword(encryptPassword(record.getPassword()));
         }
 
         return userMapper.insert(record);
@@ -114,7 +142,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User login(String username, String password) {
         User user = userMapper.selectByUsername(username);
-        if (user != null && user.getPassword().equals(DigestUtils.md5DigestAsHex(password.getBytes()))) {
+        if (user != null && user.getPassword().equals(encryptPassword(password))) {
             return user;
         }
         return null;
@@ -131,7 +159,7 @@ public class UserServiceImpl implements UserService {
             return 0;
         }
         // 密码加密
-        user.setPassword(DigestUtils.md5DigestAsHex(user.getPassword().getBytes()));
+        user.setPassword(encryptPassword(user.getPassword()));
         user.setCreatedTime(new Date());
         return userMapper.insert(user);
     }
@@ -139,8 +167,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public int updatePassword(Integer userId, String oldPassword, String newPassword) {
         User user = userMapper.selectById(userId);
-        if (user != null && user.getPassword().equals(DigestUtils.md5DigestAsHex(oldPassword.getBytes()))) {
-            return userMapper.updatePassword(userId, DigestUtils.md5DigestAsHex(newPassword.getBytes()));
+        if (user != null && user.getPassword().equals(encryptPassword(oldPassword))) {
+            return userMapper.updatePassword(userId, encryptPassword(newPassword));
         }
         return 0;
     }
@@ -183,5 +211,80 @@ public class UserServiceImpl implements UserService {
     @Override
     public int updateCreatedTime(Integer userId, Date createdTime) {
         return userMapper.updateCreatedTime(userId, createdTime);
+    }
+
+    @Transactional
+    public int registerStudent(User user, StudentDTO dto) {
+        // 1. 检查用户名和邮箱是否已存在
+        if (checkUsernameExists(user.getUsername()) || checkEmailExists(user.getEmail())) {
+            throw new RuntimeException("用户名或邮箱已存在");
+        }
+        // 2. 对密码进行MD5加密
+        user.setPassword(encryptPassword(user.getPassword()));
+
+        // 3. 创建用户
+        int result = userMapper.insert(user);
+        if (result <= 0) {
+            throw new RuntimeException("用户创建失败");
+        }
+
+        // 4. 创建学生信息
+        Student student = new Student();
+        student.setUserId(user.getUserId());
+        student.setName(dto.getName());
+        student.setGrade(dto.getGrade());
+        student.setCollegeId(dto.getCollegeId());
+        student.setOther(dto.getOther());
+
+        result = studentMapper.insert(student);
+        if (result <= 0) {
+            throw new RuntimeException("学生信息创建失败");
+        }
+
+        return result;
+    }
+
+    @Transactional
+    public int registerStaff(User user, StaffRegisterDTO dto) {
+        // 1. 检查用户名和邮箱是否已存在
+        if (checkUsernameExists(user.getUsername()) || checkEmailExists(user.getEmail())) {
+            throw new RuntimeException("用户名或邮箱已存在");
+        }
+
+        // 2. 对密码进行加密
+        user.setPassword(encryptPassword(user.getPassword()));
+
+        // 3. 创建用户
+        int result = userMapper.insert(user);
+        if (result <= 0) {
+            throw new RuntimeException("用户创建失败");
+        }
+
+        // 4. 根据角色创建管理员或教师信息
+        if (user.getRole() == 0) {
+            Admin admin = new Admin();
+            admin.setUserId(user.getUserId());
+            admin.setName(dto.getName());
+            admin.setOther(dto.getOther());
+
+            result = adminMapper.insert(admin);
+            if (result <= 0) {
+                throw new RuntimeException("管理员信息创建失败");
+            }
+        } else if (user.getRole() == 1) {
+            Teacher teacher = new Teacher();
+            teacher.setUserId(user.getUserId());
+            teacher.setName(dto.getName());
+            teacher.setPermission(dto.getPermission());
+            teacher.setCollegeId(dto.getCollegeId());
+            teacher.setOther(dto.getOther());
+
+            result = teacherMapper.insert(teacher);
+            if (result <= 0) {
+                throw new RuntimeException("教师信息创建失败");
+            }
+        }
+
+        return result;
     }
 }
