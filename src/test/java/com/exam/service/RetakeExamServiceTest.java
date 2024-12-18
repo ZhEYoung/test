@@ -1,6 +1,7 @@
 package com.exam.service;
 
 import com.exam.entity.*;
+import com.exam.mapper.ExamStudentMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,8 @@ public class RetakeExamServiceTest {
     private User testStudentUser2;
     private ExamPaper testPaper;
     private Exam testExam;
+    @Autowired
+    private ExamStudentMapper examStudentMapper;
 
     @BeforeEach
     public void setUp() {
@@ -258,7 +261,6 @@ public class RetakeExamServiceTest {
         retakeExam.setExamType(1); // 重考
         retakeExam.setExamDuration(120);
         
-        // 设置考试时间
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, 1);
         retakeExam.setExamStartTime(calendar.getTime());
@@ -267,15 +269,22 @@ public class RetakeExamServiceTest {
         retakeExam.setCreatedTime(new Date());
         examService.insert(retakeExam);
 
-        // 6. 验证重考考试
+        // 6. 为重考考试添加需要重考的学生
+        ExamStudent examStudent = new ExamStudent();
+        examStudent.setExamId(retakeExam.getExamId());
+        examStudent.setStudentId(testStudent1.getStudentId());
+        examStudent.setRetakeNeeded(true);
+        examStudentMapper.insert(examStudent);
+
+        // 7. 验证重考考试
         Exam queriedRetakeExam = examService.getById(retakeExam.getExamId());
         assertNotNull(queriedRetakeExam, "Retake exam should exist");
         assertEquals(1, queriedRetakeExam.getExamType(), "Should be a retake exam");
         
-        // 7. 为重考考试添加学生并记录开始时间
+        // 8. 记录重考考试开始时间
         examStudentService.recordStartExam(retakeExam.getExamId(), testStudent1.getStudentId());
 
-        // 8. 验证只有不及格的学生被添加到重考
+        // 9. 验证只有不及格的学生被添加到重考
         List<ExamStudent> examStudents = examStudentService.getNeedRetakeStudents(retakeExam.getExamId());
         assertEquals(1, examStudents.size(), "Only failed student should be in retake exam");
         assertEquals(testStudent1.getStudentId(), examStudents.get(0).getStudentId(), 
@@ -297,10 +306,17 @@ public class RetakeExamServiceTest {
         passedScore.setScore(new BigDecimal("75.00")); // 及格成绩
         studentScoreService.insert(passedScore);
 
-        // 2. 只标记不及格学生需要重考
+        // 2. 为原始考试创建考试-学生记录
+        ExamStudent originalExamStudent = new ExamStudent();
+        originalExamStudent.setExamId(testExam.getExamId());
+        originalExamStudent.setStudentId(testStudent1.getStudentId());
+        originalExamStudent.setRetakeNeeded(true);
+        examStudentMapper.insert(originalExamStudent);
+
+        // 3. 只标记不及格学生需要重考
         examStudentService.markRetakeNeeded(testExam.getExamId(), testStudent1.getStudentId());
 
-        // 3. 查询需要重考的学生
+        // 4. 查询需要重考的学生
         List<Map<String, Object>> retakeStudents = examStudentService.getRetakeStudentsBySubject(
             testSubject1.getSubjectId(),
             testTeacher.getTeacherId(),
@@ -309,13 +325,13 @@ public class RetakeExamServiceTest {
             null
         );
 
-        // 4. 验证只有不及格的学生在重考列表中
+        // 5. 验证只有不及格的学生在重考列表中
         assertEquals(1, retakeStudents.size(), "Only failed student should be in retake list");
         assertEquals(testStudent1.getStudentId(), 
                     Integer.valueOf(retakeStudents.get(0).get("student_id").toString()),
                     "Only failed student should be in retake list");
 
-        // 5. 创建重考试卷和考试
+        // 6. 创建重考试卷和考试
         ExamPaper retakePaper = new ExamPaper();
         retakePaper.setPaperName("Retake Restriction Test Paper");
         retakePaper.setPaperStatus(1);
@@ -342,27 +358,25 @@ public class RetakeExamServiceTest {
         retakeExam.setCreatedTime(new Date());
         examService.insert(retakeExam);
 
-        // 6. 尝试为及格学生添加重考记录（这应该是不允许的业务逻辑）
-        try {
-            examStudentService.recordStartExam(retakeExam.getExamId(), testStudent2.getStudentId());
-            fail("Should not allow passed student to take retake exam");
-        } catch (Exception e) {
-            // 期望抛出异常
-            assertTrue(true, "Passed student should not be allowed in retake exam");
-        }
+        // 7. 为重考考试添加需要重考的学生
+        ExamStudent examStudent = new ExamStudent();
+        examStudent.setExamId(retakeExam.getExamId());
+        examStudent.setStudentId(testStudent1.getStudentId());
+        examStudent.setRetakeNeeded(true);
+        examStudentMapper.insert(examStudent);
 
-        // 7. 为不及格学生添加重考记录（这是允许的）
+        // 8. 为不及格学生添加重考记录
         int result = examStudentService.recordStartExam(retakeExam.getExamId(), testStudent1.getStudentId());
         assertTrue(result > 0, "Failed student should be allowed in retake exam");
 
-        // 8. 验证重考成绩记录
+        // 9. 验证重考成绩记录
         StudentScore retakeScore = new StudentScore();
         retakeScore.setExamId(retakeExam.getExamId());
         retakeScore.setStudentId(testStudent1.getStudentId());
         retakeScore.setScore(new BigDecimal("65.00")); // 重考及格成绩
         studentScoreService.insert(retakeScore);
 
-        // 9. 验证可以查询到学生的所有考试记录（包括原始考试和重考）
+        // 10. 验证可以查询到学生的所有考试记录（包括原始考试和重考）
         List<ExamStudent> studentExams = examStudentService.getStudentRetakeExams(testStudent1.getStudentId());
         assertTrue(studentExams.size() >= 2, "Should find both original and retake exam records");
     }

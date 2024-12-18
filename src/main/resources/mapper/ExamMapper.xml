@@ -232,4 +232,32 @@
         INSERT INTO exam_class (exam_id, class_id, create_time)
         VALUES (#{examId}, #{classId}, NOW())
     </insert>
+
+    <!-- 获取考试剩余时间信息 -->
+    <select id="getRemainingTime" resultType="java.util.Map">
+        SELECT 
+            exam_id,
+            exam_status,
+            exam_start_time,
+            exam_end_time,
+            exam_duration
+        FROM exam
+        WHERE exam_id = #{examId}
+    </select>
+
+    <!-- 获取刚刚结束的考试 -->
+    <select id="selectRecentlyEndedExams" resultType="com.exam.entity.Exam">
+        SELECT *
+        FROM exam
+        WHERE exam_end_time BETWEEN #{startTime} AND #{endTime}
+        AND exam_status != 2
+    </select>
+
+    <!-- 获取最近开始的考试 -->
+    <select id="selectRecentlyStartedExams" resultType="com.exam.entity.Exam">
+        SELECT *
+        FROM exam
+        WHERE exam_start_time BETWEEN #{startTime} AND #{endTime}
+        AND exam_status = 1
+    </select>
 </mapper>

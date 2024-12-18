@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.scheduling.annotation.Scheduled;
+import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
 /**
  * 考试服务实现类
  */
+@Slf4j
 @Service
 @Transactional
 public class ExamServiceImpl implements ExamService {
@@ -164,19 +166,44 @@ public class ExamServiceImpl implements ExamService {
 
     @Override
     public int updateStatus(Integer examId, Integer status) {
-        // 检查考试时间，自动更新状态
+        // 验证考试是否存在
         Exam exam = examMapper.selectById(examId);
-        if (exam != null) {
-            Date now = new Date();
-            if (now.before(exam.getExamStartTime())) {
-                status = 0; // 未开始
-            } else if (now.after(exam.getExamEndTime())) {
-                status = 2; // 已结束
-            } else {
-                status = 1; // 进行中
-            }
+        if (exam == null) {
+            throw new RuntimeException("考试不存在");
         }
-        return examMapper.updateStatus(examId, status);
+
+        // 验证状态转换是否合法
+        validateStatusTransition(exam.getExamStatus(), status);
+
+        // 添加日志
+        log.info("Updating exam {} status from {} to {}", examId, exam.getExamStatus(), status);
+
+        // 更新考试状态
+        int result = examMapper.updateStatus(examId, status);
+        
+        // 验证更新结果
+        if (result > 0) {
+            log.info("Successfully updated exam {} status to {}", examId, status);
+        } else {
+            log.warn("Failed to update exam {} status", examId);
+        }
+        
+        return result;
+    }
+
+    private void validateStatusTransition(Integer currentStatus, Integer newStatus) {
+        // 考试状态：0-未开始，1-进行中，2-已结束
+        if (currentStatus.equals(newStatus)) {
+            return; // 状态相同，允许
+        }
+
+        // 定义合法的状态转换
+        if ((currentStatus == 0 && newStatus == 1) ||    // 未开始 -> 进行中
+            (currentStatus == 1 && newStatus == 2)) {    // 进行中 -> 已结束
+            return;
+        }
+
+        throw new RuntimeException("非法的考试状态转换");
     }
 
     @Override
@@ -548,6 +575,51 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    public List<Exam> getRecentlyEndedExams(Date now) {
+        // 获取结束时间在当前时间前后1分钟内的考试
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(now);
+        
+        // 当前时间前1分钟
+        calendar.add(Calendar.MINUTE, -1);
+        Date oneMinuteAgo = calendar.getTime();
+        
+        // 当前时间后1分钟
+        calendar.add(Calendar.MINUTE, 1);
+        Date oneMinuteAfter = calendar.getTime();
+        
+        Map<String, Object> params = new HashMap<>();
+        params.put("startTime", oneMinuteAgo);
+        params.put("endTime", oneMinuteAfter);
+        
+        return examMapper.selectRecentlyEndedExams(params);
+    }
+
+    @Override
+    public List<Exam> getRecentlyStartedExams(Date now) {
+        // 获取开始时间在10分钟前的考试
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(now);
+        calendar.add(Calendar.MINUTE, -10);
+        Date tenMinutesAgo = calendar.getTime();
+        // 获取开始时间在9-10分钟前的考试（避免重复处理）
+        calendar.add(Calendar.MINUTE, 1);
+        Date nineMinutesAgo = calendar.getTime();
+        
+        Map<String, Object> params = new HashMap<>();
+        params.put("startTime", tenMinutesAgo);
+        params.put("endTime", nineMinutesAgo);
+        
+        return examMapper.selectRecentlyStartedExams(params);
+    }
+
+
+
+
+
+
+
+    @Override
     @Transactional
     public Exam publishNormalExam(Integer teacherId, Integer subjectId, List<Integer> classIds, Integer paperId, 
                                 Date examStartTime, Integer examDuration) {
@@ -605,6 +677,10 @@ public class ExamServiceImpl implements ExamService {
         for (Integer classId : classIds) {
             // 获取班级中的在班学生列表
             List<Student> students = classService.getClassStudents(classId);
+
+            //TODO：判断是否有学生已经与该考试建立了关联
+            ExamStudent examStudent1 = examStudentService.getByExamIdAndStudentId(normalExam.getExamId(), students.get(0).getStudentId());
+
             if (students != null && !students.isEmpty()) {
                 List<ExamStudent> examStudents = students.stream()
                         .map(student -> {

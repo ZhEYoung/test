@@ -220,6 +220,7 @@ public class StudentQuestionScoreServiceImpl implements StudentQuestionScoreServ
 
         // 构建返回结果
         Map<String, Object> result = new HashMap<>();
+        result.put("recordId", questionScore.getRecordId());
         result.put("questionId", questionId);
         result.put("studentId", studentId);
         result.put("examId", examId);

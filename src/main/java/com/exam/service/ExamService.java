@@ -231,4 +231,14 @@ public interface ExamService {
      */
     public Exam publishRetakeExam(Integer teacherId, Integer subjectId, List<Integer> studentIds, Integer paperId,
                                 Date examStartTime, Integer examDuration);
+
+    /**
+     * 获取刚刚结束的考试（结束时间在当前时间前后1分钟内）
+     */
+    List<Exam> getRecentlyEndedExams(Date now);
+
+    /**
+     * 获取开始超过10分钟的考试
+     */
+    List<Exam> getRecentlyStartedExams(Date now);
 } 

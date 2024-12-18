@@ -31,35 +31,17 @@ public class ExamStudentServiceImpl implements ExamStudentService {
 
     @Override
     public int recordStartExam(Integer examId, Integer studentId) {
-        // 先查询考试信息
+        // 获取考试信息
         Exam exam = examMapper.selectById(examId);
-        if (exam != null && exam.getExamType() == 1) { // 重考考试
-            // 检查学生是否需要重考
-            ExamStudent examStudent = examStudentMapper.selectByExamAndStudent(examId, studentId);
-            if (examStudent == null || !examStudent.getRetakeNeeded()) {
-                // 查询原始考试成绩
-                List<StudentScore> scores = studentScoreMapper.selectByStudentId(studentId);
-                boolean isEligible = false;
-                for (StudentScore score : scores) {
-                    if (score.getScore() != null && score.getScore().compareTo(new BigDecimal("60")) < 0) {
-                        // 找到不及格成绩，标记需要重考
-                        markRetakeNeeded(examId, studentId);
-                        isEligible = true;
-                        break;
-                    }
-                }
-                if (!isEligible) {
-                    throw new RuntimeException("Student is not eligible for retake exam");
-                }
-            }
+        if (exam == null) {
+            throw new RuntimeException("考试不存在");
         }
-        
         // 记录开始考试时间
-        ExamStudent record = new ExamStudent();
-        record.setExamId(examId);
-        record.setStudentId(studentId);
-        record.setStudentStartTime(new Date());
-        return examStudentMapper.insert(record);
+        Map<String, Object> params = new HashMap<>();
+        params.put("examId", examId);
+        params.put("studentId", studentId);
+        params.put("startTime", new Date());
+        return examStudentMapper.updateStartTime(params);
     }
 
     @Override
@@ -77,6 +59,9 @@ public class ExamStudentServiceImpl implements ExamStudentService {
         params.put("examId", examId);
         params.put("studentId", studentId);
         params.put("absent", true);
+        params.put("retakeNeeded", true);// 缺考的学生默认需要重考
+        params.put("teacherComment", "缺考");
+        params.put("studentStartTime", new Date());
         return examStudentMapper.updateAbsentStatus(params);
     }
 
@@ -250,6 +235,29 @@ public class ExamStudentServiceImpl implements ExamStudentService {
     }
 
     @Override
+    public int markRetakeNotNeeded(Integer examId, Integer studentId) {
+        // 先查询考试-学生关联记录
+        ExamStudent examStudent = examStudentMapper.selectByExamAndStudent(examId, studentId);
+        if (examStudent == null) {
+            // 如果不存在关联记录，需要先创建一个
+            examStudent = new ExamStudent();
+            examStudent.setExamId(examId);
+            examStudent.setStudentId(studentId);
+            examStudent.setRetakeNeeded(true);
+            return examStudentMapper.insert(examStudent);
+        }
+
+        // 更新重考状态，保持其他状态不变
+        return examStudentMapper.updateStatus(
+                examStudent.getEsId(),
+                examStudent.getAbsent(),
+                false,           // 设置不需要重考
+                examStudent.getDisciplinary(),
+                examStudent.getTeacherComment()
+        );
+    }
+
+    @Override
     public List<ExamStudent> getByExamId(Integer examId) {
         return examStudentMapper.selectByExamId(examId);
     }
@@ -258,4 +266,26 @@ public class ExamStudentServiceImpl implements ExamStudentService {
     public int deleteById(Integer esId) {
         return examStudentMapper.deleteById(esId);
     }
+
+
+    @Override
+    public List<ExamStudent> getByStudentId(Integer studentId) {
+        return examStudentMapper.selectByStudentId(studentId);
+    }
+
+    @Override
+    public ExamStudent getByExamIdAndStudentId(Integer examId, Integer studentId){
+        return examStudentMapper.selectByExamAndStudent(examId, studentId);
+    }
+
+    @Override
+    public List<ExamStudent> getUnsubmittedStudents(Integer examId) {
+        return examStudentMapper.selectUnsubmittedStudents(examId);
+    }
+
+    @Override
+    public List<ExamStudent> getNotStartedStudents(Integer examId) {
+        return examStudentMapper.selectNotStartedStudents(examId);
+    }
+
 } 

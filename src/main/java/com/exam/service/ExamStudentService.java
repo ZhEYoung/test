@@ -17,6 +17,21 @@ public interface ExamStudentService {
      * @return 考试-学生记录列表
      */
     List<ExamStudent> getByExamId(Integer examId);
+
+    /**
+     * 根据学生ID查询所有考试-学生记录
+     * @param studentId 学生ID
+     * @return 考试-学生记录列表
+     */
+    List<ExamStudent> getByStudentId(Integer studentId);
+
+    /**
+     * 根据考试ID和学生ID查询考试-学生记录
+     * @param examId 考试ID
+     * @param studentId 学生ID
+     * @return 考试-学生记录
+     */
+    ExamStudent getByExamIdAndStudentId(Integer examId, Integer studentId);
     
     /**
      * 根据主键删除考试-学生记录
@@ -190,4 +205,26 @@ public interface ExamStudentService {
      * @return 操作结果
      */
     int markRetakeNeeded(Integer examId, Integer studentId);
+
+    /**
+     * 标记学生不需要重考
+     * @param examId 考试ID
+     * @param studentId 学生ID
+     * @return 操作结果
+     */
+    int markRetakeNotNeeded(Integer examId, Integer studentId);
+
+    /**
+     * 获取未提交考试的学生列表
+     * @param examId 考试ID
+     * @return 未提交考试的学生列表
+     */
+    List<ExamStudent> getUnsubmittedStudents(Integer examId);
+
+    /**
+     * 获取未开始考试的学生列表
+     * @param examId 考试ID
+     * @return 未开始考试的学生列表
+     */
+    List<ExamStudent> getNotStartedStudents(Integer examId);
 } 

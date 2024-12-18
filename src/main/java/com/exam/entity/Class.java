@@ -11,7 +11,7 @@ public class Class {
     private Integer teacherId;    // 教师ID
     private String className;     // 课程名
     private Integer subjectId;    // 学科编号
-    private Boolean finalExam;    // 是否有期末考试
+    private Boolean finalExam;    // 是否已期末考试
     
     // 关联信息
     private Teacher teacher;      // 教师信息

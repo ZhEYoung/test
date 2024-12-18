@@ -115,9 +115,9 @@ public class ExamServiceTest {
         
         // 设置考试时间
         Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.MINUTE, -30);  // 设置开始时间为30分钟前
+        calendar.add(Calendar.MINUTE, 30);  // 设置开始时间为30分钟后
         testExam.setExamStartTime(calendar.getTime());
-        calendar.add(Calendar.HOUR, 2);      // 设置结束时间为1.5小时后
+        calendar.add(Calendar.HOUR, 2);      // 设置结束时间为2小时后
         testExam.setExamEndTime(calendar.getTime());
         testExam.setCreatedTime(new Date());
     }

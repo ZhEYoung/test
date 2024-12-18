@@ -294,4 +294,18 @@ public interface ExamStudentMapper {
      * 统计缺考学生人数
      */
     int countAbsentStudents(@Param("examId") Integer examId);
+
+    /**
+     * 查询未提交考试的学生列表
+     * @param examId 考试ID
+     * @return 未提交考试的学生列表
+     */
+    List<ExamStudent> selectUnsubmittedStudents(@Param("examId") Integer examId);
+
+    /**
+     * 查询未开始考试的学生列表
+     * @param examId 考试ID
+     * @return 未开始考试的学生列表
+     */
+    List<ExamStudent> selectNotStartedStudents(@Param("examId") Integer examId);
 }

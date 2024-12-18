@@ -118,7 +118,10 @@
 
     <!-- 查询试卷题目及分值 -->
     <select id="selectPaperQuestionsWithScore" resultType="java.util.Map">
-        SELECT q.*, epq.question_score, epq.question_order
+        SELECT epq.question_id as questionId,
+               epq.question_score as score,
+               epq.question_order as questionOrder,
+                q.*
         FROM question q
         INNER JOIN exam_paper_question epq ON q.question_id = epq.question_id
         WHERE epq.paper_id = #{paperId}

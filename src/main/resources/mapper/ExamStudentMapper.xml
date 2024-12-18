@@ -132,22 +132,15 @@
         ORDER BY student_id
     </select>
 
-    <!-- 查询学生的重考记录 -->
+    <!-- 查询学生的所有重考相关记录（包括原始考试和重考） -->
     <select id="selectStudentRetakeExams" resultMap="BaseResultMap">
-        SELECT 
-            es.es_id,
-            es.exam_id,
-            es.student_id,
-            es.student_start_time,
-            es.student_submit_time,
-            es.absent,
-            es.retake_needed,
-            es.disciplinary,
-            es.teacher_comment
+        SELECT es.es_id, es.exam_id, es.student_id, es.student_start_time, 
+               es.student_submit_time, es.absent, es.retake_needed, 
+               es.disciplinary, es.teacher_comment
         FROM exam_student es
         INNER JOIN exam e ON es.exam_id = e.exam_id
         WHERE es.student_id = #{studentId}
-        AND e.exam_type = 1
+        AND (e.exam_type = 1 OR es.retake_needed = true)
         ORDER BY e.exam_start_time DESC
     </select>
 
@@ -400,5 +393,24 @@
         AND es.disciplinary = 1
         GROUP BY e.exam_id, e.exam_name, e.exam_start_time
         ORDER BY e.exam_start_time DESC
+    </select>
+
+    <!-- 查询未提交考试的学生列表 -->
+    <select id="selectUnsubmittedStudents" resultType="com.exam.entity.ExamStudent">
+        SELECT es.*
+        FROM exam_student es
+        WHERE es.exam_id = #{examId}
+        AND es.student_start_time IS NOT NULL
+        AND es.student_submit_time IS NULL
+        AND es.absent = false
+    </select>
+
+    <!-- 查询未开始考试的学生列表 -->
+    <select id="selectNotStartedStudents" resultType="com.exam.entity.ExamStudent">
+        SELECT es.*
+        FROM exam_student es
+        WHERE es.exam_id = #{examId}
+        AND es.student_start_time IS NULL
+        AND es.absent = false
     </select>
 </mapper>

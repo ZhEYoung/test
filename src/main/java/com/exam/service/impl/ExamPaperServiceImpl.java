@@ -126,7 +126,11 @@ public class ExamPaperServiceImpl implements ExamPaperService {
 
     @Override
     public List<Map<String, Object>> getPaperQuestionsWithScore(Integer paperId) {
-        return examPaperMapper.selectPaperQuestionsWithScore(paperId);
+        List<Map<String, Object>> questions = examPaperMapper.selectPaperQuestionsWithScore(paperId);
+        for (Map<String, Object> question : questions) {
+            question.put("question",questionMapper.selectById((Integer) question.get("questionId")));
+        }
+        return questions;
     }
 
     @Override

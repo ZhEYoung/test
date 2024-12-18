@@ -279,12 +279,12 @@ public class ExamPaperServiceTest {
         Map<Integer, Integer> actualTypeCount = new HashMap<>();
         Map<Integer, BigDecimal> actualTypeScores = new HashMap<>();
         final BigDecimal totalScore = paperQuestions.stream()
-            .map(q -> (BigDecimal) q.get("question_score"))
+            .map(q -> (BigDecimal) q.get("score"))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         
         for (Map<String, Object> question : paperQuestions) {
             Integer type = (Integer) question.get("type");
-            BigDecimal score = (BigDecimal) question.get("question_score");
+            BigDecimal score = (BigDecimal) question.get("score");
             actualTypeCount.merge(type, 1, Integer::sum);
             actualTypeScores.merge(type, score, BigDecimal::add);
         }
@@ -494,19 +494,26 @@ public class ExamPaperServiceTest {
         BigDecimal totalScore = BigDecimal.ZERO;
         
         for (Map<String, Object> question : paperQuestions) {
-            Integer type = (Integer) question.get("type");
-            BigDecimal score = (BigDecimal) question.get("question_score");
-            actualTypeCount.merge(type, 1, Integer::sum);
-            actualTypeScores.merge(type, score, BigDecimal::add);
-            totalScore = totalScore.add(score);
+            Question questionObj = (Question) question.get("question");
+            Integer type = questionObj.getType();
+            BigDecimal score = (BigDecimal) question.get("score");
+            
+            // 确保type和score不为空
+            if (type != null && score != null) {
+                actualTypeCount.merge(type, 1, Integer::sum);
+                actualTypeScores.merge(type, score, BigDecimal::add);
+                totalScore = totalScore.add(score);
+            }
         }
         
         // 验证题目数量
-        questionTypeCount.forEach((type, expectedCount) -> {
-            Integer actualCount = actualTypeCount.get(type);
-            assertEquals(expectedCount, actualCount, 
-                "题型" + type + "的数量不匹配，期望：" + expectedCount + "，实际：" + actualCount);
-        });
+        if (questionTypeCount != null) {
+            questionTypeCount.forEach((type, expectedCount) -> {
+                Integer actualCount = actualTypeCount.getOrDefault(type, 0);
+                assertEquals(expectedCount, actualCount, 
+                    "题型" + type + "的数量不匹配，期望：" + expectedCount + "，实际：" + actualCount);
+            });
+        }
         
         // 验证总分为100分
         assertEquals(0, totalScore.compareTo(new BigDecimal("100")), 
@@ -517,7 +524,7 @@ public class ExamPaperServiceTest {
             expectedTypeScoreRatio.forEach((type, expectedRatio) -> {
                 BigDecimal expectedScore = new BigDecimal("100").multiply(expectedRatio)
                     .setScale(2, RoundingMode.HALF_UP);
-                BigDecimal actualScore = actualTypeScores.get(type)
+                BigDecimal actualScore = actualTypeScores.getOrDefault(type, BigDecimal.ZERO)
                     .setScale(2, RoundingMode.HALF_UP);
                 assertEquals(0, expectedScore.compareTo(actualScore), 
                     "题型" + type + "的分值不匹配，期望：" + expectedScore + "，实际：" + actualScore);

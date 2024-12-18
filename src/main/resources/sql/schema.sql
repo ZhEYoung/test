@@ -146,7 +146,7 @@ CREATE TABLE IF NOT EXISTS question_option (
 -- 试卷表
 CREATE TABLE IF NOT EXISTS exam_paper (
     paper_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '试卷ID',
-    paper_name VARCHAR(50) UNIQUE NOT NULL COMMENT '试卷名称',
+    paper_name VARCHAR(50)  NOT NULL COMMENT '试卷名称',
     paper_status INT DEFAULT 0 COMMENT '0: 未发布，1: 已发布',
     subject_id INT NOT NULL COMMENT '学科编号',
     teacher_id INT NOT NULL COMMENT '创建教师ID',

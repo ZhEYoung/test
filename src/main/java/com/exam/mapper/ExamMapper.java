@@ -197,4 +197,18 @@ public interface ExamMapper {
      */
     int insertExamClass(Map<String, Object> params);
 
+    /**
+     * 获取考试剩余时间信息
+     */
+    Map<String, Object> getRemainingTime(Integer examId);
+
+    /**
+     * 获取刚刚结束的考试
+     */
+    List<Exam> selectRecentlyEndedExams(Map<String, Object> params);
+
+    /**
+     * 获取最近开始的考试
+     */
+    List<Exam> selectRecentlyStartedExams(Map<String, Object> params);
 }
