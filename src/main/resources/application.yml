@@ -2,6 +2,11 @@ server:
   port: 8080
   servlet:
     context-path: /api
+  tomcat:
+    # tomcat最大线程数，默认为200
+    max-threads: 300
+    # tomcat启动初始化的线程数，默认值25
+    min-spare-threads: 50
 
 spring:
   # 数据库配置
@@ -13,11 +18,11 @@ spring:
     password: 123456
     druid:
       # 初始连接数
-      initial-size: 5
+      initial-size: 10
       # 最小连接池数量
-      min-idle: 5
+      min-idle: 10
       # 最大连接池数量
-      max-active: 20
+      max-active: 50
       # 配置获取连接等待超时的时间
       max-wait: 60000
       # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
@@ -34,6 +39,44 @@ spring:
       # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
       filters: stat,wall,slf4j
       connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+      # 配置DruidStatFilter
+      web-stat-filter:
+        enabled: true
+        url-pattern: /*
+        exclusions: "*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*"
+      # 配置DruidStatViewServlet
+      stat-view-servlet:
+        enabled: true
+        url-pattern: /druid/*
+        reset-enable: false
+        login-username: admin
+        login-password: 123456
+
+  # Redis配置
+  redis:
+    host: localhost
+    port: 6379
+    password: # Redis服务器密码，默认为空
+    database: 0
+    lettuce:
+      pool:
+        # 连接池最大连接数
+        max-active: 8
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1ms
+        # 连接池中的最大空闲连接
+        max-idle: 8
+        # 连接池中的最小空闲连接
+        min-idle: 0
+    timeout: 5000ms
+
+  # 缓存配置
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000 # 缓存过期时间（毫秒）
+      cache-null-values: true # 是否缓存空值
+
   mvc:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER

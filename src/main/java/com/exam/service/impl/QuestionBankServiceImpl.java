@@ -7,6 +7,9 @@ import com.exam.mapper.QuestionMapper;
 import com.exam.mapper.QuestionOptionMapper;
 import com.exam.service.QuestionBankService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -29,6 +32,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     private QuestionOptionMapper optionMapper;
 
     @Override
+    @CacheEvict(value = {"qbank", "qbank_list", "qbank_by_subject"}, allEntries = true)
     public int insert(QuestionBank questionBank) {
         // 验证题库名称
         if (questionBank == null || questionBank.getQbName() == null || 
@@ -60,7 +64,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
-    @Transactional
+    @CacheEvict(value = {"qbank", "qbank_list", "qbank_by_subject", "qbank_questions"}, allEntries = true)
     public int deleteById(Integer qbId) {
         // 1. 获取题库下的所有题目
         List<Question> questions = questionBankMapper.selectQuestions(qbId);
@@ -78,6 +82,8 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @CachePut(value = "qbank", key = "#questionBank.qbId", unless = "#result == 0")
+    @CacheEvict(value = {"qbank_list", "qbank_by_subject"}, allEntries = true)
     public int update(QuestionBank questionBank) {
         // 验证基本参数
         if (questionBank == null || questionBank.getQbId() == null) {
@@ -101,16 +107,19 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @Cacheable(value = "qbank", key = "#qbId", unless = "#result == null")
     public QuestionBank getById(Integer qbId) {
         return questionBankMapper.selectById(qbId);
     }
 
     @Override
+    @Cacheable(value = "qbank_list", unless = "#result == null || #result.isEmpty()")
     public List<QuestionBank> getAll() {
         return questionBankMapper.selectAll();
     }
     
     @Override
+    @Cacheable(value = "qbank_page", key = "#pageNum + '_' + #pageSize")
     public List<QuestionBank> getPage(Integer pageNum, Integer pageSize) {
         if (pageNum == null || pageSize == null || pageNum < 1 || pageSize < 1) {
             return new ArrayList<>();
@@ -122,6 +131,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
     
     @Override
+    @Cacheable(value = "qbank_by_condition", key = "'condition_'+#condition.hashCode()")
     public List<QuestionBank> getByCondition(Map<String, Object> condition) {
         if (condition == null) {
             return new ArrayList<>();
@@ -130,6 +140,8 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
     
     @Override
+    @Cacheable(value = "qbank_page_by_condition", 
+               key = "'condition_'+#condition.hashCode()+'_page_'+#pageNum+'_'+#pageSize")
     public List<QuestionBank> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
         if (condition == null || pageNum == null || pageSize == null || pageNum < 1 || pageSize < 1) {
             return new ArrayList<>();
@@ -140,11 +152,13 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
     
     @Override
+    @Cacheable(value = "qbank_count")
     public Long getCount() {
         return questionBankMapper.selectCount();
     }
     
     @Override
+    @Cacheable(value = "qbank_count_by_condition", key = "'condition_'+#condition.hashCode()")
     public Long getCountByCondition(Map<String, Object> condition) {
         if (condition == null) {
             return 0L;
@@ -153,26 +167,31 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @Cacheable(value = "qbank_by_subject", key = "#subjectId", unless = "#result == null || #result.isEmpty()")
     public List<QuestionBank> getBySubjectId(Integer subjectId) {
         return questionBankMapper.selectBySubjectId(subjectId);
     }
 
     @Override
+    @Cacheable(value = "qbank_by_name", key = "#qbName", unless = "#result == null")
     public QuestionBank getByName(String qbName) {
         return questionBankMapper.selectByName(qbName);
     }
 
     @Override
+    @Cacheable(value = "qbank_question_count", key = "#qbId")
     public Integer countQuestions(Integer qbId) {
         return questionBankMapper.countQuestions(qbId);
     }
 
     @Override
+    @Cacheable(value = "qbank_count_by_subject", key = "#subjectId")
     public Integer countBySubjectId(Integer subjectId) {
         return questionBankMapper.countBySubjectId(subjectId);
     }
 
     @Override
+    @CacheEvict(value = {"qbank_questions", "qbank_question_count"}, key = "#qbId")
     public int addQuestion(Integer qbId, Integer questionId) {
         if (qbId == null || questionId == null) {
             return 0;
@@ -181,6 +200,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @CacheEvict(value = {"qbank_questions", "qbank_question_count"}, key = "#qbId")
     public int batchAddQuestions(Integer qbId, List<Integer> questionIds) {
         if (qbId == null || questionIds == null || questionIds.isEmpty()) {
             return 0;
@@ -189,6 +209,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @CacheEvict(value = {"qbank_questions", "qbank_question_count"}, key = "#qbId")
     public int removeQuestion(Integer qbId, Integer questionId) {
         if (qbId == null || questionId == null) {
             return 0;
@@ -197,6 +218,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @CacheEvict(value = {"qbank_questions", "qbank_question_count"}, key = "#qbId")
     public int batchRemoveQuestions(Integer qbId, List<Integer> questionIds) {
         if (qbId == null || questionIds == null || questionIds.isEmpty()) {
             return 0;
@@ -205,32 +227,39 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @Cacheable(value = "qbank_questions", key = "#qbId")
     public List<Question> getQuestions(Integer qbId) {
         return questionBankMapper.selectQuestions(qbId);
     }
 
     @Override
+    @Cacheable(value = "qbank_questions_by_condition", 
+               key = "'qb_'+#qbId+'_type_'+#type+'_diff_'+#minDifficulty+'_'+#maxDifficulty")
     public List<Question> getQuestionsByCondition(Integer qbId, Integer type, 
                                                 BigDecimal minDifficulty, BigDecimal maxDifficulty) {
         return questionBankMapper.selectQuestionsByCondition(qbId, type, minDifficulty, maxDifficulty);
     }
 
     @Override
+    @Cacheable(value = "qbank_questions_by_type", key = "#qbId")
     public List<Map<String, Object>> countQuestionsByType(Integer qbId) {
         return questionBankMapper.countQuestionsByType(qbId);
     }
 
     @Override
+    @Cacheable(value = "qbank_questions_by_difficulty", key = "#qbId")
     public List<Map<String, Object>> countQuestionsByDifficulty(Integer qbId) {
         return questionBankMapper.countQuestionsByDifficulty(qbId);
     }
 
     @Override
+    @Cacheable(value = "qbank_usage", key = "#qbId")
     public List<Map<String, Object>> countBankUsage(Integer qbId) {
         return questionBankMapper.countBankUsage(qbId);
     }
 
     @Override
+    @CacheEvict(value = {"qbank", "qbank_list", "qbank_by_subject"}, allEntries = true)
     public int copyBank(Integer sourceQbId, String newBankName, Integer subjectId) {
         if (sourceQbId == null || newBankName == null || subjectId == null) {
             return 0;
@@ -239,6 +268,7 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @CacheEvict(value = {"qbank", "qbank_list", "qbank_questions", "qbank_question_count"}, allEntries = true)
     public int mergeBanks(Integer targetQbId, List<Integer> sourceQbIds) {
         if (targetQbId == null || sourceQbIds == null || sourceQbIds.isEmpty()) {
             return 0;
@@ -247,11 +277,13 @@ public class QuestionBankServiceImpl implements QuestionBankService {
     }
 
     @Override
+    @Cacheable(value = "qbank_recent", key = "#limit")
     public List<QuestionBank> getRecentUsed(Integer limit) {
         return questionBankMapper.selectRecentUsed(limit);
     }
 
     @Override
+    @Cacheable(value = "qbank_hot", key = "#limit")
     public List<QuestionBank> getHotBanks(Integer limit) {
         return questionBankMapper.selectHotBanks(limit);
     }

@@ -14,6 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.math.BigDecimal;
 import java.util.stream.Collectors;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 
 /**
  * 考试服务实现类
@@ -49,16 +52,19 @@ public class ExamServiceImpl implements ExamService {
     private ExamStudentService examStudentService;
 
     @Override
+    @CacheEvict(value = {"exam", "exam_list"}, allEntries = true)
     public int insert(Exam record) {
         return examMapper.insert(record);
     }
 
     @Override
+    @CacheEvict(value = {"exam", "exam_list"}, allEntries = true)
     public int deleteById(Integer id) {
         return examMapper.deleteById(id);
     }
 
     @Override
+    @CacheEvict(value = {"exam", "exam_list"}, allEntries = true)
     public int updateById(Exam record) {
         if (record == null || record.getExamId() == null) {
             return 0;
@@ -90,27 +96,33 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "exam", key = "#id")
     public Exam getById(Integer id) {
         return examMapper.selectById(id);
     }
 
     @Override
+    @Cacheable(value = "exam_list")
     public List<Exam> getAll() {
         return examMapper.selectAll();
     }
 
     @Override
+    @Cacheable(value = "exam_page", key = "#pageNum + '_' + #pageSize")
     public List<Exam> getPage(Integer pageNum, Integer pageSize) {
         int offset = (pageNum - 1) * pageSize;
         return examMapper.selectByConditions(null, null, null, null, null, null, offset, pageSize);
     }
 
     @Override
+    @Cacheable(value = "exam_count")
     public Long getCount() {
         return examMapper.countByTimeRange(null, null);
     }
 
     @Override
+    @Cacheable(value = "exam_by_condition", 
+               key = "'subj_'+#condition.get('subjectId')+'_teach_'+#condition.get('teacherId')+'_type_'+#condition.get('examType')+'_status_'+#condition.get('examStatus')")
     public List<Exam> getByCondition(Map<String, Object> condition) {
         Integer subjectId = (Integer) condition.get("subjectId");
         Integer teacherId = (Integer) condition.get("teacherId");
@@ -126,6 +138,8 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "exam_count_by_condition",
+               key = "'start_'+#condition.get('startTime')+'_end_'+#condition.get('endTime')")
     public Long getCountByCondition(Map<String, Object> condition) {
         Date startTime = (Date) condition.get("startTime");
         Date endTime = (Date) condition.get("endTime");
@@ -140,26 +154,31 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "exam_by_subject", key = "#subjectId")
     public List<Exam> getBySubjectId(Integer subjectId) {
         return examMapper.selectBySubjectId(subjectId);
     }
 
     @Override
+    @Cacheable(value = "exam_by_paper", key = "#paperId")
     public List<Exam> getByPaperId(Integer paperId) {
         return examMapper.selectByPaperId(paperId);
     }
 
     @Override
+    @Cacheable(value = "exam_by_teacher", key = "#teacherId")
     public List<Exam> getByTeacherId(Integer teacherId) {
         return examMapper.selectByTeacherId(teacherId);
     }
 
     @Override
+    @Cacheable(value = "exam_by_status", key = "#examStatus")
     public List<Exam> getByStatus(Integer examStatus) {
         return examMapper.selectByStatus(examStatus);
     }
 
     @Override
+    @Cacheable(value = "exam_by_type", key = "#examType")
     public List<Exam> getByType(Integer examType) {
         return examMapper.selectByType(examType);
     }
@@ -207,16 +226,19 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "exam_by_student", key = "#studentId")
     public List<Exam> getByStudentId(Integer studentId) {
         return examMapper.selectByStudentId(studentId);
     }
 
     @Override
+    @Cacheable(value = "exam_by_class", key = "#classId")
     public List<Exam> getByClassId(Integer classId) {
         return examMapper.selectByClassId(classId);
     }
 
     @Override
+    @Cacheable(value = "exam_by_timerange", key = "#startTime.getTime() + '_' + #endTime.getTime()")
     public List<Exam> getByTimeRange(Date startTime, Date endTime) {
         return examMapper.selectByTimeRange(startTime, endTime);
     }
@@ -237,22 +259,28 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @CacheEvict(value = {"exam", "exam_list", "exam_by_class"}, allEntries = true)
     public int updateDuration(Integer examId, Integer duration) {
         return examMapper.updateDuration(examId, duration);
     }
 
     @Override
+    @CacheEvict(value = {"exam", "exam_list", "exam_by_class"}, allEntries = true)
     public int batchAddExamClass(Integer examId, List<Integer> classIds) {
         return examMapper.batchInsertExamClass(examId, classIds);
     }
 
     @Override
+    @CacheEvict(value = {"exam", "exam_list", "exam_by_class"}, allEntries = true)
     public int removeExamClass(Integer examId, Integer classId) {
         return examMapper.deleteExamClass(examId, classId);
     }
 
     @Override
-    @Transactional
+    @CacheEvict(value = {"exam", "exam_list", "exam_by_subject", "exam_by_paper", "exam_by_teacher", 
+                        "exam_by_status", "exam_by_type", "exam_by_student", "exam_by_class",
+                        "exam_page", "exam_count", "exam_by_condition", "exam_count_by_condition"}, 
+                allEntries = true)
     public int publishExam(Integer examId) {
         // 检查考试时间是否合法
         Exam exam = examMapper.selectById(examId);
@@ -273,7 +301,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    @Transactional
+    @CacheEvict(value = {"exam", "exam_list", "exam_by_status"}, allEntries = true)
     public int startExam(Integer examId) {
         Exam exam = examMapper.selectById(examId);
         if (exam == null) {
@@ -289,7 +317,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
-    @Transactional
+    @CacheEvict(value = {"exam", "exam_list", "exam_by_status"}, allEntries = true)
     public int endExam(Integer examId) {
         Exam exam = examMapper.selectById(examId);
         if (exam == null) {
@@ -305,6 +333,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "exam_statistics", key = "#examId")
     public Map<String, Object> getExamStatistics(Integer examId) {
         Map<String, Object> statistics = new HashMap<>();
         
@@ -358,6 +387,7 @@ public class ExamServiceImpl implements ExamService {
     }
 
     @Override
+    @Cacheable(value = "exam_progress", key = "#examId")
     public Map<String, Object> getExamProgress(Integer examId) {
         Map<String, Object> progress = new HashMap<>();
         
@@ -460,13 +490,17 @@ public class ExamServiceImpl implements ExamService {
         // 8. 为每个班级创建考试-班级关联
         examMapper.batchInsertExamClass(finalExam.getExamId(), classIds);
 
-
         // 9. 为参加考试班级的在班学生创建考试-学生关联
         for (Integer classId : classIds) {
             // 获取班级中的在班学生列表
             List<Student> students = classService.getClassStudents(classId);
             if (students != null && !students.isEmpty()) {
                 List<ExamStudent> examStudents = students.stream()
+                        .filter(student -> {
+                            // 检查学生是否已经与该考试建立关联
+                            ExamStudent existingAssociation = examStudentService.getByExamIdAndStudentId(finalExam.getExamId(), student.getStudentId());
+                            return existingAssociation == null; // 只保留未建立关联的学生
+                        })
                         .map(student -> {
                             ExamStudent examStudent = new ExamStudent();
                             examStudent.setExamId(finalExam.getExamId());
@@ -481,7 +515,9 @@ public class ExamServiceImpl implements ExamService {
                         })
                         .collect(Collectors.toList());
                 // 批量插入考试-学生关联记录
-                examStudentMapper.batchInsert(examStudents);
+                if (!examStudents.isEmpty()) {
+                    examStudentMapper.batchInsert(examStudents);
+                }
             }
         }
 
@@ -532,6 +568,7 @@ public class ExamServiceImpl implements ExamService {
 
     // 获取考试剩余时间（分钟）
     @Override
+    @Cacheable(value = "exam_remaining_time", key = "#examId")
     public Map<String, Object> getRemainingTime(Integer examId) {
         Exam exam = examMapper.selectById(examId);
         Map<String, Object> result = new HashMap<>();
@@ -677,12 +714,15 @@ public class ExamServiceImpl implements ExamService {
         for (Integer classId : classIds) {
             // 获取班级中的在班学生列表
             List<Student> students = classService.getClassStudents(classId);
-
-            //TODO：判断是否有学生已经与该考试建立了关联
-            ExamStudent examStudent1 = examStudentService.getByExamIdAndStudentId(normalExam.getExamId(), students.get(0).getStudentId());
-
+            
             if (students != null && !students.isEmpty()) {
+                // 过滤掉已经与该考试建立关联的学生
                 List<ExamStudent> examStudents = students.stream()
+                        .filter(student -> {
+                            // 检查学生是否已经与该考试建立关联
+                            ExamStudent existingAssociation = examStudentService.getByExamIdAndStudentId(normalExam.getExamId(), student.getStudentId());
+                            return existingAssociation == null; // 只保留未建立关联的学生
+                        })
                         .map(student -> {
                             ExamStudent examStudent = new ExamStudent();
                             examStudent.setExamId(normalExam.getExamId());
@@ -696,8 +736,11 @@ public class ExamServiceImpl implements ExamService {
                             return examStudent;
                         })
                         .collect(Collectors.toList());
-                // 批量插入考试-学生关联记录
-                examStudentMapper.batchInsert(examStudents);
+                
+                // 只有当有新的学生需要添加时才执行批量插入
+                if (!examStudents.isEmpty()) {
+                    examStudentMapper.batchInsert(examStudents);
+                }
             }
         }
 
