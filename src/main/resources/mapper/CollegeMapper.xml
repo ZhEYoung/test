@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.CollegeMapper">
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        college_id, college_name, description, created_time
+    </sql>
+
+    <!-- 结果映射 -->
+    <resultMap id="CollegeResultMap" type="com.exam.entity.College">
+        <id column="college_id" property="collegeId"/>
+        <result column="college_name" property="collegeName"/>
+        <result column="description" property="description"/>
+        <result column="created_time" property="createdTime"/>
+    </resultMap>
+
+    <!-- 插入学院记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="collegeId">
+        INSERT INTO college (college_name, description, created_time)
+        VALUES (#{collegeName}, #{description}, #{createdTime})
+    </insert>
+
+    <!-- 批量插入学院记录 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="collegeId">
+        INSERT INTO college (college_name, description, created_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.collegeName}, #{item.description}, #{item.createdTime})
+        </foreach>
+    </insert>
+
+    <!-- 根据ID删除学院 -->
+    <delete id="deleteById">
+        DELETE FROM college WHERE college_id = #{collegeId}
+    </delete>
+
+    <!-- 批量删除学院 -->
+    <delete id="batchDelete">
+        DELETE FROM college WHERE college_id IN
+        <foreach collection="collegeIds" item="collegeId" open="(" separator="," close=")">
+            #{collegeId}
+        </foreach>
+    </delete>
+
+    <!-- 更新学院信息 -->
+    <update id="updateById">
+        UPDATE college
+        <set>
+            <if test="collegeName != null">college_name = #{collegeName},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="createdTime != null">created_time = #{createdTime}</if>
+        </set>
+        WHERE college_id = #{collegeId}
+    </update>
+
+    <!-- 批量更新学院 -->
+    <update id="batchUpdate">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE college
+            <set>
+                <if test="item.collegeName != null">college_name = #{item.collegeName},</if>
+                <if test="item.description != null">description = #{item.description},</if>
+                <if test="item.createdTime != null">created_time = #{item.createdTime}</if>
+            </set>
+            WHERE college_id = #{item.collegeId}
+        </foreach>
+    </update>
+
+    <!-- 根据ID查询学院 -->
+    <select id="selectById" resultMap="CollegeResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM college
+        WHERE college_id = #{collegeId}
+    </select>
+
+    <!-- 查询所有学院 -->
+    <select id="selectAll" resultMap="CollegeResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM college
+    </select>
+
+    <!-- 分页查询学院 -->
+    <select id="selectPage" resultMap="CollegeResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM college
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询学院总数 -->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM college
+    </select>
+
+    <!-- 条件查询学院 -->
+    <select id="selectByCondition" resultMap="CollegeResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM college
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 条件查询学院数量 -->
+    <select id="selectCountByCondition" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM college
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 条件分页查询学院 -->
+    <select id="selectPageByCondition" resultMap="CollegeResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM college
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 根据学院名称查询 -->
+    <select id="selectByCollegeName" resultMap="CollegeResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM college
+        WHERE college_name = #{collegeName}
+    </select>
+
+    <!-- 查询学院教师列表 -->
+    <select id="selectCollegeTeachers" resultType="com.exam.entity.Teacher">
+        SELECT t.*
+        FROM teacher t
+        WHERE t.college_id = #{collegeId}
+    </select>
+
+    <!-- 查询学院学生列表 -->
+    <select id="selectCollegeStudents" resultType="com.exam.entity.Student">
+        SELECT s.*
+        FROM student s
+        WHERE s.college_id = #{collegeId}
+    </select>
+
+    <!-- 查询学院学科列表 -->
+    <select id="selectCollegeSubjects" resultType="com.exam.entity.Subject">
+        SELECT s.*
+        FROM subject s
+        WHERE s.college_id = #{collegeId}
+    </select>
+
+    <!-- 统计学院教师数量 -->
+    <select id="countTeachers" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM teacher
+        WHERE college_id = #{collegeId}
+    </select>
+
+    <!-- 统计学院学生数量 -->
+    <select id="countStudents" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM student
+        WHERE college_id = #{collegeId}
+    </select>
+
+    <!-- 统计学院学科数量 -->
+    <select id="countSubjects" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM subject
+        WHERE college_id = #{collegeId}
+    </select>
+
+    <!-- 更新学院描述 -->
+    <update id="updateDescription">
+        UPDATE college
+        SET description = #{description}
+        WHERE college_id = #{collegeId}
+    </update>
+
+    <!-- 关联学院和学科 -->
+    <update id="associateSubjects">
+        UPDATE subject 
+        SET college_id = #{collegeId}
+        WHERE subject_id IN
+        <foreach collection="subjectIds" item="subjectId" open="(" separator="," close=")">
+            #{subjectId}
+        </foreach>
+    </update>
+</mapper>

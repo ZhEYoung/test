@@ -1,0 +1,373 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.exam.mapper.QuestionMapper">
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.exam.entity.Question">
+        <id column="question_id" property="questionId"/>
+        <result column="qb_id" property="qbId"/>
+        <result column="content" property="content"/>
+        <result column="answer" property="answer"/>
+        <result column="type" property="type"/>
+        <result column="difficulty" property="difficulty"/>
+    </resultMap>
+
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        question_id, qb_id, content, answer, type, difficulty
+    </sql>
+
+    <!-- 分页查询题目 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        ORDER BY question_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询题目总数 -->
+    <select id="selectCount" resultType="Long">
+        SELECT COUNT(1)
+        FROM question
+    </select>
+
+    <!-- 条件查询题目 -->
+    <select id="selectByCondition" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        <where>
+            <if test="qbId != null">
+                AND qb_id = #{qbId}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="content != null and content != ''">
+                AND content LIKE CONCAT('%', #{content}, '%')
+            </if>
+            <if test="minDifficulty != null and maxDifficulty != null">
+                AND difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+            </if>
+        </where>
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 条件查询题目总数 -->
+    <select id="selectCountByCondition" parameterType="java.util.Map" resultType="Long">
+        SELECT COUNT(1)
+        FROM question
+        <where>
+            <if test="qbId != null">
+                AND qb_id = #{qbId}
+            </if>
+            <if test="type != null">
+                AND type = #{type}
+            </if>
+            <if test="content != null and content != ''">
+                AND content LIKE CONCAT('%', #{content}, '%')
+            </if>
+            <if test="minDifficulty != null and maxDifficulty != null">
+                AND difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+            </if>
+        </where>
+    </select>
+
+    <!-- 条件分页查询题目 -->
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        <where>
+            <if test="condition.qbId != null">
+                AND qb_id = #{condition.qbId}
+            </if>
+            <if test="condition.type != null">
+                AND type = #{condition.type}
+            </if>
+            <if test="condition.content != null and condition.content != ''">
+                AND content LIKE CONCAT('%', #{condition.content}, '%')
+            </if>
+            <if test="condition.minDifficulty != null and condition.maxDifficulty != null">
+                AND difficulty BETWEEN #{condition.minDifficulty} AND #{condition.maxDifficulty}
+            </if>
+        </where>
+        ORDER BY question_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 插入题目记录 -->
+    <insert id="insert" parameterType="com.exam.entity.Question" useGeneratedKeys="true" keyProperty="questionId">
+        INSERT INTO question (qb_id, content, answer, type, difficulty)
+        VALUES (#{qbId}, #{content}, #{answer}, #{type}, #{difficulty})
+    </insert>
+
+    <!-- 根据ID删除题目 -->
+    <delete id="deleteById">
+        DELETE FROM question WHERE question_id = #{questionId}
+    </delete>
+
+    <!-- 更新题目信息 -->
+    <update id="update" parameterType="com.exam.entity.Question">
+        UPDATE question
+        <set>
+            <if test="qbId != null">qb_id = #{qbId},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="answer != null">answer = #{answer},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="difficulty != null">difficulty = #{difficulty},</if>
+        </set>
+        WHERE question_id = #{questionId}
+    </update>
+
+    <!-- 根据ID查询题目 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        WHERE question_id = #{questionId}
+    </select>
+
+    <!-- 查询所有题目 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 根据题库ID查询题目列表 -->
+    <select id="selectByBankId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question 
+        WHERE qb_id = #{qbId}
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 根据题目类型查询 -->
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question 
+        WHERE type = #{type}
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 根据难度范围查询 -->
+    <select id="selectByDifficultyRange" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question 
+        WHERE difficulty BETWEEN #{minDifficulty} AND #{maxDifficulty}
+        ORDER BY difficulty DESC, question_id DESC
+    </select>
+
+    <!-- 根据题目内容模糊查询 -->
+    <select id="selectByContent" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question 
+        WHERE content LIKE CONCAT('%', #{content}, '%')
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 批量查询题目 -->
+    <select id="selectByIds" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM question 
+        WHERE question_id IN
+        <foreach collection="questionIds" item="questionId" open="(" separator="," close=")">
+            #{questionId}
+        </foreach>
+        ORDER BY question_id DESC
+    </select>
+
+    <!-- 查询题目的所有选项 -->
+    <select id="selectOptions" resultType="com.exam.entity.QuestionOption">
+        SELECT option_id, question_id, content, is_correct
+        FROM question_option 
+        WHERE question_id = #{questionId}
+        ORDER BY option_id
+    </select>
+
+    <!-- 添加题目选项 -->
+    <insert id="insertOption" useGeneratedKeys="true" keyProperty="option.optionId">
+        INSERT INTO question_option (
+            question_id, content, is_correct
+        ) VALUES (
+            #{questionId}, #{option.content}, #{option.isCorrect}
+        )
+    </insert>
+
+    <!-- 批量添加题目选项 -->
+    <insert id="batchInsertOptions" useGeneratedKeys="true" keyProperty="options.optionId">
+        INSERT INTO question_option (
+            question_id, content, is_correct
+        ) VALUES 
+        <foreach collection="options" item="option" separator=",">
+            (#{questionId}, #{option.content}, #{option.isCorrect})
+        </foreach>
+    </insert>
+
+    <!-- 更新题目选项 -->
+    <update id="updateOption">
+        UPDATE question_option 
+        <set>
+            <if test="option.content != null">content = #{option.content},</if>
+            <if test="option.isCorrect != null">is_correct = #{option.isCorrect},</if>
+        </set>
+        WHERE option_id = #{optionId}
+    </update>
+
+    <!-- 删除题目选项 -->
+    <delete id="deleteOption">
+        DELETE FROM question_option WHERE option_id = #{optionId}
+    </delete>
+
+    <!-- 查询试卷中的题目 -->
+    <select id="selectByPaperId" resultMap="BaseResultMap">
+        SELECT q.* 
+        FROM question q
+        INNER JOIN exam_paper_question epq ON q.question_id = epq.question_id
+        WHERE epq.paper_id = #{paperId}
+        ORDER BY epq.question_order
+    </select>
+
+    <!-- 批量添加题目到试卷 -->
+    <insert id="batchAddToPaper">
+        INSERT INTO exam_paper_question (
+            paper_id, question_id, question_score, question_order
+        ) VALUES 
+        <foreach collection="questionIds" item="questionId" index="index" separator=",">
+            (#{paperId}, #{questionId}, #{scores[${index}]}, #{index} + 1)
+        </foreach>
+    </insert>
+
+    <!-- 从试卷中移除题目 -->
+    <delete id="removeFromPaper">
+        DELETE FROM exam_paper_question 
+        WHERE paper_id = #{paperId} AND question_id = #{questionId}
+    </delete>
+
+    <!-- 统计题目使用次数 -->
+    <select id="countUsage" resultType="Long">
+        SELECT COUNT(DISTINCT paper_id) 
+        FROM exam_paper_question
+        WHERE question_id = #{questionId}
+    </select>
+
+    <!-- 统计题目正确率 -->
+    <select id="calculateCorrectRate" resultType="java.math.BigDecimal">
+        SELECT 
+            CAST(SUM(CASE WHEN sqs.score = epq.question_score THEN 1 ELSE 0 END) AS DECIMAL(5,2)) * 100 
+            / NULLIF(COUNT(*), 0) as correct_rate
+        FROM student_question_score sqs
+        INNER JOIN exam e ON sqs.exam_id = e.exam_id
+        INNER JOIN exam_paper_question epq 
+            ON sqs.question_id = epq.question_id
+            AND e.paper_id = epq.paper_id
+        WHERE sqs.question_id = #{questionId}
+    </select>
+
+    <!-- 统计各类型题目数量 -->
+    <select id="countByType" resultType="java.util.Map">
+        SELECT 
+            type,
+            COUNT(1) as count,
+            CAST(COUNT(1) * 100.0 / SUM(COUNT(1)) OVER() AS DECIMAL(5,2)) as percentage
+        FROM question
+        GROUP BY type
+        ORDER BY type
+    </select>
+
+    <!-- 统计各难度等级题目数量 -->
+    <select id="countByDifficulty" resultType="java.util.Map">
+        SELECT 
+            CASE 
+                WHEN difficulty >= 0.9 THEN '很难'
+                WHEN difficulty >= 0.7 THEN '较难'
+                WHEN difficulty >= 0.5 THEN '中等'
+                WHEN difficulty >= 0.3 THEN '较易'
+                ELSE '简单'
+            END as difficulty_level,
+            COUNT(1) as count,
+            CAST(COUNT(1) * 100.0 / SUM(COUNT(1)) OVER() AS DECIMAL(5,2)) as percentage,
+            MIN(difficulty) as min_difficulty,
+            MAX(difficulty) as max_difficulty,
+            CAST(AVG(difficulty) AS DECIMAL(5,2)) as avg_difficulty
+        FROM question
+        GROUP BY 
+            CASE 
+                WHEN difficulty >= 0.9 THEN '很难'
+                WHEN difficulty >= 0.7 THEN '较难'
+                WHEN difficulty >= 0.5 THEN '中等'
+                WHEN difficulty >= 0.3 THEN '较易'
+                ELSE '简单'
+            END
+        ORDER BY min_difficulty
+    </select>
+
+    <!-- 查询最常错的题目 -->
+    <select id="selectMostMistakes" resultMap="BaseResultMap">
+        SELECT 
+            q.*,
+            COUNT(DISTINCT sqs.student_id) as mistake_count,
+            CAST(AVG(sqs.score / epq.question_score) AS DECIMAL(5,2)) as avg_score_rate,
+            MIN(sqs.score / epq.question_score) as min_score_rate,
+            MAX(sqs.score / epq.question_score) as max_score_rate
+        FROM question q
+        INNER JOIN student_question_score sqs ON q.question_id = sqs.question_id
+        INNER JOIN exam e ON sqs.exam_id = e.exam_id
+        INNER JOIN exam_paper_question epq 
+            ON q.question_id = epq.question_id
+            AND e.paper_id = epq.paper_id
+        GROUP BY 
+            q.question_id, q.qb_id, q.content, q.answer, q.type, q.difficulty
+        HAVING avg_score_rate &lt; 0.6
+        ORDER BY mistake_count DESC, avg_score_rate ASC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 更新题目难度 -->
+    <update id="updateDifficulty">
+        UPDATE question 
+        SET difficulty = #{difficulty}
+        WHERE question_id = #{questionId}
+    </update>
+
+    <!-- 批量更新题目难度 -->
+    <update id="batchUpdateDifficulty">
+        <foreach collection="questionIds" item="questionId" index="index" separator=";">
+            UPDATE question 
+            SET difficulty = #{difficulties[${index}]}
+            WHERE question_id = #{questionId}
+        </foreach>
+    </update>
+
+    <!-- 根据题库ID删除题目 -->
+    <delete id="deleteByBankId">
+        DELETE FROM question
+        WHERE qb_id = #{qbId}
+    </delete>
+
+    <!-- 根据题型和科目查询题目 -->
+    <select id="selectByTypeAndSubject" parameterType="java.util.Map" resultMap="BaseResultMap">
+        SELECT q.*
+        FROM question q
+        INNER JOIN question_bank qb ON q.qb_id = qb.qb_id
+        WHERE qb.subject_id = #{subjectId}
+        AND q.type = #{type}
+        <if test="minDifficulty != null">
+            AND q.difficulty >= #{minDifficulty}
+        </if>
+        <if test="maxDifficulty != null">
+            AND q.difficulty &lt;= #{maxDifficulty}
+        </if>
+        ORDER BY RAND()
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 根据科目ID查询题库列表 -->
+    <select id="selectQuestionBanksBySubject" resultType="java.util.Map">
+        SELECT qb.qb_id, qb.qb_name, qb.subject_id,
+               COUNT(q.question_id) as question_count
+        FROM question_bank qb
+        LEFT JOIN question q ON qb.qb_id = q.qb_id
+        WHERE qb.subject_id = #{subjectId}
+        GROUP BY qb.qb_id, qb.qb_name, qb.subject_id
+    </select>
+</mapper>
