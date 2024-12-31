@@ -5,12 +5,47 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * 考试管理Mapper接口
  */
 @Mapper
-public interface ExamMapper extends BaseMapper<Exam> {
+public interface ExamMapper {
+    
+    /**
+     * 插入考试记录
+     * @param exam 考试实体
+     * @return 影响行数
+     */
+    int insert(Exam exam);
+
+    /**
+     * 根据ID删除考试记录
+     * @param examId 考试ID
+     * @return 影响行数
+     */
+    int deleteById(@Param("examId") Integer examId);
+
+    /**
+     * 更新考试记录
+     * @param exam 考试实体
+     * @return 影响行数
+     */
+    int update(Exam exam);
+
+    /**
+     * 根据ID查询考试
+     * @param examId 考试ID
+     * @return 考试实体
+     */
+    Exam selectById(@Param("examId") Integer examId);
+
+    /**
+     * 查询所有考试
+     * @return 考试列表
+     */
+    List<Exam> selectAll();
     
     /**
      * 根据学科ID查询考试列表
@@ -123,7 +158,8 @@ public interface ExamMapper extends BaseMapper<Exam> {
      * @return 插入结果
      */
     int batchInsertExamClass(@Param("examId") Integer examId, @Param("classIds") List<Integer> classIds);
-    
+
+
     /**
      * 删除考试班级关联
      * @param examId 考试ID
@@ -131,4 +167,48 @@ public interface ExamMapper extends BaseMapper<Exam> {
      * @return 删除结果
      */
     int deleteExamClass(@Param("examId") Integer examId, @Param("classId") Integer classId);
+
+
+    /**
+     * 查询教师权限
+     * @param teacherId 教师ID
+     * @return 教师权限 0-超级管理员
+     */
+    Integer selectTeacherPermission(@Param("teacherId") Integer teacherId);
+
+    /**
+     * 查询教师信息（权限和所属学院）
+     * @param teacherId 教师ID
+     * @return 教师信息
+     */
+    Map<String, Object> selectTeacherInfo(@Param("teacherId") Integer teacherId);
+
+    /**
+     * 查询科目所属学院ID
+     * @param subjectId 科目ID
+     * @return 学院ID
+     */
+    Integer selectSubjectCollegeId(@Param("subjectId") Integer subjectId);
+
+    /**
+     * 插入考试-班级关联记录
+     * @param params 包含examId和classId的Map
+     * @return 影响的行数
+     */
+    int insertExamClass(Map<String, Object> params);
+
+    /**
+     * 获取考试剩余时间信息
+     */
+    Map<String, Object> getRemainingTime(Integer examId);
+
+    /**
+     * 获取刚刚结束的考试
+     */
+    List<Exam> selectRecentlyEndedExams(Map<String, Object> params);
+
+    /**
+     * 获取最近开始的考试
+     */
+    List<Exam> selectRecentlyStartedExams(Map<String, Object> params);
 }

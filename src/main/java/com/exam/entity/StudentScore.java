@@ -26,4 +26,5 @@ public class StudentScore {
     private transient String studentName;           // 学生姓名
     private transient BigDecimal scoreRate;         // 得分率
     private transient Integer rank;                 // 排名
+    private transient String teacherComment;        // 教师评语
 } 

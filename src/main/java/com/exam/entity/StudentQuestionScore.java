@@ -2,6 +2,7 @@ package com.exam.entity;
 
 import lombok.Data;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 学生题目成绩实体类
@@ -24,4 +25,6 @@ public class StudentQuestionScore {
     private transient String questionType;    // 题目类型
     private transient String correctAnswer;   // 正确答案
     private transient String statusName;      // 状态名称
+    private transient BigDecimal fullScore;   // 满分
+    private transient Question question;       // 题目
 } 

@@ -9,7 +9,69 @@ import java.math.BigDecimal;
 /**
  * 题库服务接口
  */
-public interface QuestionBankService extends BaseService<QuestionBank> {
+public interface QuestionBankService {
+    
+    /**
+     * 插入题库记录
+     */
+    int insert(QuestionBank questionBank);
+
+    /**
+     * 根据ID删除题库
+     */
+    int deleteById(Integer qbId);
+
+    /**
+     * 更新题库信息
+     */
+    int update(QuestionBank questionBank);
+
+    /**
+     * 根据ID查询题库
+     */
+    QuestionBank getById(Integer qbId);
+
+    /**
+     * 查询所有题库
+     */
+    List<QuestionBank> getAll();
+    
+    /**
+     * 分页查询题库
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 题库列表
+     */
+    List<QuestionBank> getPage(Integer pageNum, Integer pageSize);
+    
+    /**
+     * 条件查询题库
+     * @param condition 查询条件
+     * @return 题库列表
+     */
+    List<QuestionBank> getByCondition(Map<String, Object> condition);
+    
+    /**
+     * 条件分页查询题库
+     * @param condition 查询条件
+     * @param pageNum 页码
+     * @param pageSize 每页大小
+     * @return 题库列表
+     */
+    List<QuestionBank> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
+    
+    /**
+     * 查询题库总数
+     * @return 总记录数
+     */
+    Long getCount();
+    
+    /**
+     * 条件查询题库总数
+     * @param condition 查询条件
+     * @return 记录数
+     */
+    Long getCountByCondition(Map<String, Object> condition);
     
     /**
      * 根据学科ID查询题库列表
@@ -96,19 +158,4 @@ public interface QuestionBankService extends BaseService<QuestionBank> {
      * 查询热门题库
      */
     List<QuestionBank> getHotBanks(Integer limit);
-    
-    /**
-     * 导入题库
-     * @param bank 题库信息
-     * @param questions 题目列表
-     * @return 导入结果
-     */
-    int importBank(QuestionBank bank, List<Question> questions);
-    
-    /**
-     * 导出题库
-     * @param qbId 题库ID
-     * @return 导出数据
-     */
-    Map<String, Object> exportBank(Integer qbId);
 } 

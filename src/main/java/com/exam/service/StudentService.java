@@ -10,7 +10,57 @@ import java.util.Map;
 /**
  * 学生服务接口
  */
-public interface StudentService extends BaseService<Student> {
+public interface StudentService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Student record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Student record);
+
+    /**
+     * 根据ID查询
+     */
+    Student getById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Student> getAll();
+
+    /**
+     * 分页查询
+     */
+    List<Student> getPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long getCount();
+
+    /**
+     * 条件查询
+     */
+    List<Student> getByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long getCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Student> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据用户ID查询学生信息

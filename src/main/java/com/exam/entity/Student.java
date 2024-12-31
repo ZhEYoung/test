@@ -17,4 +17,5 @@ public class Student {
     // 关联信息
     private User user;          // 用户信息
     private College college;    // 学院信息
+
 } 

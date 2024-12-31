@@ -11,64 +11,217 @@
         <result column="other" property="other"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        student_id, user_id, name, grade, college_id, other
+    </sql>
+
+    <!-- 插入学生记录 -->
+    <insert id="insert" parameterType="com.exam.entity.Student" useGeneratedKeys="true" keyProperty="studentId">
+        INSERT INTO student (user_id, name, grade, college_id, other)
+        VALUES (#{userId}, #{name}, #{grade}, #{collegeId}, #{other})
+    </insert>
+
+    <!-- 批量插入学生记录 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO student (user_id, name, grade, college_id, other)
+        VALUES 
+        <foreach collection="students" item="student" separator=",">
+            (#{student.userId}, #{student.name}, #{student.grade}, #{student.collegeId}, #{student.other})
+        </foreach>
+    </insert>
+
+    <!-- 根据ID删除学生 -->
+    <delete id="deleteById">
+        DELETE FROM student WHERE student_id = #{studentId}
+    </delete>
+
+    <!-- 批量删除学生 -->
+    <delete id="batchDelete">
+        DELETE FROM student 
+        WHERE student_id IN
+        <foreach collection="studentIds" item="studentId" open="(" separator="," close=")">
+            #{studentId}
+        </foreach>
+    </delete>
+
+    <!-- 更新学生信息 -->
+    <update id="updateById" parameterType="com.exam.entity.Student">
+        UPDATE student
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="grade != null">grade = #{grade},</if>
+            <if test="collegeId != null">college_id = #{collegeId},</if>
+            <if test="other != null">other = #{other},</if>
+        </set>
+        WHERE student_id = #{studentId}
+    </update>
+
+    <!-- 批量更新学生信息 -->
+    <update id="batchUpdate" parameterType="java.util.List">
+        <foreach collection="students" item="student" separator=";">
+            UPDATE student
+            <set>
+                <if test="student.userId != null">user_id = #{student.userId},</if>
+                <if test="student.name != null">name = #{student.name},</if>
+                <if test="student.grade != null">grade = #{student.grade},</if>
+                <if test="student.collegeId != null">college_id = #{student.collegeId},</if>
+                <if test="student.other != null">other = #{student.other},</if>
+            </set>
+            WHERE student_id = #{student.studentId}
+        </foreach>
+    </update>
+
+    <!-- 根据ID查询学生 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student
+        WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 查询所有学生 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student
+        ORDER BY student_id DESC
+    </select>
+
+    <!-- 分页查询学生列表 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student
+        ORDER BY student_id DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 统计学生总数 -->
+    <select id="selectCount" resultType="Long">
+        SELECT COUNT(1) FROM student
+    </select>
+
+    <!-- 根据条件查询学生数量 -->
+    <select id="selectCountByCondition" parameterType="java.util.Map" resultType="Long">
+        SELECT COUNT(1)
+        FROM student
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="name != null">AND name LIKE CONCAT('%', #{name}, '%')</if>
+            <if test="grade != null">AND grade = #{grade}</if>
+            <if test="collegeId != null">AND college_id = #{collegeId}</if>
+        </where>
+    </select>
+
+    <!-- 根据条件分页查询学生 -->
+    <select id="selectPageByCondition" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student
+        <where>
+            <if test="condition.userId != null">AND user_id = #{condition.userId}</if>
+            <if test="condition.name != null">AND name LIKE CONCAT('%', #{condition.name}, '%')</if>
+            <if test="condition.grade != null">AND grade = #{condition.grade}</if>
+            <if test="condition.collegeId != null">AND college_id = #{condition.collegeId}</if>
+        </where>
+        ORDER BY student_id DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 根据条件查询学生 -->
+    <select id="selectByCondition" parameterType="com.exam.entity.Student" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student
+        <where>
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="name != null">AND name LIKE CONCAT('%', #{name}, '%')</if>
+            <if test="grade != null">AND grade = #{grade}</if>
+            <if test="collegeId != null">AND college_id = #{collegeId}</if>
+        </where>
+        ORDER BY student_id DESC
+    </select>
+
     <!-- 根据用户ID查询学生信息 -->
     <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT * FROM student WHERE user_id = #{userId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM student 
+        WHERE user_id = #{userId}
+        LIMIT 1
     </select>
 
     <!-- 根据学院ID查询学生列表 -->
     <select id="selectByCollegeId" resultMap="BaseResultMap">
-        SELECT * FROM student WHERE college_id = #{collegeId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM student 
+        WHERE college_id = #{collegeId}
+        ORDER BY grade DESC, student_id DESC
     </select>
 
     <!-- 根据年级查询学生列表 -->
     <select id="selectByGrade" resultMap="BaseResultMap">
-        SELECT * FROM student WHERE grade = #{grade}
+        SELECT <include refid="Base_Column_List"/>
+        FROM student 
+        WHERE grade = #{grade}
+        ORDER BY student_id DESC
     </select>
 
     <!-- 根据学生姓名查询 -->
     <select id="selectByName" resultMap="BaseResultMap">
-        SELECT * FROM student WHERE name = #{name}
+        SELECT <include refid="Base_Column_List"/>
+        FROM student 
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        ORDER BY student_id DESC
     </select>
 
     <!-- 更新学生备注信息 -->
     <update id="updateOther">
-        UPDATE student SET other = #{other} WHERE student_id = #{studentId}
+        UPDATE student 
+        SET other = #{other} 
+        WHERE student_id = #{studentId}
     </update>
 
     <!-- 查询学生所在的班级列表 -->
     <select id="selectStudentClasses" resultType="com.exam.entity.StudentClass">
-        SELECT sc.* FROM student_class sc
+        SELECT sc.* 
+        FROM student_class sc
         WHERE sc.student_id = #{studentId}
-        AND sc.status = 1
+        ORDER BY sc.join_time DESC
     </select>
 
     <!-- 加入班级 -->
     <insert id="joinClass">
         INSERT INTO student_class (student_id, class_id, status, join_time)
         VALUES (#{studentId}, #{classId}, 1, CURRENT_TIMESTAMP)
+        ON DUPLICATE KEY UPDATE 
+            status = 1,
+            join_time = CURRENT_TIMESTAMP,
+            left_time = NULL
     </insert>
 
     <!-- 退出班级 -->
     <update id="leaveClass">
         UPDATE student_class 
-        SET status = 0, left_time = #{leftTime}
+        SET status = 0,
+            left_time = #{leftTime}
         WHERE student_id = #{studentId} 
         AND class_id = #{classId}
+        AND status = 1
     </update>
 
     <!-- 查询学生在某个考试中的成绩 -->
     <select id="selectScore" resultType="com.exam.entity.StudentScore">
-        SELECT * FROM student_score
-        WHERE student_id = #{studentId}
-        AND exam_id = #{examId}
+        SELECT ss.*, e.exam_name, e.exam_type
+        FROM student_score ss
+        INNER JOIN exam e ON ss.exam_id = e.exam_id
+        WHERE ss.student_id = #{studentId}
+        AND ss.exam_id = #{examId}
     </select>
 
     <!-- 查询学生的所有成绩 -->
     <select id="selectAllScores" resultType="com.exam.entity.StudentScore">
-        SELECT * FROM student_score
-        WHERE student_id = #{studentId}
-        ORDER BY upload_time DESC
+        SELECT ss.*, e.exam_name, e.exam_type
+        FROM student_score ss
+        INNER JOIN exam e ON ss.exam_id = e.exam_id
+        WHERE ss.student_id = #{studentId}
+        ORDER BY ss.upload_time DESC
     </select>
 
     <!-- 插入学生成绩 -->
@@ -80,26 +233,61 @@
     <!-- 更新学生成绩 -->
     <update id="updateScore">
         UPDATE student_score 
-        SET score = #{score}, upload_time = CURRENT_TIMESTAMP
+        SET score = #{score},
+            upload_time = CURRENT_TIMESTAMP
         WHERE student_id = #{studentId} 
         AND exam_id = #{examId}
     </update>
 
     <!-- 统计学院学生性别分布 -->
     <select id="countByGender" resultType="java.util.Map">
-        SELECT u.sex as gender, COUNT(*) as count
+        SELECT 
+            u.sex as gender,
+            COUNT(1) as count,
+            CAST(COUNT(1) * 100.0 / SUM(COUNT(1)) OVER() AS DECIMAL(5,2)) as percentage
         FROM student s
-        JOIN user u ON s.user_id = u.user_id
+        INNER JOIN user u ON s.user_id = u.user_id
         WHERE s.college_id = #{collegeId}
         GROUP BY u.sex
     </select>
 
     <!-- 统计学院学生年级分布 -->
     <select id="countByGrade" resultType="java.util.Map">
-        SELECT grade, COUNT(*) as count
+        SELECT 
+            grade,
+            COUNT(1) as count,
+            CAST(COUNT(1) * 100.0 / SUM(COUNT(1)) OVER() AS DECIMAL(5,2)) as percentage
         FROM student
         WHERE college_id = #{collegeId}
         GROUP BY grade
         ORDER BY grade
+    </select>
+
+    <!-- 查询学生考试统计信息 -->
+    <select id="selectExamStats" resultType="java.util.Map">
+        SELECT 
+            COUNT(DISTINCT ss.exam_id) as total_exams,
+            CAST(AVG(ss.score) AS DECIMAL(5,2)) as avg_score,
+            MAX(ss.score) as highest_score,
+            MIN(ss.score) as lowest_score,
+            COUNT(CASE WHEN ss.score >= 60 THEN 1 END) as pass_count,
+            CAST(COUNT(CASE WHEN ss.score >= 60 THEN 1 END) * 100.0 / COUNT(1) AS DECIMAL(5,2)) as pass_rate
+        FROM student_score ss
+        WHERE ss.student_id = #{studentId}
+    </select>
+
+    <!-- 查询学生成绩趋势 -->
+    <select id="selectScoreTrend" resultType="java.util.Map">
+        SELECT 
+            DATE(ss.upload_time) as exam_date,
+            e.exam_name,
+            ss.score,
+            e.exam_type,
+            CAST(AVG(ss.score) OVER(ORDER BY ss.upload_time ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS DECIMAL(5,2)) as moving_avg
+        FROM student_score ss
+        INNER JOIN exam e ON ss.exam_id = e.exam_id
+        WHERE ss.student_id = #{studentId}
+        AND ss.upload_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY ss.upload_time
     </select>
 </mapper> 

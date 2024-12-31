@@ -5,12 +5,61 @@ import com.exam.entity.Student;
 import com.exam.entity.Exam;
 import java.util.List;
 import java.util.Map;
-import java.util.Date;
 
 /**
  * 班级服务接口
  */
-public interface ClassService extends BaseService<Class> {
+public interface ClassService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Class record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Class record);
+
+    /**
+     * 根据ID查询
+     */
+    Class getById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Class> getAll();
+
+    /**
+     * 分页查询
+     */
+    List<Class> getPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long getCount();
+
+    /**
+     * 条件查询
+     */
+    List<Class> getByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long getCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Class> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据教师ID查询班级列表
@@ -70,7 +119,7 @@ public interface ClassService extends BaseService<Class> {
     /**
      * 查询班级考试日程
      */
-    List<Exam> getExamSchedule(Integer classId, Date startTime, Date endTime);
+    List<Exam> getExamSchedule(Integer classId);
     
     /**
      * 批量添加学生到班级
