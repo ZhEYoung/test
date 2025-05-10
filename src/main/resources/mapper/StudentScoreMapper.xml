@@ -10,6 +10,79 @@
         <result column="upload_time" property="uploadTime"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        score_id, student_id, exam_id, score, upload_time
+    </sql>
+
+    <!-- 插入成绩记录 -->
+    <insert id="insert" parameterType="com.exam.entity.StudentScore">
+        INSERT INTO student_score (
+            student_id, exam_id, score, upload_time
+        ) VALUES (
+            #{studentId}, #{examId}, #{score}, CURRENT_TIMESTAMP
+        )
+    </insert>
+
+    <!-- 根据主键删除成绩记录 -->
+    <delete id="deleteById">
+        DELETE FROM student_score 
+        WHERE score_id = #{scoreId}
+    </delete>
+
+    <!-- 更新成绩记录 -->
+    <update id="updateById" parameterType="com.exam.entity.StudentScore">
+        UPDATE student_score
+        SET student_id = #{studentId},
+            exam_id = #{examId},
+            score = #{score},
+            upload_time = CURRENT_TIMESTAMP
+        WHERE score_id = #{scoreId}
+    </update>
+
+    <!-- 根据主键查询成绩记录 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student_score
+        WHERE score_id = #{scoreId}
+    </select>
+
+    <!-- 查询所有成绩记录 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM student_score
+        ORDER BY upload_time DESC
+    </select>
+
+    <!-- 根据条件查询成绩记录 -->
+    <select id="selectByCondition" resultType="com.exam.entity.StudentScore">
+        SELECT ss.*, s.student_name, e.exam_name
+        FROM student_score ss
+        LEFT JOIN student s ON ss.student_id = s.student_id
+        LEFT JOIN exam e ON ss.exam_id = e.exam_id
+        <where>
+            <if test="condition.studentId != null">
+                AND ss.student_id = #{condition.studentId}
+            </if>
+            <if test="condition.examId != null">
+                AND ss.exam_id = #{condition.examId}
+            </if>
+            <if test="condition.minScore != null">
+                AND ss.score >= #{condition.minScore}
+            </if>
+            <if test="condition.maxScore != null">
+                AND ss.score &lt;= #{condition.maxScore}
+            </if>
+            <if test="condition.startTime != null">
+                AND ss.upload_time >= #{condition.startTime}
+            </if>
+            <if test="condition.endTime != null">
+                AND ss.upload_time &lt;= #{condition.endTime}
+            </if>
+        </where>
+        ORDER BY ss.score_id DESC
+    </select>
+
     <!-- 根据学生ID查询成绩列表 -->
     <select id="selectByStudentId" resultMap="BaseResultMap">
         SELECT * FROM student_score WHERE student_id = #{studentId}
@@ -43,7 +116,7 @@
             exam_id,
             score,
             upload_time,
-            RANK() OVER (ORDER BY score DESC) as rank
+            RANK() OVER (ORDER BY score DESC) as `rank`
         FROM student_score
         WHERE exam_id = #{examId}
     </select>
@@ -71,11 +144,11 @@
 
     <!-- 查询学生成绩排名 -->
     <select id="selectStudentRank" resultType="Integer">
-        SELECT rank 
+        SELECT `rank`
         FROM (
-            SELECT 
+            SELECT
                 student_id,
-                RANK() OVER (ORDER BY score DESC) as rank
+                RANK() OVER (ORDER BY score DESC) as `rank`
             FROM student_score
             WHERE exam_id = #{examId}
         ) ranked
@@ -88,7 +161,7 @@
             s.student_id,
             s.name as student_name,
             ss.score,
-            RANK() OVER (ORDER BY ss.score DESC) as rank
+            RANK() OVER (ORDER BY ss.score DESC) as `rank`
         FROM student_score ss
         INNER JOIN student s ON ss.student_id = s.student_id
         INNER JOIN student_class sc ON s.student_id = sc.student_id
@@ -103,7 +176,7 @@
             s.student_id,
             s.name as student_name,
             ss.score,
-            RANK() OVER (ORDER BY ss.score DESC) as rank
+            RANK() OVER (ORDER BY ss.score DESC) as `rank`
         FROM student_score ss
         INNER JOIN student s ON ss.student_id = s.student_id
         WHERE ss.exam_id = #{examId}
@@ -185,7 +258,7 @@
         INNER JOIN student_class sc ON s.student_id = sc.student_id
         INNER JOIN class c ON sc.class_id = c.class_id
         WHERE ss.exam_id = #{examId}
-        AND ss.score < #{passScore}
+        AND CAST(ss.score AS DECIMAL(10,2)) &lt; #{passScore}
     </select>
 
     <!-- 统计学生成绩进步情况 -->
@@ -207,6 +280,75 @@
         FROM exam_scores curr
         LEFT JOIN exam_scores prev ON curr.exam_order = prev.exam_order + 1
         WHERE prev.score IS NOT NULL
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="selectPage" resultType="com.exam.entity.StudentScore">
+        SELECT * FROM student_score
+        ORDER BY score_id DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 查询总记录数 -->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM student_score
+    </select>
+
+    <!-- 条件查询记录数 -->
+    <select id="selectCountByCondition" resultType="java.lang.Long" parameterType="java.util.Map">
+        SELECT COUNT(*) FROM student_score ss
+        LEFT JOIN student s ON ss.student_id = s.student_id
+        LEFT JOIN exam e ON ss.exam_id = e.exam_id
+        <where>
+            <if test="condition.studentId != null">
+                AND ss.student_id = #{condition.studentId}
+            </if>
+            <if test="condition.examId != null">
+                AND ss.exam_id = #{condition.examId}
+            </if>
+            <if test="condition.minScore != null">
+                AND ss.score >= #{condition.minScore}
+            </if>
+            <if test="condition.maxScore != null">
+                AND ss.score &lt;= #{condition.maxScore}
+            </if>
+            <if test="condition.startTime != null">
+                AND ss.upload_time >= #{condition.startTime}
+            </if>
+            <if test="condition.endTime != null">
+                AND ss.upload_time &lt;= #{condition.endTime}
+            </if>
+        </where>
+    </select>
+
+    <!-- 条件分页查询 -->
+    <select id="selectPageByCondition" resultType="com.exam.entity.StudentScore">
+        SELECT ss.*, s.student_name, e.exam_name
+        FROM student_score ss
+        LEFT JOIN student s ON ss.student_id = s.student_id
+        LEFT JOIN exam e ON ss.exam_id = e.exam_id
+        <where>
+            <if test="condition.studentId != null">
+                AND ss.student_id = #{condition.studentId}
+            </if>
+            <if test="condition.examId != null">
+                AND ss.exam_id = #{condition.examId}
+            </if>
+            <if test="condition.minScore != null">
+                AND ss.score >= #{condition.minScore}
+            </if>
+            <if test="condition.maxScore != null">
+                AND ss.score &lt;= #{condition.maxScore}
+            </if>
+            <if test="condition.startTime != null">
+                AND ss.upload_time >= #{condition.startTime}
+            </if>
+            <if test="condition.endTime != null">
+                AND ss.upload_time &lt;= #{condition.endTime}
+            </if>
+        </where>
+        ORDER BY ss.score_id DESC
+        LIMIT #{offset}, #{pageSize}
     </select>
 
 </mapper>
