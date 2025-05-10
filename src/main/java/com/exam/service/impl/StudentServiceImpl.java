@@ -5,6 +5,7 @@ import com.exam.entity.StudentClass;
 import com.exam.entity.StudentScore;
 import com.exam.mapper.StudentMapper;
 import com.exam.service.StudentService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
@@ -14,66 +15,121 @@ import java.util.*;
  */
 @Service
 @Transactional
-public class StudentServiceImpl extends BaseServiceImpl<Student, StudentMapper> implements StudentService {
+public class StudentServiceImpl implements StudentService {
+
+    @Autowired
+    private StudentMapper studentMapper;
+
+    @Override
+    public int insert(Student record) {
+        return studentMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return studentMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(Student record) {
+        return studentMapper.updateById(record);
+    }
+
+    @Override
+    public Student selectById(Integer id) {
+        return studentMapper.selectById(id);
+    }
+
+    @Override
+    public List<Student> selectAll() {
+        return studentMapper.selectAll();
+    }
+
+    @Override
+    public List<Student> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return studentMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long selectCount() {
+        return studentMapper.selectCount();
+    }
+
+    @Override
+    public List<Student> selectByCondition(Map<String, Object> condition) {
+        return studentMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return studentMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<Student> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return studentMapper.selectPageByCondition(condition, offset, pageSize);
+    }
 
     @Override
     public Student getByUserId(Integer userId) {
-        return baseMapper.selectByUserId(userId);
+        return studentMapper.selectByUserId(userId);
     }
 
     @Override
     public List<Student> getByCollegeId(Integer collegeId) {
-        return baseMapper.selectByCollegeId(collegeId);
+        return studentMapper.selectByCollegeId(collegeId);
     }
 
     @Override
     public List<Student> getByGrade(String grade) {
-        return baseMapper.selectByGrade(grade);
+        return studentMapper.selectByGrade(grade);
     }
 
     @Override
     public List<Student> getByName(String name) {
-        return baseMapper.selectByName(name);
+        return studentMapper.selectByName(name);
     }
 
     @Override
     public int updateOther(Integer studentId, String other) {
-        return baseMapper.updateOther(studentId, other);
+        return studentMapper.updateOther(studentId, other);
     }
 
     @Override
     public List<StudentClass> getStudentClasses(Integer studentId) {
-        return baseMapper.selectStudentClasses(studentId);
+        return studentMapper.selectStudentClasses(studentId);
     }
 
     @Override
     public int joinClass(Integer studentId, Integer classId) {
-        return baseMapper.joinClass(studentId, classId);
+        return studentMapper.joinClass(studentId, classId);
     }
 
     @Override
     public int leaveClass(Integer studentId, Integer classId, Date leftTime) {
-        return baseMapper.leaveClass(studentId, classId, leftTime);
+        return studentMapper.leaveClass(studentId, classId, leftTime);
     }
 
     @Override
     public StudentScore getScore(Integer studentId, Integer examId) {
-        return baseMapper.selectScore(studentId, examId);
+        return studentMapper.selectScore(studentId, examId);
     }
 
     @Override
     public List<StudentScore> getAllScores(Integer studentId) {
-        return baseMapper.selectAllScores(studentId);
+        return studentMapper.selectAllScores(studentId);
     }
 
     @Override
     public int insertScore(Integer studentId, Integer examId, Double score) {
-        return baseMapper.insertScore(studentId, examId, score);
+        return studentMapper.insertScore(studentId, examId, score);
     }
 
     @Override
     public int updateScore(Integer studentId, Integer examId, Double score) {
-        return baseMapper.updateScore(studentId, examId, score);
+        return studentMapper.updateScore(studentId, examId, score);
     }
 
     @Override
@@ -84,14 +140,14 @@ public class StudentServiceImpl extends BaseServiceImpl<Student, StudentMapper> 
                 return 0;
             }
         }
-        return baseMapper.batchInsert(students);
+        return studentMapper.batchInsert(students);
     }
 
     @Override
     public Long countStudentsByClass(Integer classId) {
         Map<String, Object> condition = new HashMap<>();
         condition.put("classId", classId);
-        return baseMapper.selectCountByCondition(condition);
+        return studentMapper.selectCountByCondition(condition);
     }
 
     @Override

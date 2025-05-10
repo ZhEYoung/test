@@ -9,7 +9,57 @@ import java.math.BigDecimal;
 /**
  * 题目服务接口
  */
-public interface QuestionService extends BaseService<Question> {
+public interface QuestionService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Question record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Question record);
+
+    /**
+     * 根据ID查询
+     */
+    Question selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Question> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<Question> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<Question> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据题库ID查询题目列表
@@ -117,6 +167,4 @@ public interface QuestionService extends BaseService<Question> {
      * @return 导入结果
      */
     int batchImport(List<Question> questions);
-    
-
 } 

@@ -1,32 +1,153 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.exam.mapper.UserMapper">
-    <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.exam.entity.User">
-        <id column="user_id" property="userId"/>
-        <result column="username" property="username"/>
-        <result column="password" property="password"/>
-        <result column="role" property="role"/>
-        <result column="status" property="status"/>
-        <result column="sex" property="sex"/>
-        <result column="phone" property="phone"/>
-        <result column="email" property="email"/>
-        <result column="created_time" property="createdTime"/>
-    </resultMap>
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        user_id, username, password, role, status, sex, phone, email, created_time
+    </sql>
+
+    <!-- 插入用户记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO user (username, password, role, status, sex, phone, email, created_time)
+        VALUES (#{username}, #{password}, #{role}, #{status}, #{sex}, #{phone}, #{email}, #{createdTime})
+    </insert>
+
+    <!-- 批量插入用户记录 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="userId">
+        INSERT INTO user (username, password, role, status, sex, phone, email, created_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.username}, #{item.password}, #{item.role}, #{item.status}, 
+             #{item.sex}, #{item.phone}, #{item.email}, #{item.createdTime})
+        </foreach>
+    </insert>
+
+    <!-- 根据ID删除用户 -->
+    <delete id="deleteById">
+        DELETE FROM user WHERE user_id = #{userId}
+    </delete>
+
+    <!-- 批量删除用户 -->
+    <delete id="batchDelete">
+        DELETE FROM user WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+    </delete>
+
+    <!-- 更新用户信息 -->
+    <update id="updateById">
+        UPDATE user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="sex != null">sex = #{sex},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="createdTime != null">created_time = #{createdTime}</if>
+        </set>
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 批量更新用户 -->
+    <update id="batchUpdate">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE user
+            <set>
+                <if test="item.username != null">username = #{item.username},</if>
+                <if test="item.password != null">password = #{item.password},</if>
+                <if test="item.role != null">role = #{item.role},</if>
+                <if test="item.status != null">status = #{item.status},</if>
+                <if test="item.sex != null">sex = #{item.sex},</if>
+                <if test="item.phone != null">phone = #{item.phone},</if>
+                <if test="item.email != null">email = #{item.email},</if>
+                <if test="item.createdTime != null">created_time = #{item.createdTime}</if>
+            </set>
+            WHERE user_id = #{item.userId}
+        </foreach>
+    </update>
+
+    <!-- 根据ID查询用户 -->
+    <select id="selectById" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user WHERE user_id = #{userId}
+    </select>
+
+    <!-- 查询所有用户 -->
+    <select id="selectAll" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user
+    </select>
+
+    <!-- 分页查询用户 -->
+    <select id="selectPage" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询用户总数 -->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM user
+    </select>
+
+    <!-- 条件查询用户 -->
+    <select id="selectByCondition" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 条件查询用户数量 -->
+    <select id="selectCountByCondition" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM user
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 条件分页查询用户 -->
+    <select id="selectPageByCondition" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+        LIMIT #{offset}, #{limit}
+    </select>
 
     <!-- 根据用户名查询用户 -->
-    <select id="selectByUsername" resultMap="BaseResultMap">
-        SELECT * FROM user WHERE username = #{username}
+    <select id="selectByUsername" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user WHERE username = #{username}
     </select>
 
     <!-- 根据角色查询用户列表 -->
-    <select id="selectByRole" resultMap="BaseResultMap">
-        SELECT * FROM user WHERE role = #{role}
+    <select id="selectByRole" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user WHERE role = #{role}
     </select>
 
     <!-- 更新用户状态 -->
     <update id="updateStatus">
-        UPDATE user SET status = #{status} WHERE user_id = #{userId}
+        UPDATE user SET status = #{status}
+        WHERE user_id = #{userId}
     </update>
 
     <!-- 批量更新用户状态 -->
@@ -40,33 +161,39 @@
 
     <!-- 修改密码 -->
     <update id="updatePassword">
-        UPDATE user SET password = #{newPassword} WHERE user_id = #{userId}
+        UPDATE user SET password = #{newPassword}
+        WHERE user_id = #{userId}
     </update>
 
     <!-- 更新用户联系方式 -->
     <update id="updateContact">
         UPDATE user 
-        SET phone = #{phone}, email = #{email}
+        SET phone = #{phone}, 
+            email = #{email}
         WHERE user_id = #{userId}
     </update>
 
     <!-- 更新用户性别 -->
     <update id="updateSex">
-        UPDATE user SET sex = #{sex} WHERE user_id = #{userId}
+        UPDATE user SET sex = #{sex}
+        WHERE user_id = #{userId}
     </update>
 
     <!-- 根据邮箱查询用户 -->
-    <select id="selectByEmail" resultMap="BaseResultMap">
-        SELECT * FROM user WHERE email = #{email}
+    <select id="selectByEmail" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user WHERE email = #{email}
     </select>
 
     <!-- 根据手机号查询用户 -->
-    <select id="selectByPhone" resultMap="BaseResultMap">
-        SELECT * FROM user WHERE phone = #{phone}
+    <select id="selectByPhone" resultType="com.exam.entity.User">
+        SELECT <include refid="Base_Column_List" />
+        FROM user WHERE phone = #{phone}
     </select>
 
     <!-- 更新用户注册时间 -->
     <update id="updateCreatedTime">
-        UPDATE user SET created_time = #{createdTime} WHERE user_id = #{userId}
+        UPDATE user SET created_time = #{createdTime}
+        WHERE user_id = #{userId}
     </update>
 </mapper> 

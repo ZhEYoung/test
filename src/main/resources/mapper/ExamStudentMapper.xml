@@ -14,19 +14,78 @@
         <result column="teacher_comment" property="teacherComment"/>
     </resultMap>
 
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        es_id, exam_id, student_id, student_start_time, student_submit_time,
+        absent, retake_needed, disciplinary, teacher_comment
+    </sql>
+
+    <!-- 插入考试学生关联记录 -->
+    <insert id="insert" parameterType="com.exam.entity.ExamStudent" useGeneratedKeys="true" keyProperty="esId">
+        INSERT INTO exam_student (
+            exam_id, student_id, student_start_time, student_submit_time,
+            absent, retake_needed, disciplinary, teacher_comment
+        ) VALUES (
+            #{examId}, #{studentId}, #{studentStartTime}, #{studentSubmitTime},
+            #{absent}, #{retakeNeeded}, #{disciplinary}, #{teacherComment}
+        )
+    </insert>
+
+    <!-- 根据ID删除考试学生关联 -->
+    <delete id="deleteById">
+        DELETE FROM exam_student WHERE es_id = #{esId}
+    </delete>
+
+    <!-- 更新考试学生关联信息 -->
+    <update id="update" parameterType="com.exam.entity.ExamStudent">
+        UPDATE exam_student
+        <set>
+            <if test="examId != null">exam_id = #{examId},</if>
+            <if test="studentId != null">student_id = #{studentId},</if>
+            <if test="studentStartTime != null">student_start_time = #{studentStartTime},</if>
+            <if test="studentSubmitTime != null">student_submit_time = #{studentSubmitTime},</if>
+            <if test="absent != null">absent = #{absent},</if>
+            <if test="retakeNeeded != null">retake_needed = #{retakeNeeded},</if>
+            <if test="disciplinary != null">disciplinary = #{disciplinary},</if>
+            <if test="teacherComment != null">teacher_comment = #{teacherComment}</if>
+        </set>
+        WHERE es_id = #{esId}
+    </update>
+
+    <!-- 根据ID查询考试学生关联 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_student 
+        WHERE es_id = #{esId}
+    </select>
+
+    <!-- 查询所有考试学生关联 -->
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_student
+        ORDER BY exam_id, student_id
+    </select>
+
     <!-- 根据考试ID查询学生关联列表 -->
     <select id="selectByExamId" resultMap="BaseResultMap">
-        SELECT * FROM exam_student WHERE exam_id = #{examId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_student 
+        WHERE exam_id = #{examId}
+        ORDER BY student_id
     </select>
 
     <!-- 根据学生ID查询考试关联列表 -->
     <select id="selectByStudentId" resultMap="BaseResultMap">
-        SELECT * FROM exam_student WHERE student_id = #{studentId}
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_student 
+        WHERE student_id = #{studentId}
+        ORDER BY exam_id DESC
     </select>
 
     <!-- 查询学生在指定考试的关联记录 -->
     <select id="selectByExamAndStudent" resultMap="BaseResultMap">
-        SELECT * FROM exam_student 
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_student 
         WHERE exam_id = #{examId} 
         AND student_id = #{studentId}
     </select>
@@ -66,17 +125,21 @@
 
     <!-- 查询需要重考的学生列表 -->
     <select id="selectNeedRetakeStudents" resultMap="BaseResultMap">
-        SELECT * FROM exam_student 
+        SELECT <include refid="Base_Column_List"/>
+        FROM exam_student 
         WHERE exam_id = #{examId}
         AND retake_needed = 1
+        ORDER BY student_id
     </select>
 
     <!-- 查询学生的重考记录 -->
     <select id="selectStudentRetakeExams" resultMap="BaseResultMap">
-        SELECT es.* FROM exam_student es
+        SELECT es.<include refid="Base_Column_List"/>
+        FROM exam_student es
         INNER JOIN exam e ON es.exam_id = e.exam_id
         WHERE es.student_id = #{studentId}
         AND e.exam_type = 1
+        ORDER BY e.exam_start_time DESC
     </select>
 
     <!-- 按学科查询需要重考的学生列表 -->
@@ -89,17 +152,18 @@
             e.exam_name,
             e.exam_start_time,
             es.student_submit_time,
-            es.teacher_comment
+            es.teacher_comment,
+            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as duration
         FROM exam_student es
         INNER JOIN student s ON es.student_id = s.student_id
         INNER JOIN exam e ON es.exam_id = e.exam_id
         WHERE e.subject_id = #{subjectId}
         AND e.teacher_id = #{teacherId}
         AND es.retake_needed = 1
-        <if test="studentName != null">
+        <if test="studentName != null and studentName != ''">
             AND s.name LIKE CONCAT('%', #{studentName}, '%')
         </if>
-        <if test="studentNo != null">
+        <if test="studentNo != null and studentNo != ''">
             AND s.student_no = #{studentNo}
         </if>
         <if test="examTimeStart != null">
@@ -108,7 +172,7 @@
         <if test="examTimeEnd != null">
             AND e.exam_start_time &lt;= #{examTimeEnd}
         </if>
-        ORDER BY e.exam_start_time DESC
+        ORDER BY e.exam_start_time DESC, s.student_no
     </select>
 
     <!-- 统计某学科的重考情况 -->
@@ -116,7 +180,8 @@
         SELECT 
             COUNT(DISTINCT es.student_id) as retake_student_count,
             COUNT(DISTINCT es.exam_id) as retake_exam_count,
-            AVG(CASE WHEN es.retake_needed = 1 THEN 1 ELSE 0 END) * 100 as retake_rate
+            ROUND(AVG(CASE WHEN es.retake_needed = 1 THEN 1 ELSE 0 END) * 100, 2) as retake_rate,
+            COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_count
         FROM exam_student es
         INNER JOIN exam e ON es.exam_id = e.exam_id
         WHERE e.subject_id = #{subjectId}
@@ -142,7 +207,9 @@
             COUNT(DISTINCT es.student_id) as total_students,
             COUNT(DISTINCT CASE WHEN es.student_start_time IS NOT NULL THEN es.student_id END) as started_students,
             COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as submitted_students,
-            COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students
+            COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students,
+            ROUND(COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) * 100.0 
+                / NULLIF(COUNT(DISTINCT es.student_id), 0), 2) as completion_rate
         FROM exam_student es
         WHERE es.exam_id = #{examId}
     </select>
@@ -152,14 +219,19 @@
         SELECT 
             s.student_id,
             s.name as student_name,
+            s.student_no,
             es.student_start_time,
             es.student_submit_time,
-            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as used_time
+            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as used_time,
+            e.exam_duration as allowed_time,
+            es.teacher_comment
         FROM exam_student es
         INNER JOIN student s ON es.student_id = s.student_id
+        INNER JOIN exam e ON es.exam_id = e.exam_id
         WHERE es.exam_id = #{examId}
         AND es.student_submit_time IS NOT NULL
         AND TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) > #{timeThreshold}
+        ORDER BY used_time DESC
     </select>
 
     <!-- 统计考试参与情况 -->
@@ -168,7 +240,11 @@
             COUNT(DISTINCT es.student_id) as total_students,
             COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as completed_students,
             COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students,
-            COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students
+            COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students,
+            ROUND(COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) * 100.0 
+                / NULLIF(COUNT(DISTINCT es.student_id), 0), 2) as completion_rate,
+            ROUND(COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) * 100.0 
+                / NULLIF(COUNT(DISTINCT es.student_id), 0), 2) as absent_rate
         FROM exam_student es
         WHERE es.exam_id = #{examId}
     </select>
@@ -178,7 +254,8 @@
         SELECT 
             MIN(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)) as min_duration,
             MAX(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)) as max_duration,
-            AVG(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)) as avg_duration
+            ROUND(AVG(TIMESTAMPDIFF(MINUTE, student_start_time, student_submit_time)), 2) as avg_duration,
+            COUNT(CASE WHEN student_submit_time IS NOT NULL THEN 1 END) as submitted_count
         FROM exam_student
         WHERE exam_id = #{examId}
         AND student_submit_time IS NOT NULL
@@ -191,12 +268,17 @@
             e.exam_name,
             COUNT(DISTINCT es.student_id) as total_students,
             COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students,
-            GROUP_CONCAT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.teacher_comment END) as comments
+            ROUND(COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) * 100.0 
+                / NULLIF(COUNT(DISTINCT es.student_id), 0), 2) as disciplinary_rate,
+            GROUP_CONCAT(DISTINCT CASE WHEN es.disciplinary = 1 
+                THEN CONCAT(s.name, ': ', es.teacher_comment) END SEPARATOR '; ') as comments
         FROM exam_student es
         INNER JOIN exam e ON es.exam_id = e.exam_id
+        INNER JOIN student s ON es.student_id = s.student_id
         WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
         AND es.disciplinary = 1
         GROUP BY e.exam_id, e.exam_name
+        ORDER BY e.exam_start_time DESC
     </select>
 
     <!-- 更新考试监考记录 -->
@@ -223,11 +305,121 @@
         SELECT 
             COUNT(DISTINCT sc.student_id) as total_students,
             COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) as completed_students,
-            CAST(COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) AS DECIMAL(5,2)) * 100 
-            / COUNT(DISTINCT sc.student_id) as completion_rate
+            ROUND(COUNT(DISTINCT CASE WHEN es.student_submit_time IS NOT NULL THEN es.student_id END) * 100.0 
+                / NULLIF(COUNT(DISTINCT sc.student_id), 0), 2) as completion_rate,
+            COUNT(DISTINCT CASE WHEN es.absent = 1 THEN es.student_id END) as absent_students,
+            COUNT(DISTINCT CASE WHEN es.disciplinary = 1 THEN es.student_id END) as disciplinary_students,
+            MIN(TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time)) as min_duration,
+            MAX(TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time)) as max_duration,
+            ROUND(AVG(TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time)), 2) as avg_duration
         FROM student_class sc
         LEFT JOIN exam_student es ON sc.student_id = es.student_id
         WHERE sc.class_id = #{classId}
         AND es.exam_id = #{examId}
+    </select>
+
+    <!-- 统计考试总人数 -->
+    <select id="countByExamId" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_student
+        WHERE exam_id = #{examId}
+    </select>
+
+    <!-- 统计已开始考试的学生人数 -->
+    <select id="countStartedStudents" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_student
+        WHERE exam_id = #{examId}
+        AND student_start_time IS NOT NULL
+        AND absent = FALSE
+    </select>
+
+    <!-- 统计已提交考试的学生人数 -->
+    <select id="countSubmittedStudents" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_student
+        WHERE exam_id = #{examId}
+        AND student_submit_time IS NOT NULL
+        AND absent = FALSE
+    </select>
+
+    <!-- 统计缺考学生人数 -->
+    <select id="countAbsentStudents" resultType="int">
+        SELECT COUNT(*)
+        FROM exam_student
+        WHERE exam_id = #{examId}
+        AND absent = TRUE
+    </select>
+
+    <!-- 更新学生开始考试时间 -->
+    <update id="updateStartTime" parameterType="map">
+        UPDATE exam_student 
+        SET student_start_time = #{startTime}
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </update>
+
+    <!-- 更新学生提交考试时间 -->
+    <update id="updateSubmitTime" parameterType="map">
+        UPDATE exam_student 
+        SET student_submit_time = #{submitTime}
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </update>
+
+    <!-- 更新缺考状态 -->
+    <update id="updateAbsentStatus" parameterType="map">
+        UPDATE exam_student 
+        SET absent = #{absent}
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </update>
+
+    <!-- 更新违纪状态 -->
+    <update id="updateDisciplinaryStatus" parameterType="map">
+        UPDATE exam_student 
+        SET disciplinary = #{disciplinary},
+            teacher_comment = #{comment}
+        WHERE exam_id = #{examId} 
+        AND student_id = #{studentId}
+    </update>
+
+    <!-- 查询考试时间异常的学生 -->
+    <select id="selectAbnormalTimeStudents" resultType="map">
+        SELECT 
+            es.exam_id,
+            es.student_id,
+            s.name as student_name,
+            es.student_start_time,
+            es.student_submit_time,
+            TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) as duration,
+            e.exam_duration as expected_duration
+        FROM exam_student es
+        INNER JOIN exam e ON es.exam_id = e.exam_id
+        INNER JOIN student s ON es.student_id = s.student_id
+        WHERE es.exam_id = #{examId}
+        AND es.student_start_time IS NOT NULL
+        AND es.student_submit_time IS NOT NULL
+        AND ABS(TIMESTAMPDIFF(MINUTE, es.student_start_time, es.student_submit_time) - e.exam_duration) > #{timeThreshold}
+        ORDER BY duration DESC
+    </select>
+
+    <!-- 查询违纪记录 -->
+    <select id="selectDisciplinaryRecords" resultType="map">
+        SELECT 
+            e.exam_id,
+            e.exam_name,
+            COUNT(es.student_id) as disciplinary_count,
+            GROUP_CONCAT(
+                CASE WHEN es.disciplinary = 1 
+                THEN CONCAT(s.name, ': ', es.teacher_comment) END SEPARATOR '; '
+            ) as comments
+        FROM exam_student es
+        INNER JOIN exam e ON es.exam_id = e.exam_id
+        INNER JOIN student s ON es.student_id = s.student_id
+        WHERE e.exam_start_time BETWEEN #{startTime} AND #{endTime}
+        AND es.disciplinary = 1
+        GROUP BY e.exam_id, e.exam_name
+        ORDER BY e.exam_start_time DESC
     </select>
 </mapper>

@@ -7,7 +7,57 @@ import java.util.Map;
 /**
  * 学科服务接口
  */
-public interface SubjectService extends BaseService<Subject> {
+public interface SubjectService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(Subject record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(Subject record);
+
+    /**
+     * 根据ID查询
+     */
+    Subject selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<Subject> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<Subject> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<Subject> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<Subject> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学院ID查询学科列表
@@ -85,6 +135,4 @@ public interface SubjectService extends BaseService<Subject> {
      * @return 统计信息
      */
     Map<String, Object> getSubjectStatistics(Integer subjectId);
-    
-
 } 

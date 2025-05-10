@@ -16,109 +16,165 @@ import java.math.BigDecimal;
  */
 @Service
 @Transactional
-public class QuestionServiceImpl extends BaseServiceImpl<Question, QuestionMapper> implements QuestionService {
+public class QuestionServiceImpl implements QuestionService {
 
+    @Autowired
+    private QuestionMapper questionMapper;
+    
     @Autowired
     private QuestionOptionMapper optionMapper;
 
+    // 基础CRUD方法
+    @Override
+    public int insert(Question record) {
+        return questionMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return questionMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(Question record) {
+        return questionMapper.updateById(record);
+    }
+
+    @Override
+    public Question selectById(Integer id) {
+        return questionMapper.selectById(id);
+    }
+
+    @Override
+    public List<Question> selectAll() {
+        return questionMapper.selectAll();
+    }
+
+    @Override
+    public List<Question> selectPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return questionMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long selectCount() {
+        return questionMapper.selectCount();
+    }
+
+    @Override
+    public List<Question> selectByCondition(Map<String, Object> condition) {
+        return questionMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long selectCountByCondition(Map<String, Object> condition) {
+        return questionMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<Question> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return questionMapper.selectPageByCondition(condition, offset, pageSize);
+    }
+
     @Override
     public List<Question> getByBankId(Integer qbId) {
-        return baseMapper.selectByBankId(qbId);
+        return questionMapper.selectByBankId(qbId);
     }
 
     @Override
     public List<Question> getByType(Integer type) {
-        return baseMapper.selectByType(type);
+        return questionMapper.selectByType(type);
     }
 
     @Override
     public List<Question> getByDifficultyRange(BigDecimal minDifficulty, BigDecimal maxDifficulty) {
-        return baseMapper.selectByDifficultyRange(minDifficulty, maxDifficulty);
+        return questionMapper.selectByDifficultyRange(minDifficulty, maxDifficulty);
     }
 
     @Override
     public List<Question> getByContent(String content) {
-        return baseMapper.selectByContent(content);
+        return questionMapper.selectByContent(content);
     }
 
     @Override
     public List<Question> getByIds(List<Integer> questionIds) {
-        return baseMapper.selectByIds(questionIds);
+        return questionMapper.selectByIds(questionIds);
     }
 
     @Override
     public List<QuestionOption> getOptions(Integer questionId) {
-        return baseMapper.selectOptions(questionId);
+        return questionMapper.selectOptions(questionId);
     }
 
     @Override
     public int addOption(Integer questionId, QuestionOption option) {
-        return baseMapper.insertOption(questionId, option);
+        return questionMapper.insertOption(questionId, option);
     }
 
     @Override
     public int batchAddOptions(Integer questionId, List<QuestionOption> options) {
-        return baseMapper.batchInsertOptions(questionId, options);
+        return questionMapper.batchInsertOptions(questionId, options);
     }
 
     @Override
     public int updateOption(Integer optionId, QuestionOption option) {
-        return baseMapper.updateOption(optionId, option);
+        return questionMapper.updateOption(optionId, option);
     }
 
     @Override
     public int deleteOption(Integer optionId) {
-        return baseMapper.deleteOption(optionId);
+        return questionMapper.deleteOption(optionId);
     }
 
     @Override
     public List<Question> getByPaperId(Integer paperId) {
-        return baseMapper.selectByPaperId(paperId);
+        return questionMapper.selectByPaperId(paperId);
     }
 
     @Override
     public int batchAddToPaper(Integer paperId, List<Integer> questionIds, List<BigDecimal> scores) {
-        return baseMapper.batchAddToPaper(paperId, questionIds, scores);
+        return questionMapper.batchAddToPaper(paperId, questionIds, scores);
     }
 
     @Override
     public int removeFromPaper(Integer paperId, Integer questionId) {
-        return baseMapper.removeFromPaper(paperId, questionId);
+        return questionMapper.removeFromPaper(paperId, questionId);
     }
 
     @Override
     public Long countUsage(Integer questionId) {
-        return baseMapper.countUsage(questionId);
+        return questionMapper.countUsage(questionId);
     }
 
     @Override
     public BigDecimal calculateCorrectRate(Integer questionId) {
-        return baseMapper.calculateCorrectRate(questionId);
+        return questionMapper.calculateCorrectRate(questionId);
     }
 
     @Override
     public List<Map<String, Object>> countByType() {
-        return baseMapper.countByType();
+        return questionMapper.countByType();
     }
 
     @Override
     public List<Map<String, Object>> countByDifficulty() {
-        return baseMapper.countByDifficulty();
+        return questionMapper.countByDifficulty();
     }
 
     @Override
     public List<Question> getMostMistakes(Integer limit) {
-        return baseMapper.selectMostMistakes(limit);
+        return questionMapper.selectMostMistakes(limit);
     }
 
     @Override
     public int updateDifficulty(Integer questionId, BigDecimal difficulty) {
-        return baseMapper.updateDifficulty(questionId, difficulty);
+        return questionMapper.updateDifficulty(questionId, difficulty);
     }
 
     @Override
     public int batchUpdateDifficulty(List<Integer> questionIds, List<BigDecimal> difficulties) {
-        return baseMapper.batchUpdateDifficulty(questionIds, difficulties);
+        return questionMapper.batchUpdateDifficulty(questionIds, difficulties);
     }
 
     @Override
@@ -135,7 +191,7 @@ public class QuestionServiceImpl extends BaseServiceImpl<Question, QuestionMappe
             }
         }
         
-        int result = baseMapper.batchInsert(questions);
+        int result = questionMapper.batchInsert(questions);
         
         // 批量插入选项
         for (Question question : questions) {
@@ -146,5 +202,4 @@ public class QuestionServiceImpl extends BaseServiceImpl<Question, QuestionMappe
         
         return result;
     }
-
 } 
