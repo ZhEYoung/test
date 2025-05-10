@@ -1,27 +1,179 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.exam.mapper.AdminMapper">
+    <!-- 基础列 -->
+    <sql id="Base_Column_List">
+        a.admin_id, a.user_id, a.name, a.other
+    </sql>
+
+    <!-- 关联查询列 -->
+    <sql id="Join_Column_List">
+        a.admin_id, a.user_id, a.name, a.other,
+        u.username, u.role, u.status, u.sex, u.phone, u.email, u.created_time
+    </sql>
+
     <!-- 结果映射 -->
-    <resultMap id="BaseResultMap" type="com.exam.entity.Admin">
+    <resultMap id="AdminResultMap" type="com.exam.entity.Admin">
         <id column="admin_id" property="adminId"/>
         <result column="user_id" property="userId"/>
         <result column="name" property="name"/>
         <result column="other" property="other"/>
+        <!-- 关联用户信息 -->
+        <association property="user" javaType="com.exam.entity.User">
+            <id column="user_id" property="userId"/>
+            <result column="username" property="username"/>
+            <result column="role" property="role"/>
+            <result column="status" property="status"/>
+            <result column="sex" property="sex"/>
+            <result column="phone" property="phone"/>
+            <result column="email" property="email"/>
+            <result column="created_time" property="createdTime"/>
+        </association>
     </resultMap>
 
+    <!-- 插入管理员记录 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="adminId">
+        INSERT INTO admin (user_id, name, other)
+        VALUES (#{userId}, #{name}, #{other})
+    </insert>
+
+    <!-- 批量插入管理员记录 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="adminId">
+        INSERT INTO admin (user_id, name, other)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.name}, #{item.other})
+        </foreach>
+    </insert>
+
+    <!-- 根据ID删除管理员 -->
+    <delete id="deleteById">
+        DELETE FROM admin WHERE admin_id = #{adminId}
+    </delete>
+
+    <!-- 批量删除管理员 -->
+    <delete id="batchDelete">
+        DELETE FROM admin WHERE admin_id IN
+        <foreach collection="adminIds" item="adminId" open="(" separator="," close=")">
+            #{adminId}
+        </foreach>
+    </delete>
+
+    <!-- 更新管理员信息 -->
+    <update id="updateById">
+        UPDATE admin
+        <set>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="other != null">other = #{other}</if>
+        </set>
+        WHERE admin_id = #{adminId}
+    </update>
+
+    <!-- 批量更新管理员 -->
+    <update id="batchUpdate">
+        <foreach collection="list" item="item" separator=";">
+            UPDATE admin
+            <set>
+                <if test="item.userId != null">user_id = #{item.userId},</if>
+                <if test="item.name != null">name = #{item.name},</if>
+                <if test="item.other != null">other = #{item.other}</if>
+            </set>
+            WHERE admin_id = #{item.adminId}
+        </foreach>
+    </update>
+
+    <!-- 根据ID查询管理员 -->
+    <select id="selectById" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        WHERE a.admin_id = #{adminId}
+    </select>
+
+    <!-- 查询所有管理员 -->
+    <select id="selectAll" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+    </select>
+
+    <!-- 分页查询管理员 -->
+    <select id="selectPage" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <!-- 查询管理员总数 -->
+    <select id="selectCount" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM admin
+    </select>
+
+    <!-- 条件查询管理员 -->
+    <select id="selectByCondition" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 条件查询管理员数量 -->
+    <select id="selectCountByCondition" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+    </select>
+
+    <!-- 条件分页查询管理员 -->
+    <select id="selectPageByCondition" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        <where>
+            <foreach collection="condition" index="key" item="value" separator="AND">
+                <if test="value != null">
+                    ${key} = #{value}
+                </if>
+            </foreach>
+        </where>
+        LIMIT #{offset}, #{limit}
+    </select>
+
     <!-- 根据用户ID查询管理员信息 -->
-    <select id="selectByUserId" resultMap="BaseResultMap">
-        SELECT * FROM admin WHERE user_id = #{userId}
+    <select id="selectByUserId" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        WHERE a.user_id = #{userId}
     </select>
 
     <!-- 根据管理员姓名查询 -->
-    <select id="selectByName" resultMap="BaseResultMap">
-        SELECT * FROM admin WHERE name = #{name}
+    <select id="selectByName" resultMap="AdminResultMap">
+        SELECT <include refid="Join_Column_List" />
+        FROM admin a
+        LEFT JOIN user u ON a.user_id = u.user_id
+        WHERE a.name = #{name}
     </select>
 
     <!-- 更新管理员备注信息 -->
     <update id="updateOther">
-        UPDATE admin SET other = #{other} WHERE admin_id = #{adminId}
+        UPDATE admin SET other = #{other}
+        WHERE admin_id = #{adminId}
     </update>
 
     <!-- 批量更新管理员备注信息 -->
@@ -35,7 +187,8 @@
 
     <!-- 查询管理员的操作日志 -->
     <select id="selectAdminLogs" resultType="java.util.Map">
-        SELECT l.* FROM log l
+        SELECT l.*
+        FROM log l
         INNER JOIN admin a ON l.user_id = a.user_id
         WHERE a.admin_id = #{adminId}
         AND l.created_time BETWEEN #{startTime} AND #{endTime}

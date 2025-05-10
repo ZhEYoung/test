@@ -9,7 +9,57 @@ import java.math.BigDecimal;
 /**
  * 试卷服务接口
  */
-public interface ExamPaperService extends BaseService<ExamPaper> {
+public interface ExamPaperService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(ExamPaper record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(ExamPaper record);
+
+    /**
+     * 根据ID查询
+     */
+    ExamPaper selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<ExamPaper> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<ExamPaper> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<ExamPaper> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<ExamPaper> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 根据学科ID查询试卷列表
@@ -117,8 +167,11 @@ public interface ExamPaperService extends BaseService<ExamPaper> {
      * @param paperName 试卷名称
      * @param difficulty 难度系数
      * @param questionTypeCount 各题型数量
+     * @param typeScoreRatio 各题型分数比例（可选，如果为null则根据题目数量自动计算）
+     * @param teacherId 教师ID
      * @return 组卷结果
      */
     ExamPaper generatePaper(Integer subjectId, String paperName, 
-                          BigDecimal difficulty, Map<Integer, Integer> questionTypeCount);
+                          BigDecimal difficulty, Map<Integer, Integer> questionTypeCount,
+                          Map<Integer, BigDecimal> typeScoreRatio, Integer teacherId);
 } 

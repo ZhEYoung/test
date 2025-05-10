@@ -9,7 +9,57 @@ import java.util.Date;
 /**
  * 学生题目得分服务接口
  */
-public interface StudentQuestionScoreService extends BaseService<StudentQuestionScore> {
+public interface StudentQuestionScoreService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(StudentQuestionScore record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(StudentQuestionScore record);
+
+    /**
+     * 根据ID查询
+     */
+    StudentQuestionScore selectById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<StudentQuestionScore> selectAll();
+
+    /**
+     * 分页查询
+     */
+    List<StudentQuestionScore> selectPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long selectCount();
+
+    /**
+     * 条件查询
+     */
+    List<StudentQuestionScore> selectByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long selectCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<StudentQuestionScore> selectPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 插入单条学生题目得分记录
@@ -83,10 +133,7 @@ public interface StudentQuestionScoreService extends BaseService<StudentQuestion
      */
     List<Map<String, Object>> analyzeAnswerPattern(Integer studentId, Integer examId);
     
-    /**
-     * 统计题目类型得分情况
-     */
-    List<Map<String, Object>> analyzeScoreByQuestionType(Integer studentId, Integer examId);
+
     
     /**
      * 查询需要人工批改的题目
@@ -98,10 +145,7 @@ public interface StudentQuestionScoreService extends BaseService<StudentQuestion
      */
     int batchUpdateGradingStatus(List<Integer> recordIds, String status, Integer graderId);
     
-    /**
-     * 统计批改进度
-     */
-    Map<String, Object> countGradingProgress(Integer examId);
+
     
     /**
      * 导出题目得分报告
