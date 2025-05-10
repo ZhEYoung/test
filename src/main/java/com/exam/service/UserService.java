@@ -2,12 +2,63 @@ package com.exam.service;
 
 import com.exam.entity.User;
 import java.util.List;
+import java.util.Map;
 import java.util.Date;
 
 /**
  * 用户服务接口
  */
-public interface UserService extends BaseService<User> {
+public interface UserService {
+    
+    /**
+     * 插入一条记录
+     */
+    int insert(User record);
+
+    /**
+     * 根据ID删除
+     */
+    int deleteById(Integer id);
+
+    /**
+     * 根据ID更新
+     */
+    int updateById(User record);
+
+    /**
+     * 根据ID查询
+     */
+    User getById(Integer id);
+
+    /**
+     * 查询所有记录
+     */
+    List<User> getAll();
+
+    /**
+     * 分页查询
+     */
+    List<User> getPage(Integer pageNum, Integer pageSize);
+
+    /**
+     * 查询总记录数
+     */
+    Long getCount();
+
+    /**
+     * 条件查询
+     */
+    List<User> getByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件查询记录数
+     */
+    Long getCountByCondition(Map<String, Object> condition);
+
+    /**
+     * 条件分页查询
+     */
+    List<User> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize);
     
     /**
      * 用户登录

@@ -3,131 +3,184 @@ package com.exam.service.impl;
 import com.exam.entity.Class;
 import com.exam.entity.Student;
 import com.exam.entity.Exam;
-import com.exam.mapper.ClassMapper;
-import com.exam.mapper.StudentMapper;
-import com.exam.mapper.ExamMapper;
 import com.exam.service.ClassService;
+import com.exam.mapper.ClassMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * 班级服务实现类
  */
 @Service
-@Transactional
-public class ClassServiceImpl extends BaseServiceImpl<Class, ClassMapper> implements ClassService {
+public class ClassServiceImpl implements ClassService {
 
     @Autowired
-    private StudentMapper studentMapper;
-    
-    @Autowired
-    private ExamMapper examMapper;
+    private ClassMapper classMapper;
+
+    @Override
+    public int insert(Class record) {
+        return classMapper.insert(record);
+    }
+
+    @Override
+    public int deleteById(Integer id) {
+        return classMapper.deleteById(id);
+    }
+
+    @Override
+    public int updateById(Class record) {
+        return classMapper.updateById(record);
+    }
+
+    @Override
+    public Class getById(Integer id) {
+        return classMapper.selectById(id);
+    }
+
+    @Override
+    public List<Class> getAll() {
+        return classMapper.selectAll();
+    }
+
+    @Override
+    public List<Class> getPage(Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return classMapper.selectPage(offset, pageSize);
+    }
+
+    @Override
+    public Long getCount() {
+        return classMapper.selectCount();
+    }
+
+    @Override
+    public List<Class> getByCondition(Map<String, Object> condition) {
+        return classMapper.selectByCondition(condition);
+    }
+
+    @Override
+    public Long getCountByCondition(Map<String, Object> condition) {
+        return classMapper.selectCountByCondition(condition);
+    }
+
+    @Override
+    public List<Class> getPageByCondition(Map<String, Object> condition, Integer pageNum, Integer pageSize) {
+        int offset = (pageNum - 1) * pageSize;
+        return classMapper.selectPageByCondition(condition, offset, pageSize);
+    }
 
     @Override
     public List<Class> getByTeacherId(Integer teacherId) {
-        return baseMapper.selectByTeacherId(teacherId);
+        return classMapper.selectByTeacherId(teacherId);
     }
 
     @Override
     public List<Class> getBySubjectId(Integer subjectId) {
-        return baseMapper.selectBySubjectId(subjectId);
+        return classMapper.selectBySubjectId(subjectId);
     }
 
     @Override
     public Class getByClassName(String className) {
-        return baseMapper.selectByClassName(className);
+        return classMapper.selectByClassName(className);
     }
 
     @Override
     public int updateFinalExam(Integer classId, Boolean finalExam) {
-        return baseMapper.updateFinalExam(classId, finalExam);
+        return classMapper.updateFinalExam(classId, finalExam);
     }
 
     @Override
     public List<Student> getClassStudents(Integer classId) {
-        return baseMapper.selectClassStudents(classId);
+        return classMapper.selectClassStudents(classId);
     }
 
     @Override
     public List<Exam> getClassExams(Integer classId) {
-        return baseMapper.selectClassExams(classId);
+        return classMapper.selectClassExams(classId);
     }
 
     @Override
     public Exam getFinalExam(Integer classId) {
-        return baseMapper.selectFinalExam(classId);
+        return classMapper.selectFinalExam(classId);
     }
 
     @Override
     public Long countStudents(Integer classId) {
-        return baseMapper.countStudents(classId);
+        return classMapper.countStudents(classId);
     }
 
     @Override
     public Long countExams(Integer classId) {
-        return baseMapper.countExams(classId);
+        return classMapper.countExams(classId);
     }
 
     @Override
     public Double getAvgScore(Integer classId, Integer examId) {
-        return baseMapper.selectAvgScore(classId, examId);
+        return classMapper.selectAvgScore(classId, examId);
     }
 
     @Override
     public List<Map<String, Object>> getScoreDistribution(Integer classId, Integer examId) {
-        return baseMapper.selectScoreDistribution(classId, examId);
+        return classMapper.selectScoreDistribution(classId, examId);
     }
 
     @Override
-    public List<Exam> getExamSchedule(Integer classId, Date startTime, Date endTime) {
-        return baseMapper.selectExamSchedule(classId, startTime, endTime);
+    public List<Exam> getExamSchedule(Integer classId) {
+        // 默认查询未来一个月的考试安排
+        Date startTime = new Date();
+        Date endTime = new Date(startTime.getTime() + 30L * 24 * 60 * 60 * 1000);
+        return classMapper.selectExamSchedule(classId, startTime, endTime);
     }
 
     @Override
+    @Transactional
     public int batchAddStudents(Integer classId, List<Integer> studentIds) {
-        return baseMapper.batchAddStudents(classId, studentIds);
+        return classMapper.batchAddStudents(classId, studentIds);
     }
 
     @Override
+    @Transactional
     public int batchRemoveStudents(Integer classId, List<Integer> studentIds) {
-        return baseMapper.batchRemoveStudents(classId, studentIds);
+        return classMapper.batchRemoveStudents(classId, studentIds);
     }
 
     @Override
+    @Transactional
     public int createClass(Class classInfo, Integer teacherId, List<Integer> studentIds) {
-        // 设置班级信息
+        // 设置教师ID
         classInfo.setTeacherId(teacherId);
         
-        // 插入班级记录
-        int result = baseMapper.insert(classInfo);
-        if (result == 0) {
-            return 0;
+        // 插入班级信息
+        int result = classMapper.insert(classInfo);
+        if (result > 0 && studentIds != null && !studentIds.isEmpty()) {
+            // 批量添加学生
+            classMapper.batchAddStudents(classInfo.getClassId(), studentIds);
         }
-        
-        // 批量添加学生
-        if (!studentIds.isEmpty()) {
-            baseMapper.batchAddStudents(classInfo.getClassId(), studentIds);
-        }
-        
         return result;
     }
 
     @Override
+    @Transactional
     public int dissolveClass(Integer classId) {
         // 先移除所有学生
-        List<Student> students = getClassStudents(classId);
+        Map<String, Object> condition = new HashMap<>();
+        condition.put("classId", classId);
+        List<Student> students = classMapper.selectClassStudents(classId);
         if (!students.isEmpty()) {
-            List<Integer> studentIds = new ArrayList<>();
-            for (Student student : students) {
-                studentIds.add(student.getStudentId());
-            }
-            batchRemoveStudents(classId, studentIds);
+            List<Integer> studentIds = students.stream()
+                .map(Student::getStudentId)
+                .toList();
+            classMapper.batchRemoveStudents(classId, studentIds);
         }
         
-        // 删除班级记录
-        return baseMapper.deleteById(classId);
+        // 删除班级
+        return classMapper.deleteById(classId);
     }
 
     @Override
@@ -135,79 +188,56 @@ public class ClassServiceImpl extends BaseServiceImpl<Class, ClassMapper> implem
         Map<String, Object> statistics = new HashMap<>();
         
         // 获取班级基本信息
-        Class classInfo = baseMapper.selectById(classId);
-        if (classInfo == null) {
-            return statistics;
-        }
+        Class classInfo = classMapper.selectById(classId);
         statistics.put("classInfo", classInfo);
         
-        // 统计学生数量
-        statistics.put("studentCount", countStudents(classId));
+        // 获取学生数量
+        Long studentCount = classMapper.countStudents(classId);
+        statistics.put("studentCount", studentCount);
         
-        // 统计考试数量
-        statistics.put("examCount", countExams(classId));
+        // 获取考试数量
+        Long examCount = classMapper.countExams(classId);
+        statistics.put("examCount", examCount);
         
-        // 获取考试列表
-        List<Exam> exams = getClassExams(classId);
-        statistics.put("exams", exams);
+        // 获取考试安排
+        List<Exam> examSchedule = getExamSchedule(classId);
+        statistics.put("upcomingExams", examSchedule);
         
-        // 统计各次考试平均分
-        List<Map<String, Object>> examScores = new ArrayList<>();
-        for (Exam exam : exams) {
-            Map<String, Object> examScore = new HashMap<>();
-            examScore.put("examId", exam.getExamId());
-            examScore.put("examName", exam.getExamName());
-            examScore.put("avgScore", getAvgScore(classId, exam.getExamId()));
-            examScore.put("distribution", getScoreDistribution(classId, exam.getExamId()));
-            examScores.add(examScore);
-        }
-        statistics.put("examScores", examScores);
+        // 获取期末考试信息
+        Exam finalExam = classMapper.selectFinalExam(classId);
+        statistics.put("finalExam", finalExam);
         
         return statistics;
     }
 
     @Override
     public Map<String, Object> exportStudentList(Integer classId) {
-        Map<String, Object> data = new HashMap<>();
+        Map<String, Object> exportData = new HashMap<>();
         
         // 获取班级信息
-        Class classInfo = baseMapper.selectById(classId);
-        if (classInfo == null) {
-            return data;
-        }
-        data.put("classInfo", classInfo);
+        Class classInfo = classMapper.selectById(classId);
+        exportData.put("classInfo", classInfo);
         
         // 获取学生列表
-        List<Student> students = getClassStudents(classId);
-        data.put("students", students);
+        List<Student> students = classMapper.selectClassStudents(classId);
+        exportData.put("students", students);
         
-        // 获取考试信息
-        List<Exam> exams = getClassExams(classId);
-        data.put("exams", exams);
-        
-        return data;
+        return exportData;
     }
 
     @Override
+    @Transactional
     public int importStudents(Integer classId, List<Student> students) {
-        // 检查班级是否存在
-        if (baseMapper.selectById(classId) == null) {
+        if (students == null || students.isEmpty()) {
             return 0;
         }
         
-        // 批量插入学生
-        int result = studentMapper.batchInsert(students);
-        if (result == 0) {
-            return 0;
-        }
-        
-        // 获取学生ID列表
-        List<Integer> studentIds = new ArrayList<>();
-        for (Student student : students) {
-            studentIds.add(student.getStudentId());
-        }
-        
-        // 建立班级和学生的关联
-        return batchAddStudents(classId, studentIds);
+        // 提取学生ID列表
+        List<Integer> studentIds = students.stream()
+            .map(Student::getStudentId)
+            .toList();
+            
+        // 批量添加学生到班级
+        return classMapper.batchAddStudents(classId, studentIds);
     }
 } 
